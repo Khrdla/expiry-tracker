@@ -181,7 +181,7 @@ async def delete_inventory_item(item_id: str):
 async def get_expiry_alerts():
     today = date.today()
     from datetime import timedelta
-    alert_date = today + timedelta(days=7)
+    alert_date = today + timedelta(days=30)  # Changed to 30 days (1 month)
     
     # Get all items
     all_items = await db.inventory.find().to_list(1000)
