@@ -95,6 +95,10 @@ async def create_inventory_item(item: InventoryItemCreate):
     item_dict["created_at"] = datetime.utcnow()
     item_dict["updated_at"] = datetime.utcnow()
     
+    # Convert date to datetime for MongoDB compatibility
+    if isinstance(item_dict.get("expiry_date"), date):
+        item_dict["expiry_date"] = datetime.combine(item_dict["expiry_date"], datetime.min.time())
+    
     result = await db.inventory.insert_one(item_dict)
     created_item = await db.inventory.find_one({"_id": result.inserted_id})
     
