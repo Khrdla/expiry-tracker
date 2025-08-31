@@ -229,7 +229,9 @@ async def get_analytics_by_supplier():
         
         for item in supplier["items"]:
             expiry_date = item["expiry_date"]
-            if isinstance(expiry_date, str):
+            if isinstance(expiry_date, datetime):
+                expiry_date = expiry_date.date()
+            elif isinstance(expiry_date, str):
                 expiry_date = datetime.fromisoformat(expiry_date).date()
                 
             if expiry_date < today:
