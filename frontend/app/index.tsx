@@ -13,10 +13,14 @@ import {
   Modal,
   ScrollView,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Image,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.EXPO_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -51,6 +55,10 @@ export default function ExpiryTracker() {
   const [searchText, setSearchText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'expiring' | 'expired'>('all');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  const router = useRouter();
+  const params = useLocalSearchParams();
   
   // Form state for adding/editing items
   const [formData, setFormData] = useState({
@@ -65,7 +73,13 @@ export default function ExpiryTracker() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    
+    // Handle barcode scanner return
+    if (params.barcode && params.showAddModal === 'true') {
+      setFormData(prev => ({ ...prev, barcode: params.barcode as string }));
+      setModalVisible(true);
+    }
+  }, [params]);
 
   const loadData = async () => {
     try {
@@ -113,6 +127,72 @@ export default function ExpiryTracker() {
     setRefreshing(false);
   };
 
+  const selectImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please grant access to your photo library');
+        return;
+      }
+
+      Alert.alert(
+        'Select Image',
+        'Choose image source',
+        [
+          { text: 'Camera', onPress: () => openCamera() },
+          { text: 'Gallery', onPress: () => openGallery() },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    } catch (error) {
+      console.error('Error requesting permission:', error);
+    }
+  };
+
+  const openCamera = async () => {
+    try {
+      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!cameraPermission.granted) {
+        Alert.alert('Permission Required', 'Please grant camera access');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0].base64) {
+        setSelectedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+    } catch (error) {
+      console.error('Error opening camera:', error);
+      Alert.alert('Error', 'Failed to open camera');
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0].base64) {
+        setSelectedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+    } catch (error) {
+      console.error('Error opening gallery:', error);
+      Alert.alert('Error', 'Failed to open gallery');
+    }
+  };
+
   const addItem = async () => {
     try {
       if (!formData.item_name || !formData.expiry_date || !formData.section) {
@@ -128,6 +208,7 @@ export default function ExpiryTracker() {
         body: JSON.stringify({
           ...formData,
           stock_available: parseInt(formData.stock_available) || 0,
+          product_image: selectedImage,
         }),
       });
 
@@ -186,6 +267,7 @@ export default function ExpiryTracker() {
       stock_available: '',
       expiry_date: ''
     });
+    setSelectedImage(null);
   };
 
   const getExpiryStatus = (expiryDate: string) => {
@@ -196,7 +278,7 @@ export default function ExpiryTracker() {
 
     if (diffDays < 0) {
       return { status: 'expired', color: '#ff4757', text: `Expired ${Math.abs(diffDays)} days ago` };
-    } else if (diffDays <= 7) {
+    } else if (diffDays <= 30) { // Changed to 30 days
       return { status: 'expiring', color: '#ffa726', text: `Expires in ${diffDays} days` };
     } else {
       return { status: 'good', color: '#2ed573', text: `${diffDays} days remaining` };
@@ -235,7 +317,14 @@ export default function ExpiryTracker() {
     return (
       <View style={styles.itemCard}>
         <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>{item.item_name}</Text>
+          <View style={styles.itemHeaderLeft}>
+            {item.product_image && (
+              <Image source={{ uri: item.product_image }} style={styles.productImage} />
+            )}
+            <View style={styles.itemTitleContainer}>
+              <Text style={styles.itemName}>{item.item_name}</Text>
+            </View>
+          </View>
           <TouchableOpacity
             onPress={() => deleteItem(item.id)}
             style={styles.deleteButton}
@@ -286,12 +375,26 @@ export default function ExpiryTracker() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Expiry Tracker</Text>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={styles.addButton}
-        >
-          <Ionicons name="add" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/barcode-scanner')}
+            style={[styles.headerButton, { marginRight: 12 }]}
+          >
+            <Ionicons name="scan" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/reports')}
+            style={[styles.headerButton, { marginRight: 12 }]}
+          >
+            <Ionicons name="bar-chart" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={styles.headerButton}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Dashboard */}
@@ -350,6 +453,9 @@ export default function ExpiryTracker() {
           <View style={styles.emptyState}>
             <Ionicons name="archive-outline" size={64} color="#999" />
             <Text style={styles.emptyText}>No items found</Text>
+            <Text style={styles.emptySubText}>
+              Tap the + button or scan a barcode to add items
+            </Text>
           </View>
         }
       />
@@ -369,7 +475,10 @@ export default function ExpiryTracker() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add New Item</Text>
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  setModalVisible(false);
+                  resetForm();
+                }}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color="#666" />
@@ -377,6 +486,21 @@ export default function ExpiryTracker() {
             </View>
 
             <ScrollView style={styles.formContainer}>
+              {/* Image Selection */}
+              <View style={styles.imageSection}>
+                <Text style={styles.imageLabel}>Product Image</Text>
+                <TouchableOpacity onPress={selectImage} style={styles.imageSelector}>
+                  {selectedImage ? (
+                    <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+                  ) : (
+                    <View style={styles.imagePlaceholder}>
+                      <Ionicons name="camera-outline" size={40} color="#999" />
+                      <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+              
               <TextInput
                 style={styles.input}
                 placeholder="Item Name *"
@@ -463,7 +587,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  addButton: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
     backgroundColor: '#3742fa',
     width: 40,
     height: 40,
@@ -574,11 +702,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  itemHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  productImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  itemTitleContainer: {
+    flex: 1,
+  },
   itemName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2f3542',
-    flex: 1,
   },
   deleteButton: {
     padding: 4,
@@ -611,6 +752,12 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 16,
   },
+  emptySubText: {
+    fontSize: 14,
+    color: '#ccc',
+    marginTop: 8,
+    textAlign: 'center',
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -640,6 +787,39 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 20,
+  },
+  imageSection: {
+    marginBottom: 20,
+  },
+  imageLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2f3542',
+    marginBottom: 12,
+  },
+  imageSelector: {
+    alignItems: 'center',
+  },
+  selectedImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+  },
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  imagePlaceholderText: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 8,
   },
   input: {
     borderWidth: 1,
