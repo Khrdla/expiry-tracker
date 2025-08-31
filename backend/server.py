@@ -74,9 +74,12 @@ def serialize_item(item):
     if item:
         item["id"] = str(item["_id"])
         del item["_id"]
-        # Convert date objects to ISO format strings for JSON serialization
-        if "expiry_date" in item and isinstance(item["expiry_date"], date):
-            item["expiry_date"] = item["expiry_date"].isoformat()
+        # Convert datetime objects to ISO format strings for JSON serialization
+        if "expiry_date" in item:
+            if isinstance(item["expiry_date"], datetime):
+                item["expiry_date"] = item["expiry_date"].date().isoformat()
+            elif isinstance(item["expiry_date"], date):
+                item["expiry_date"] = item["expiry_date"].isoformat()
         if "created_at" in item and isinstance(item["created_at"], datetime):
             item["created_at"] = item["created_at"].isoformat()
         if "updated_at" in item and isinstance(item["updated_at"], datetime):
