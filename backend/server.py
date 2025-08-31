@@ -145,6 +145,10 @@ async def update_inventory_item(item_id: str, item_update: InventoryItemUpdate):
         update_data = {k: v for k, v in item_update.dict().items() if v is not None}
         update_data["updated_at"] = datetime.utcnow()
         
+        # Convert date to datetime for MongoDB compatibility
+        if "expiry_date" in update_data and isinstance(update_data["expiry_date"], date):
+            update_data["expiry_date"] = datetime.combine(update_data["expiry_date"], datetime.min.time())
+        
         result = await db.inventory.update_one(
             {"_id": ObjectId(item_id)}, 
             {"$set": update_data}
