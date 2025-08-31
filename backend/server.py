@@ -236,7 +236,7 @@ async def get_analytics_by_supplier():
                 
             if expiry_date < today:
                 expired_count += 1
-            elif expiry_date <= today + timedelta(days=7):
+            elif expiry_date <= today + timedelta(days=30):
                 expiring_soon_count += 1
         
         supplier["expired_items"] = expired_count
