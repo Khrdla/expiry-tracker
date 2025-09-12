@@ -7,6 +7,8 @@ import "./App.css";
 import EnhancedDashboard from "./components/EnhancedDashboard";
 import EnhancedProductManagement from "./components/EnhancedProductManagement";
 import SettingsPanel from "./components/SettingsPanel";
+import ExpiryTracker from "./components/ExpiryTracker";
+import ReturnForm from "./components/ReturnForm";
 
 // Icons
 import { 
