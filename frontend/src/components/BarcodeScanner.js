@@ -256,20 +256,47 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 )}
               </div>
 
+              {/* Manual Input */}
+              {showManualInput && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-semibold text-gray-800 text-center">Manual Barcode Entry</h4>
+                  <form onSubmit={handleManualSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      value={manualBarcode}
+                      onChange={(e) => setManualBarcode(e.target.value)}
+                      placeholder="Enter barcode manually"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-mono"
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={!manualBarcode.trim() || loading}
+                      className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {loading ? 'Looking up...' : 'Search Product'}
+                    </button>
+                  </form>
+                </div>
+              )}
+
               {/* Scanner Component */}
               {isScanning && (
                 <div className="relative">
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-black">
                     <BarcodeScannerComponent
+                      ref={scannerRef}
                       width="100%"
-                      height={window.innerWidth > 768 ? 300 : 200}
+                      height={window.innerWidth > 768 ? 300 : 250}
                       onUpdate={(err, result) => {
-                        if (result) {
+                        if (result && result.text) {
                           handleBarcodeScan(result.text);
-                        } else if (err) {
+                        } else if (err && err.name !== 'NotFoundException') {
+                          // Only handle actual errors, not "no barcode found" messages
                           handleError(err);
                         }
                       }}
+                      facingMode="environment" // Use back camera on mobile
                     />
                   </div>
                   
