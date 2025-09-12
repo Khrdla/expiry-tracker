@@ -498,6 +498,99 @@ async def update_product(
     
     return {"message": "Product updated successfully"}
 
+# Excel lookup endpoint
+@api_router.get("/excel-lookup")
+async def excel_lookup(
+    query: str = Query(..., description="Product name or barcode to search"),
+    current_user: User = Depends(get_current_user)
+):
+    """Lookup product in Excel sheet by name or barcode"""
+    try:
+        import pandas as pd
+        import os
+        
+        # Check if Excel file exists
+        excel_path = '/app/items_import_template.xlsx'
+        if not os.path.exists(excel_path):
+            raise HTTPException(status_code=404, detail="Excel template not found")
+        
+        # Read Excel file
+        df = pd.read_excel(excel_path)
+        df.columns = df.columns.str.strip()
+        
+        # Search by product name (case-insensitive) or barcode
+        query_lower = str(query).lower().strip()
+        
+        # Try multiple search strategies
+        matches = []
+        
+        # 1. Exact match on Item Name
+        exact_name_match = df[df['Item Name'].str.lower().str.strip() == query_lower]
+        if not exact_name_match.empty:
+            matches.extend(exact_name_match.to_dict('records'))
+        
+        # 2. Partial match on Item Name (contains)
+        if not matches:
+            partial_name_match = df[df['Item Name'].str.lower().str.contains(query_lower, na=False)]
+            if not partial_name_match.empty:
+                matches.extend(partial_name_match.head(5).to_dict('records'))  # Limit to 5 results
+        
+        # 3. Exact match on Barcode
+        if 'Barcode' in df.columns:
+            barcode_match = df[df['Barcode'].astype(str).str.strip() == str(query).strip()]
+            if not barcode_match.empty:
+                matches.extend(barcode_match.to_dict('records'))
+        
+        # 4. Exact match on item Number
+        if 'item Number' in df.columns:
+            item_number_match = df[df['item Number'].astype(str).str.strip() == str(query).strip()]
+            if not item_number_match.empty:
+                matches.extend(item_number_match.to_dict('records'))
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_matches = []
+        for match in matches:
+            # Use item name + item number as unique identifier
+            identifier = f"{match.get('Item Name', '')}-{match.get('item Number', '')}"
+            if identifier not in seen:
+                seen.add(identifier)
+                unique_matches.append(match)
+        
+        if not unique_matches:
+            return {"found": False, "message": "No products found matching the search query"}
+        
+        # Return the best match (first one) with standardized field names
+        best_match = unique_matches[0]
+        
+        # Standardize the response format
+        standardized_match = {
+            "found": True,
+            "product_name": str(best_match.get('Item Name', '')),
+            "item_number": str(best_match.get('item Number', '')),
+            "department": str(best_match.get('Department', '')),
+            "section": str(best_match.get('Section', '')),
+            "family": str(best_match.get('Family', '')),
+            "sub_family": str(best_match.get('Sub Family', '')),
+            "supplier_code": str(best_match.get('supplier Code', '')) if pd.notna(best_match.get('supplier Code')) else '',
+            "supplier": str(best_match.get('Supplier', '')),
+            "barcode": str(best_match.get('Barcode', '')) if pd.notna(best_match.get('Barcode')) else '',
+            "purchase_price": float(best_match.get('purchase price', 0)) if pd.notna(best_match.get('purchase price')) else 0.0,
+            "purchase_currency": str(best_match.get('Purchase currency ', 'YER')).strip() if pd.notna(best_match.get('Purchase currency ')) else 'YER',
+            "selling_price": float(best_match.get('Selling Price', 0)) if pd.notna(best_match.get('Selling Price')) else 0.0,
+            "arabic_description": str(best_match.get('Arabic Description', '')) if pd.notna(best_match.get('Arabic Description')) else '',
+            "location": str(best_match.get('Location', '')) if pd.notna(best_match.get('Location')) else '',
+            "brand": str(best_match.get('Brand', '')) if pd.notna(best_match.get('Brand')) else '',
+            "all_matches": len(unique_matches),
+            "search_query": query
+        }
+        
+        return standardized_match
+        
+    except Exception as e:
+        logger.error(f"Error in Excel lookup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Excel lookup failed: {str(e)}")
+
 # Barcode lookup endpoint
 @api_router.get("/barcode/{barcode}")
 async def get_product_by_barcode(
