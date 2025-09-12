@@ -1,0 +1,399 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
+
+const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [refreshInterval, setRefreshInterval] = useState(null);
+
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+  const COLORS = {
+    'in_stock': '#22c55e',
+    'low_stock': '#f59e0b', 
+    'out_of_stock': '#ef4444',
+    'expired': '#991b1b',
+    'near_expiry': '#fb923c'
+  };
+
+  const DEPARTMENT_COLORS = {
+    '01-FMG': '#22c55e',
+    '01-CGD': '#3b82f6',
+    '01-OPSS': '#8b5cf6'
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+    setRefreshInterval(interval);
+    
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    };
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDepartmentName = (deptCode) => {
+    const names = {
+      '01-FMG': 'Fresh & Food Grocery',
+      '01-CGD': 'Consumer Goods & Drinks',
+      '01-OPSS': 'Operations & Special Services'
+    };
+    return names[deptCode] || deptCode;
+  };
+
+  const formatCurrency = (amount, currency = 'YER') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency === 'SAR' ? 'SAR' : currency === 'EUR' ? 'EUR' : 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getFilteredKPIs = () => {
+    if (!dashboardData) return [];
+    if (selectedDepartment === 'all') return dashboardData.kpis;
+    return dashboardData.kpis.filter(kpi => kpi.department === selectedDepartment);
+  };
+
+  const prepareChartData = () => {
+    const kpis = getFilteredKPIs();
+    return kpis.map(kpi => ({
+      department: getDepartmentName(kpi.department),
+      'Total Items': kpi.total_items,
+      'Out of Stock': kpi.out_of_stock_items,
+      'Low Stock': kpi.low_stock_items,
+      'Near Expiry': kpi.near_expiry_items,
+      'Stock Value': kpi.total_stock_value
+    }));
+  };
+
+  const prepareExpiryData = () => {
+    if (!dashboardData) return [];
+    const expiry = dashboardData.expiry_status;
+    return Object.entries(expiry).map(([key, value]) => ({
+      name: key.replace('_', ' ').toUpperCase(),
+      value: value,
+      color: COLORS[key]
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="text-center text-red-600 p-8">
+        <p>Failed to load dashboard data. Please try again.</p>
+        <button onClick={fetchDashboardData} className="mt-4 bg-green-500 text-white px-4 py-2 rounded">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header with Department Filter */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-xl">
+        <div>
+          <h1 className="text-3xl font-bold">Geant Hypermarket</h1>
+          <p className="text-green-100">Inventory Management Dashboard</p>
+          <p className="text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium"
+          >
+            <option value="all">All Departments</option>
+            {dashboardData.accessible_departments.map(dept => (
+              <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
+            ))}
+          </select>
+          
+          <button
+            onClick={fetchDashboardData}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {getFilteredKPIs().map((kpi, index) => (
+          <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div 
+              className="h-2"
+              style={{ backgroundColor: DEPARTMENT_COLORS[kpi.department] }}
+            ></div>
+            
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-800">{getDepartmentName(kpi.department)}</h3>
+                <div className="text-2xl">📦</div>
+              </div>
+              
+              <div className="space-y-3">
+                <div 
+                  className="flex justify-between items-center cursor-pointer hover:bg-green-50 p-2 rounded"
+                  onClick={() => onProductClick && onProductClick('total', kpi.department)}
+                >
+                  <span className="text-sm text-gray-600">Total Items</span>
+                  <span className="font-bold text-green-600">{kpi.total_items.toLocaleString()}</span>
+                </div>
+                
+                <div 
+                  className="flex justify-between items-center cursor-pointer hover:bg-red-50 p-2 rounded"
+                  onClick={() => onProductClick && onProductClick('out_of_stock', kpi.department)}
+                >
+                  <span className="text-sm text-gray-600">Out of Stock</span>
+                  <span className="font-bold text-red-600">{kpi.out_of_stock_items.toLocaleString()}</span>
+                </div>
+                
+                <div 
+                  className="flex justify-between items-center cursor-pointer hover:bg-yellow-50 p-2 rounded"
+                  onClick={() => onProductClick && onProductClick('low_stock', kpi.department)}
+                >
+                  <span className="text-sm text-gray-600">Low Stock</span>
+                  <span className="font-bold text-yellow-600">{kpi.low_stock_items.toLocaleString()}</span>
+                </div>
+                
+                <div 
+                  className="flex justify-between items-center cursor-pointer hover:bg-orange-50 p-2 rounded"
+                  onClick={() => onProductClick && onProductClick('near_expiry', kpi.department)}
+                >
+                  <span className="text-sm text-gray-600">Near Expiry</span>
+                  <span className="font-bold text-orange-600">{kpi.near_expiry_items.toLocaleString()}</span>
+                </div>
+                
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Stock Value</span>
+                    <span className="font-bold text-blue-600">{formatCurrency(kpi.total_stock_value)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Department Overview Chart */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Department Overview</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={prepareChartData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="department" 
+                tick={{ fontSize: 12 }}
+                angle={-45}
+                textAnchor="end"
+                height={100}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip 
+                formatter={(value, name) => [
+                  name === 'Stock Value' ? formatCurrency(value) : value.toLocaleString(),
+                  name
+                ]}
+              />
+              <Legend />
+              <Bar dataKey="Total Items" fill="#22c55e" />
+              <Bar dataKey="Out of Stock" fill="#ef4444" />
+              <Bar dataKey="Low Stock" fill="#f59e0b" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Stock Status Pie Chart */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Overall Stock Status</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={prepareExpiryData()}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {prepareExpiryData().map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => value.toLocaleString()} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Top Suppliers Section */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Suppliers</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {dashboardData.top_suppliers.map((supplier, index) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+              <div className="flex items-center mb-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                <h4 className="font-medium text-gray-800 text-sm leading-tight">{supplier.supplier_name}</h4>
+              </div>
+              
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Items:</span>
+                  <span className="font-medium">{supplier.total_items}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Out of Stock:</span>
+                  <span className="font-medium text-red-600">{supplier.out_of_stock_items}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Value:</span>
+                  <span className="font-medium text-green-600">
+                    {formatCurrency(supplier.stock_value, supplier.purchase_currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Currency:</span>
+                  <span className="font-medium">{supplier.purchase_currency}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Alerts */}
+      {dashboardData.recent_alerts.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Alerts</h3>
+          <div className="space-y-3">
+            {dashboardData.recent_alerts.map((alert, index) => (
+              <div 
+                key={index}
+                className={`p-4 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 ${
+                  alert.priority === 'high' ? 'border-red-500 bg-red-50' :
+                  alert.priority === 'medium' ? 'border-yellow-500 bg-yellow-50' :
+                  'border-blue-500 bg-blue-50'
+                }`}
+                onClick={() => onAlertClick && onAlertClick(alert)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-800">{alert.message}</p>
+                    <p className="text-sm text-gray-600">
+                      {getDepartmentName(alert.department)} • {alert.section}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      alert.priority === 'high' ? 'bg-red-100 text-red-800' :
+                      alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {alert.priority.toUpperCase()}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(alert.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-6 text-white">
+        <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button 
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
+            onClick={() => onProductClick && onProductClick('out_of_stock', 'all')}
+          >
+            <div className="text-2xl mb-2">🚨</div>
+            <div className="text-sm font-medium">View Out of Stock</div>
+          </button>
+          
+          <button 
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
+            onClick={() => onProductClick && onProductClick('near_expiry', 'all')}
+          >
+            <div className="text-2xl mb-2">⏰</div>
+            <div className="text-sm font-medium">Near Expiry Items</div>
+          </button>
+          
+          <button 
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
+            onClick={() => window.open(`${BACKEND_URL}/api/export/excel`, '_blank')}
+          >
+            <div className="text-2xl mb-2">📊</div>
+            <div className="text-sm font-medium">Export Report</div>
+          </button>
+          
+          <button 
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
+            onClick={() => onProductClick && onProductClick('all', 'all')}
+          >
+            <div className="text-2xl mb-2">📦</div>
+            <div className="text-sm font-medium">View All Items</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EnhancedDashboard;
