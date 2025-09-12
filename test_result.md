@@ -233,13 +233,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix products API endpoint - no products showing"
-    - "Fix company branding - remove hardcoded 'Geant Hypermarket'"
     - "Fix currency display to show original purchase currencies"
+    - "Add product add/edit cards functionality"
+    - "Add return to supplier functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "User reported multiple issues. Dashboard shows 1,807 products but products page empty. Need to fix API endpoints, branding, currency display, and add missing supplier/product management features."
+    message: "MAJOR PROGRESS: Fixed critical ObjectId serialization issues. Products API now working with 50 products showing. Company branding updated to 'Expiry Tracker'. Departments and sections displaying correctly. Remaining: Currency display in dashboard, Add/Edit products functionality, Return to supplier feature."
