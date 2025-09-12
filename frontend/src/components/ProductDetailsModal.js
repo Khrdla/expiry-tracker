@@ -36,12 +36,8 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
   };
 
   const getDepartmentName = (deptCode) => {
-    const names = {
-      '01-FMG': 'Fresh & Food Grocery',
-      '01-CGD': 'Consumer Goods & Drinks',
-      '01-OPSS': 'Operations & Special Services'
-    };
-    return names[deptCode] || deptCode;
+    // Return department code exactly as it appears in Excel sheet
+    return deptCode;
   };
 
   return (
