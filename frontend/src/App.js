@@ -161,11 +161,16 @@ const LoginForm = ({ onLogin }) => {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Package size={32} className="text-white" />
+          <div className="w-24 h-24 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="text-white font-bold text-xl">
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-black">G</span>
+                <span className="text-xs -mt-1">MART</span>
+              </div>
+            </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Geant Hypermarket</h1>
-          <p className="text-gray-600">Inventory Management System</p>
+          <p className="text-gray-600 font-medium">Inventory Management System</p>
         </div>
 
         {/* Login Form */}
