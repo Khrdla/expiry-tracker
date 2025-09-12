@@ -576,7 +576,7 @@ async def excel_lookup(
             "supplier": str(best_match.get('Supplier', '')),
             "barcode": str(best_match.get('Barcode', '')) if pd.notna(best_match.get('Barcode')) else '',
             "purchase_price": float(best_match.get('purchase price', 0)) if pd.notna(best_match.get('purchase price')) else 0.0,
-            "purchase_currency": str(best_match.get('Purchase currency ', 'YER')).strip() if pd.notna(best_match.get('Purchase currency ')) else 'YER',
+            "purchase_currency": str(best_match.get('Purchase currency', best_match.get('Purchase currency ', 'YER'))).strip() if pd.notna(best_match.get('Purchase currency', best_match.get('Purchase currency '))) else 'YER',
             "selling_price": float(best_match.get('Selling Price', 0)) if pd.notna(best_match.get('Selling Price')) else 0.0,
             "arabic_description": str(best_match.get('Arabic Description', '')) if pd.notna(best_match.get('Arabic Description')) else '',
             "location": str(best_match.get('Location', '')) if pd.notna(best_match.get('Location')) else '',
