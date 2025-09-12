@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Upload, Signature, User, Building, Search } from 'lucide-react';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 const ReturnForm = ({ user }) => {
   const [returnData, setReturnData] = useState({
     // Item Details
