@@ -492,6 +492,40 @@ async def update_product(
     
     return {"message": "Product updated successfully"}
 
+# Barcode lookup endpoint
+@api_router.get("/barcode/{barcode}")
+async def get_product_by_barcode(
+    barcode: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get product details by barcode scan"""
+    accessible_departments = get_accessible_departments(current_user)
+    
+    # Find product by exact barcode match
+    product = await db.products.find_one({
+        "barcode": barcode,
+        "department": {"$in": [d.value for d in accessible_departments]}
+    })
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Remove ObjectId for serialization
+    if '_id' in product:
+        del product['_id']
+    
+    # Handle ObjectId fields in the document
+    for key, value in list(product.items()):
+        if isinstance(value, ObjectId):
+            del product[key]
+        elif isinstance(value, datetime):
+            product[key] = value.isoformat()
+    
+    # Calculate status
+    product["status"] = await calculate_product_status(product)
+    
+    return product
+
 # Search endpoint with barcode support
 @api_router.get("/search")
 async def search_products(
