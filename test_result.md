@@ -269,6 +269,9 @@ frontend:
       - working: false
         agent: "main"
         comment: "Missing UI for adding and editing products - TO BE IMPLEMENTED"
+      - working: false
+        agent: "testing"
+        comment: "NOT IMPLEMENTED - Add Product button is visible in products page header but functionality is not implemented. Edit Product button appears in product detail modal but is not functional. This is a medium priority feature that needs implementation."
 
   - task: "Fix department/section display from uploaded data"
     implemented: true
