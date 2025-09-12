@@ -774,6 +774,29 @@ async def upload_product_image(
         logger.error(f"Error uploading image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to upload image")
 
+# Serve images through API endpoint
+@api_router.get("/uploads/{filename}")
+async def serve_image(filename: str):
+    """Serve uploaded images through API endpoint"""
+    try:
+        import os
+        from fastapi.responses import FileResponse
+        
+        file_path = f"/app/uploads/{filename}"
+        
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        return FileResponse(
+            file_path,
+            media_type="image/jpeg",  # You might want to detect this dynamically
+            headers={"Cache-Control": "public, max-age=3600"}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error serving image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to serve image")
+
 # Search endpoint with barcode support
 @api_router.get("/search")
 async def search_products(
