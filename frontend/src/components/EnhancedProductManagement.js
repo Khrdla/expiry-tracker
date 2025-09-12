@@ -598,8 +598,6 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
                 {(user?.role === 'admin' || user?.role === 'manager') && (
                   <button 
                     onClick={() => {
-                      console.log('Edit button clicked - selectedProduct:', selectedProduct);
-                      console.log('Edit button clicked - selectedProduct.image_url:', selectedProduct?.image_url);
                       setEditFormData(selectedProduct);
                       setShowModal(false);
                       setShowEditModal(true);
