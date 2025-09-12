@@ -239,18 +239,70 @@ const ReturnForm = ({ user }) => {
           <div className={`mb-6 p-4 rounded-lg ${
             message.type === 'success' 
               ? 'bg-green-50 text-green-700 border border-green-200'
+              : message.type === 'info'
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
               : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
             {message.text}
           </div>
         )}
 
+        {/* Excel Lookup Section */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-lg font-medium text-blue-800 mb-3 flex items-center">
+            <Search size={20} className="mr-2" />
+            Excel Product Lookup
+          </h3>
+          
+          <div className="flex space-x-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={lookupQuery}
+                onChange={(e) => setLookupQuery(e.target.value)}
+                placeholder="Type product name or scan barcode to auto-fill form..."
+                className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            {lookupLoading && (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Lookup Results */}
+          {showLookupResults && lookupResults && lookupResults.found && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-medium text-green-800">{lookupResults.product_name}</h4>
+                  <div className="text-sm text-green-700 mt-1">
+                    <p>Code: {lookupResults.item_number}</p>
+                    <p>Department: {lookupResults.department}</p>
+                    <p>Section: {lookupResults.section}</p>
+                    <p>Supplier: {lookupResults.supplier}</p>
+                    <p>Price: {lookupResults.purchase_price} {lookupResults.purchase_currency}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={autoFillForm}
+                  className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  Auto-Fill Form
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Item Details Section */}
           <div className="border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Upload size={20} className="mr-2" />
-              Item Details
+              Item Details (Auto-filled from Excel)
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -262,8 +314,9 @@ const ReturnForm = ({ user }) => {
                   value={returnData.product_code}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Enter product code"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                  placeholder="Use lookup above to auto-fill"
+                  readOnly={lookupResults?.found}
                 />
               </div>
 
@@ -275,8 +328,44 @@ const ReturnForm = ({ user }) => {
                   value={returnData.product_name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Enter product name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                  placeholder="Use lookup above to auto-fill"
+                  readOnly={lookupResults?.found}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price (Auto-filled)</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="purchase_price"
+                    value={returnData.purchase_price}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                    readOnly={lookupResults?.found}
+                  />
+                  <input
+                    type="text"
+                    name="purchase_currency"
+                    value={returnData.purchase_currency}
+                    onChange={handleChange}
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50 text-center"
+                    readOnly={lookupResults?.found}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier (Auto-filled)</label>
+                <input
+                  type="text"
+                  name="supplier"
+                  value={returnData.supplier}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                  readOnly={lookupResults?.found}
                 />
               </div>
 
@@ -289,44 +378,7 @@ const ReturnForm = ({ user }) => {
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price</label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="purchase_price"
-                    value={returnData.purchase_price}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
-                  <select
-                    name="purchase_currency"
-                    value={returnData.purchase_currency}
-                    onChange={handleChange}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    <option value="YER">YER</option>
-                    <option value="SAR">SAR</option>
-                    <option value="EUR">EUR</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                <input
-                  type="text"
-                  name="supplier"
-                  value={returnData.supplier}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Enter supplier name"
+                  placeholder="Enter quantity to return"
                 />
               </div>
 
