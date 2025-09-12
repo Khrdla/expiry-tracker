@@ -300,13 +300,12 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 rounded-lg flex items-center justify-center shadow-md">
-              <div className="text-white font-bold text-sm">
-                <div className="flex flex-col items-center">
-                  <span className="text-xs font-black">G</span>
-                  <span className="text-[6px] -mt-0.5">MART</span>
-                </div>
-              </div>
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img 
+                src="/geant_logo.jpeg" 
+                alt="Geant Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className={`${sidebarOpen || 'lg:block'} ${!sidebarOpen && 'hidden'}`}>
               <h1 className="text-xl font-bold text-gray-800">Geant Hypermarket</h1>
