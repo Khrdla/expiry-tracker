@@ -782,7 +782,7 @@ async def get_inventory_value_report():
                 "inventory_cost_value": {"$multiply": ["$current_stock", {"$arrayElemAt": ["$product.cost_price", 0]}]},
                 "inventory_retail_value": {"$multiply": ["$current_stock", {"$arrayElemAt": ["$product.unit_price", 0]}]}
             }},
-            {"$project": {"product": 0}},
+            {"$project": {"product": 0, "_id": 0}},
             {"$sort": {"inventory_cost_value": -1}}
         ]
         
