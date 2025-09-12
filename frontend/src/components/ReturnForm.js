@@ -37,6 +37,80 @@ const ReturnForm = ({ user }) => {
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+  // Excel lookup function
+  const performExcelLookup = async (query) => {
+    if (!query.trim()) {
+      setLookupResults(null);
+      setShowLookupResults(false);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/excel-lookup?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLookupResults(data);
+        setShowLookupResults(true);
+        
+        // If found, show success message
+        if (data.found) {
+          setMessage({ 
+            type: 'success', 
+            text: `Found "${data.product_name}" - Click "Auto-Fill" to populate form` 
+          });
+        } else {
+          setMessage({ type: 'info', text: data.message });
+        }
+      } else {
+        setMessage({ type: 'error', text: 'Lookup failed' });
+      }
+    } catch (error) {
+      console.error('Lookup error:', error);
+      setMessage({ type: 'error', text: 'Network error during lookup' });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Auto-fill form with lookup results
+  const autoFillForm = () => {
+    if (lookupResults && lookupResults.found) {
+      setReturnData({
+        ...returnData,
+        product_code: lookupResults.item_number,
+        product_name: lookupResults.product_name,
+        purchase_price: lookupResults.purchase_price.toString(),
+        purchase_currency: lookupResults.purchase_currency,
+        supplier: lookupResults.supplier
+      });
+      
+      setMessage({ 
+        type: 'success', 
+        text: 'Form auto-filled! Please add quantity, reason for return, and approvals.' 
+      });
+      setShowLookupResults(false);
+    }
+  };
+
+  // Debounced lookup
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (lookupQuery) {
+        performExcelLookup(lookupQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [lookupQuery]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
