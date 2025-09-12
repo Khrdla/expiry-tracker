@@ -236,6 +236,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "FIXED - Updated all references to 'Expiry Tracker' throughout the application"
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Login page, dashboard header, and sidebar all display 'Expiry Tracker' branding correctly. Company branding is consistent throughout the application."
 
   - task: "Fix products page - showing 'No products found'"
     implemented: true
