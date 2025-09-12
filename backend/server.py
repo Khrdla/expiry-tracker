@@ -513,6 +513,293 @@ async def get_product(product_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching product: {str(e)}")
 
+@api_router.put("/products/{product_id}", response_model=Product)
+async def update_product(product_id: str, product_update: ProductUpdate):
+    try:
+        update_data = product_update.dict(exclude_unset=True)
+        if "updated_at" not in update_data:
+            update_data["updated_at"] = datetime.utcnow()
+        
+        # Validate category and supplier if provided
+        if "category_id" in update_data:
+            category = await db.categories.find_one({"id": update_data["category_id"]})
+            if not category:
+                raise HTTPException(status_code=400, detail="Category not found")
+        
+        if "supplier_id" in update_data:
+            supplier = await db.suppliers.find_one({"id": update_data["supplier_id"]})
+            if not supplier:
+                raise HTTPException(status_code=400, detail="Supplier not found")
+        
+        result = await db.products.update_one(
+            {"id": product_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        updated_product = await db.products.find_one({"id": product_id})
+        return Product(**updated_product)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating product: {str(e)}")
+
+@api_router.delete("/products/{product_id}")
+async def delete_product(product_id: str):
+    try:
+        # Check if product exists
+        product = await db.products.find_one({"id": product_id})
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Delete related inventory and transactions
+        await db.inventory.delete_many({"product_id": product_id})
+        await db.stock_transactions.delete_many({"product_id": product_id})
+        
+        # Delete the product
+        await db.products.delete_one({"id": product_id})
+        
+        return {"message": "Product deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting product: {str(e)}")
+
+# Inventory endpoints
+@api_router.get("/inventory", response_model=List[Dict[str, Any]])
+async def get_inventory(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    low_stock_only: bool = False
+):
+    try:
+        pipeline = [
+            {"$lookup": {
+                "from": "products",
+                "localField": "product_id",
+                "foreignField": "id",
+                "as": "product"
+            }},
+            {"$addFields": {
+                "product_name": {"$arrayElemAt": ["$product.name", 0]},
+                "product_sku": {"$arrayElemAt": ["$product.sku", 0]},
+                "unit_price": {"$arrayElemAt": ["$product.unit_price", 0]},
+                "cost_price": {"$arrayElemAt": ["$product.cost_price", 0]},
+                "is_low_stock": {"$lt": ["$current_stock", "$min_stock"]}
+            }},
+            {"$project": {"product": 0}}
+        ]
+        
+        if low_stock_only:
+            pipeline.append({"$match": {"is_low_stock": True}})
+        
+        pipeline.extend([
+            {"$skip": skip},
+            {"$limit": limit}
+        ])
+        
+        inventory = await db.inventory.aggregate(pipeline).to_list(limit)
+        return inventory
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching inventory: {str(e)}")
+
+@api_router.get("/inventory/{product_id}", response_model=Dict[str, Any])
+async def get_product_inventory(product_id: str):
+    try:
+        pipeline = [
+            {"$match": {"product_id": product_id}},
+            {"$lookup": {
+                "from": "products",
+                "localField": "product_id",
+                "foreignField": "id",
+                "as": "product"
+            }},
+            {"$addFields": {
+                "product_name": {"$arrayElemAt": ["$product.name", 0]},
+                "product_sku": {"$arrayElemAt": ["$product.sku", 0]},
+                "unit_price": {"$arrayElemAt": ["$product.unit_price", 0]},
+                "cost_price": {"$arrayElemAt": ["$product.cost_price", 0]},
+                "is_low_stock": {"$lt": ["$current_stock", "$min_stock"]}
+            }},
+            {"$project": {"product": 0}}
+        ]
+        
+        inventory = await db.inventory.aggregate(pipeline).to_list(1)
+        if not inventory:
+            raise HTTPException(status_code=404, detail="Product inventory not found")
+        
+        return inventory[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching product inventory: {str(e)}")
+
+@api_router.put("/inventory/{product_id}", response_model=Inventory)
+async def update_inventory(product_id: str, inventory_update: InventoryUpdate):
+    try:
+        update_data = inventory_update.dict(exclude_unset=True)
+        update_data["last_updated"] = datetime.utcnow()
+        
+        result = await db.inventory.update_one(
+            {"product_id": product_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Product inventory not found")
+        
+        updated_inventory = await db.inventory.find_one({"product_id": product_id})
+        return Inventory(**updated_inventory)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating inventory: {str(e)}")
+
+# Stock transaction endpoints
+@api_router.post("/stock-transactions", response_model=StockTransaction)
+async def create_stock_transaction(transaction: StockTransactionCreate):
+    try:
+        # Validate product exists
+        product = await db.products.find_one({"id": transaction.product_id})
+        if not product:
+            raise HTTPException(status_code=400, detail="Product not found")
+        
+        # Create transaction
+        transaction_dict = transaction.dict()
+        transaction_obj = StockTransaction(**transaction_dict)
+        await db.stock_transactions.insert_one(transaction_obj.dict())
+        
+        # Update inventory based on transaction type
+        inventory = await db.inventory.find_one({"product_id": transaction.product_id})
+        if not inventory:
+            raise HTTPException(status_code=400, detail="Product inventory not found")
+        
+        current_stock = inventory["current_stock"]
+        
+        if transaction.transaction_type in [StockTransactionType.RECEIVED]:
+            new_stock = current_stock + transaction.quantity
+        elif transaction.transaction_type in [StockTransactionType.SOLD, StockTransactionType.DAMAGED, StockTransactionType.EXPIRED]:
+            new_stock = max(0, current_stock - transaction.quantity)
+        else:  # ADJUSTED
+            new_stock = transaction.quantity
+        
+        await db.inventory.update_one(
+            {"product_id": transaction.product_id},
+            {
+                "$set": {
+                    "current_stock": new_stock,
+                    "last_updated": datetime.utcnow()
+                }
+            }
+        )
+        
+        return transaction_obj
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error creating stock transaction: {str(e)}")
+
+@api_router.get("/stock-transactions", response_model=List[Dict[str, Any]])
+async def get_stock_transactions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    product_id: Optional[str] = None
+):
+    try:
+        filter_dict = {}
+        if product_id:
+            filter_dict["product_id"] = product_id
+        
+        pipeline = [
+            {"$match": filter_dict},
+            {"$lookup": {
+                "from": "products",
+                "localField": "product_id",
+                "foreignField": "id",
+                "as": "product"
+            }},
+            {"$addFields": {
+                "product_name": {"$arrayElemAt": ["$product.name", 0]},
+                "product_sku": {"$arrayElemAt": ["$product.sku", 0]}
+            }},
+            {"$project": {"product": 0}},
+            {"$sort": {"created_at": -1}},
+            {"$skip": skip},
+            {"$limit": limit}
+        ]
+        
+        transactions = await db.stock_transactions.aggregate(pipeline).to_list(limit)
+        return transactions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching stock transactions: {str(e)}")
+
+# Reports endpoints
+@api_router.get("/reports/low-stock", response_model=List[Dict[str, Any]])
+async def get_low_stock_report():
+    try:
+        pipeline = [
+            {"$lookup": {
+                "from": "products",
+                "localField": "product_id",
+                "foreignField": "id",
+                "as": "product"
+            }},
+            {"$match": {
+                "$expr": {"$lt": ["$current_stock", "$min_stock"]}
+            }},
+            {"$addFields": {
+                "product_name": {"$arrayElemAt": ["$product.name", 0]},
+                "product_sku": {"$arrayElemAt": ["$product.sku", 0]},
+                "unit_price": {"$arrayElemAt": ["$product.unit_price", 0]},
+                "shortage": {"$subtract": ["$min_stock", "$current_stock"]}
+            }},
+            {"$project": {"product": 0}},
+            {"$sort": {"shortage": -1}}
+        ]
+        
+        low_stock_items = await db.inventory.aggregate(pipeline).to_list(1000)
+        return low_stock_items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating low stock report: {str(e)}")
+
+@api_router.get("/reports/inventory-value")
+async def get_inventory_value_report():
+    try:
+        pipeline = [
+            {"$lookup": {
+                "from": "products",
+                "localField": "product_id",
+                "foreignField": "id",
+                "as": "product"
+            }},
+            {"$addFields": {
+                "product_name": {"$arrayElemAt": ["$product.name", 0]},
+                "product_sku": {"$arrayElemAt": ["$product.sku", 0]},
+                "cost_price": {"$arrayElemAt": ["$product.cost_price", 0]},
+                "unit_price": {"$arrayElemAt": ["$product.unit_price", 0]},
+                "inventory_cost_value": {"$multiply": ["$current_stock", {"$arrayElemAt": ["$product.cost_price", 0]}]},
+                "inventory_retail_value": {"$multiply": ["$current_stock", {"$arrayElemAt": ["$product.unit_price", 0]}]}
+            }},
+            {"$project": {"product": 0}},
+            {"$sort": {"inventory_cost_value": -1}}
+        ]
+        
+        inventory_values = await db.inventory.aggregate(pipeline).to_list(1000)
+        
+        total_cost_value = sum(item["inventory_cost_value"] or 0 for item in inventory_values)
+        total_retail_value = sum(item["inventory_retail_value"] or 0 for item in inventory_values)
+        
+        return {
+            "items": inventory_values,
+            "summary": {
+                "total_cost_value": total_cost_value,
+                "total_retail_value": total_retail_value,
+                "potential_profit": total_retail_value - total_cost_value
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating inventory value report: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
