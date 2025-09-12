@@ -279,7 +279,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         {/* Stock Status Pie Chart */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Overall Stock Status</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
               <Pie
                 data={prepareExpiryData()}
@@ -287,15 +287,34 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 cy="50%"
                 labelLine={false}
                 label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={100}
+                outerRadius={120}
+                innerRadius={40}
                 fill="#8884d8"
                 dataKey="value"
+                strokeWidth={2}
+                stroke="#fff"
               >
                 {prepareExpiryData().map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => value.toLocaleString()} />
+              <Tooltip 
+                formatter={(value, name) => [value.toLocaleString(), name]}
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                wrapperStyle={{
+                  paddingTop: '20px',
+                  fontSize: '14px'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
