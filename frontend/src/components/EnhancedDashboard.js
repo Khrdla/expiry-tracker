@@ -411,11 +411,11 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       )}
 
       {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-6 text-white">
-        <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 md:p-6 text-white">
+        <h3 className="text-lg md:text-xl font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
             onClick={() => {
               if (onProductClick) {
                 onProductClick('low_stock', 'all');
@@ -425,12 +425,12 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               }
             }}
           >
-            <div className="text-2xl mb-2">⚠️</div>
-            <div className="text-sm font-medium">Low Stock Items</div>
+            <div className="text-xl md:text-2xl mb-2">⚠️</div>
+            <div className="text-xs md:text-sm font-medium">Low Stock Items</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
             onClick={() => {
               if (onProductClick) {
                 onProductClick('near_expiry', 'all');
@@ -440,12 +440,12 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               }
             }}
           >
-            <div className="text-2xl mb-2">⏰</div>
-            <div className="text-sm font-medium">Near Expiry Items</div>
+            <div className="text-xl md:text-2xl mb-2">⏰</div>
+            <div className="text-xs md:text-sm font-medium">Near Expiry Items</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
             onClick={() => {
               const token = localStorage.getItem('token');
               if (token) {
@@ -455,12 +455,12 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               }
             }}
           >
-            <div className="text-2xl mb-2">📊</div>
-            <div className="text-sm font-medium">Export Report</div>
+            <div className="text-xl md:text-2xl mb-2">📊</div>
+            <div className="text-xs md:text-sm font-medium">Export Report</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
             onClick={() => {
               if (onProductClick) {
                 onProductClick('all', 'all');
@@ -470,8 +470,8 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               }
             }}
           >
-            <div className="text-2xl mb-2">📦</div>
-            <div className="text-sm font-medium">View All Items</div>
+            <div className="text-xl md:text-2xl mb-2">📦</div>
+            <div className="text-xs md:text-sm font-medium">View All Items</div>
           </button>
         </div>
       </div>
