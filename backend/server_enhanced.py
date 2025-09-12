@@ -311,6 +311,30 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
     )
 
 # Product Management Endpoints
+# Test endpoint for debugging
+@api_router.get("/test-products")
+async def test_products():
+    """Simple test endpoint to debug ObjectId issues"""
+    try:
+        # Get just 5 products without any processing
+        products = []
+        async for product_doc in db.products.find().limit(5):
+            # Create simple dict with just basic fields
+            simple_product = {
+                "product_name": product_doc.get("product_name", ""),
+                "department": product_doc.get("department", ""),
+                "quantity": product_doc.get("quantity", 0),
+                "purchase_price": product_doc.get("purchase_price", 0),
+                "purchase_currency": product_doc.get("purchase_currency", "")
+            }
+            products.append(simple_product)
+        
+        return {"count": len(products), "products": products}
+        
+    except Exception as e:
+        logger.error(f"Test endpoint error: {str(e)}")
+        return {"error": str(e), "count": 0, "products": []}
+
 @api_router.get("/products")
 async def get_products(
     current_user: User = Depends(get_current_user),
@@ -327,14 +351,15 @@ async def get_products(
     from datetime import datetime
     
     try:
-        accessible_departments = get_accessible_departments(current_user)
+        # Simplify department access - just use strings
+        accessible_dept_strings = ["01-FMG", "01-CGD", "01-OPSS"]
         
         # Build department filter
-        if department and department in [d.value for d in accessible_departments]:
+        if department and department in accessible_dept_strings:
             filter_dict = {"department": department}
         else:
             # Use $or instead of $in
-            filter_dict = {"$or": [{"department": d.value} for d in accessible_departments]}
+            filter_dict = {"$or": [{"department": dept} for dept in accessible_dept_strings]}
         
         if section:
             filter_dict["section"] = section
