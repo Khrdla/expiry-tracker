@@ -534,6 +534,60 @@ async def get_product_by_barcode(
     
     return product
 
+# Return Form endpoints
+@api_router.post("/returns")
+async def create_return_form(
+    return_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new return form"""
+    try:
+        # Add additional fields
+        return_form = {
+            **return_data,
+            "id": str(uuid.uuid4()),
+            "created_by": current_user.username,
+            "created_at": datetime.utcnow(),
+            "status": "pending"
+        }
+        
+        # Store in database
+        await db.return_forms.insert_one(return_form)
+        
+        return {"message": "Return form created successfully", "id": return_form["id"]}
+        
+    except Exception as e:
+        logger.error(f"Error creating return form: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create return form")
+
+@api_router.get("/returns")
+async def get_return_forms(
+    current_user: User = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000)
+):
+    """Get return forms"""
+    try:
+        forms_cursor = db.return_forms.find().skip(skip).limit(limit).sort("created_at", -1)
+        forms = []
+        
+        async for form in forms_cursor:
+            if '_id' in form:
+                del form['_id']
+            
+            # Convert datetime objects to ISO strings
+            for key, value in form.items():
+                if isinstance(value, datetime):
+                    form[key] = value.isoformat()
+            
+            forms.append(form)
+        
+        return forms
+        
+    except Exception as e:
+        logger.error(f"Error fetching return forms: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch return forms")
+
 # Search endpoint with barcode support
 @api_router.get("/search")
 async def search_products(
