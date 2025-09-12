@@ -895,13 +895,7 @@ async def import_excel_data(
                     errors.append(f"Row {index + 2}: Missing required fields")
                     continue
                 
-                # Create product  
-                # Debug currency value
-                if product_data.get("product_name") == "Apple Juice Box 1L":
-                    print(f"DEBUG: Raw row data: {dict(row)}")
-                    print(f"DEBUG: Currency from row.get: '{row.get('Purchase currency ')}'")
-                    print(f"DEBUG: Final currency: '{product_data['purchase_currency']}'")
-                
+                # Create product
                 product = Product(**product_data)
                 
                 # Check if product exists (by item_number or barcode)
