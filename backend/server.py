@@ -588,6 +588,99 @@ async def get_return_forms(
         logger.error(f"Error fetching return forms: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch return forms")
 
+# Update product endpoint
+@api_router.put("/products/{product_id}")
+async def update_product(
+    product_id: str,
+    product_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Update a product"""
+    try:
+        from bson import ObjectId
+        
+        # Find the existing product
+        existing_product = await db.products.find_one({"id": product_id})
+        if not existing_product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Update the product
+        updated_data = {
+            **product_data,
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.products.update_one(
+            {"id": product_id},
+            {"$set": updated_data}
+        )
+        
+        # Get the updated product
+        updated_product = await db.products.find_one({"id": product_id})
+        
+        # Clean the response
+        if '_id' in updated_product:
+            del updated_product['_id']
+        
+        # Handle ObjectId fields
+        for key, value in list(updated_product.items()):
+            if isinstance(value, ObjectId):
+                del updated_product[key]
+            elif isinstance(value, datetime):
+                updated_product[key] = value.isoformat()
+        
+        return updated_product
+        
+    except Exception as e:
+        logger.error(f"Error updating product: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update product")
+
+# Image upload endpoint
+@api_router.post("/products/{product_id}/image")
+async def upload_product_image(
+    product_id: str,
+    image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload product image"""
+    try:
+        # Validate file type
+        if not image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Validate file size (5MB max)
+        if image.size > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+        
+        # Create uploads directory if it doesn't exist
+        import os
+        uploads_dir = "/app/uploads"
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        # Generate unique filename
+        import uuid
+        file_extension = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        filename = f"{product_id}_{uuid.uuid4().hex}.{file_extension}"
+        file_path = os.path.join(uploads_dir, filename)
+        
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            content = await image.read()
+            buffer.write(content)
+        
+        # Update product with image URL
+        image_url = f"/uploads/{filename}"
+        await db.products.update_one(
+            {"id": product_id},
+            {"$set": {"image_url": image_url, "updated_at": datetime.utcnow()}}
+        )
+        
+        return {"message": "Image uploaded successfully", "image_url": image_url}
+        
+    except Exception as e:
+        logger.error(f"Error uploading image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload image")
+
 # Search endpoint with barcode support
 @api_router.get("/search")
 async def search_products(
