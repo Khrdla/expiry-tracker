@@ -883,7 +883,7 @@ async def import_excel_data(
                     "quantity": int(row.get("Quantity", 0)),
                     "barcode": str(row.get("Barcode", "")) if pd.notna(row.get("Barcode")) else None,
                     "purchase_price": float(row.get("purchase price", 0)) if pd.notna(row.get("purchase price")) else 0,
-                    "purchase_currency": str(row.get("Purchase currency ", "YER")).strip() if pd.notna(row.get("Purchase currency ")) else "YER",
+                    "purchase_currency": str(row.get("Purchase currency", row.get("Purchase currency ", "YER"))).strip() if pd.notna(row.get("Purchase currency", row.get("Purchase currency "))) else "YER",
                     "selling_price": float(row.get("Selling Price", 0)) if pd.notna(row.get("Selling Price")) else 0,
                     "arabic_description": str(row.get("Arabic Description", "")) if pd.notna(row.get("Arabic Description")) else None,
                     "location": str(row.get("Location", "")) if pd.notna(row.get("Location")) else None,
