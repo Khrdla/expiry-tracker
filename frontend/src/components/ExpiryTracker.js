@@ -150,8 +150,91 @@ const AddNewItemForm = ({ user }) => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResults, setLookupResults] = useState(null);
+  const [showLookupResults, setShowLookupResults] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+  // Excel lookup function
+  const performExcelLookup = async (query) => {
+    if (!query.trim()) {
+      setLookupResults(null);
+      setShowLookupResults(false);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/excel-lookup?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLookupResults(data);
+        setShowLookupResults(true);
+        
+        // If found, show success message
+        if (data.found) {
+          setMessage({ 
+            type: 'success', 
+            text: `Found "${data.product_name}" - Click "Auto-Fill" to populate form` 
+          });
+        } else {
+          setMessage({ type: 'info', text: data.message });
+        }
+      } else {
+        setMessage({ type: 'error', text: 'Lookup failed' });
+      }
+    } catch (error) {
+      console.error('Lookup error:', error);
+      setMessage({ type: 'error', text: 'Network error during lookup' });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Auto-fill form with lookup results
+  const autoFillForm = () => {
+    if (lookupResults && lookupResults.found) {
+      setFormData({
+        ...formData,
+        product_name: lookupResults.product_name,
+        item_number: lookupResults.item_number,
+        barcode: lookupResults.barcode,
+        supplier: lookupResults.supplier,
+        purchase_price: lookupResults.purchase_price.toString(),
+        purchase_currency: lookupResults.purchase_currency,
+        selling_price: lookupResults.selling_price.toString(),
+        section: lookupResults.section,
+        department: lookupResults.department,
+        description: lookupResults.arabic_description || ''
+      });
+      
+      setMessage({ 
+        type: 'success', 
+        text: 'Form auto-filled! Please add expiry date, quantity, and notes.' 
+      });
+      setShowLookupResults(false);
+    }
+  };
+
+  // Debounced lookup
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (lookupQuery) {
+        performExcelLookup(lookupQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [lookupQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -196,6 +279,9 @@ const AddNewItemForm = ({ user }) => {
           description: '',
           notes: ''
         });
+        setLookupQuery('');
+        setLookupResults(null);
+        setShowLookupResults(false);
       } else {
         const errorData = await response.json();
         setMessage({ type: 'error', text: errorData.detail || 'Failed to add product' });
@@ -219,10 +305,62 @@ const AddNewItemForm = ({ user }) => {
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Add New Item</h2>
 
+      {/* Excel Lookup Section */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 className="text-lg font-medium text-blue-800 mb-3 flex items-center">
+          <Search size={20} className="mr-2" />
+          Excel Product Lookup
+        </h3>
+        
+        <div className="flex space-x-3">
+          <div className="flex-1">
+            <input
+              type="text"
+              value={lookupQuery}
+              onChange={(e) => setLookupQuery(e.target.value)}
+              placeholder="Type product name or scan barcode to auto-fill form..."
+              className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          {lookupLoading && (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Lookup Results */}
+        {showLookupResults && lookupResults && lookupResults.found && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h4 className="font-medium text-green-800">{lookupResults.product_name}</h4>
+                <div className="text-sm text-green-700 mt-1">
+                  <p>Code: {lookupResults.item_number}</p>
+                  <p>Department: {lookupResults.department}</p>
+                  <p>Section: {lookupResults.section}</p>
+                  <p>Supplier: {lookupResults.supplier}</p>
+                  <p>Price: {lookupResults.purchase_price} {lookupResults.purchase_currency}</p>
+                </div>
+              </div>
+              <button
+                onClick={autoFillForm}
+                className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                Auto-Fill Form
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {message.text && (
         <div className={`mb-4 p-4 rounded-lg ${
           message.type === 'success' 
             ? 'bg-green-50 text-green-700 border border-green-200'
+            : message.type === 'info'
+            ? 'bg-blue-50 text-blue-700 border border-blue-200'
             : 'bg-red-50 text-red-700 border border-red-200'
         }`}>
           {message.text}
@@ -230,9 +368,11 @@ const AddNewItemForm = ({ user }) => {
       )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Basic Information */}
+        {/* Basic Information - Auto-filled from Excel */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">Basic Information</h3>
+          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">
+            Product Details (Auto-filled from Excel)
+          </h3>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
@@ -242,8 +382,9 @@ const AddNewItemForm = ({ user }) => {
               value={formData.product_name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter product name"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              placeholder="Use lookup above to auto-fill"
+              readOnly={lookupResults?.found}
             />
           </div>
 
@@ -254,8 +395,8 @@ const AddNewItemForm = ({ user }) => {
               name="item_number"
               value={formData.item_number}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter item number"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
             />
           </div>
 
@@ -266,8 +407,8 @@ const AddNewItemForm = ({ user }) => {
               name="barcode"
               value={formData.barcode}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter barcode"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
             />
           </div>
 
@@ -278,15 +419,41 @@ const AddNewItemForm = ({ user }) => {
               name="supplier"
               value={formData.supplier}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter supplier name"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+            <input
+              type="text"
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+            <input
+              type="text"
+              name="section"
+              value={formData.section}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
             />
           </div>
         </div>
 
-        {/* Pricing Information */}
+        {/* Pricing Information - Auto-filled from Excel */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">Pricing</h3>
+          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">
+            Pricing (Auto-filled from Excel)
+          </h3>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price</label>
@@ -297,19 +464,17 @@ const AddNewItemForm = ({ user }) => {
                 name="purchase_price"
                 value={formData.purchase_price}
                 onChange={handleChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="0.00"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                readOnly={lookupResults?.found}
               />
-              <select
+              <input
+                type="text"
                 name="purchase_currency"
                 value={formData.purchase_currency}
                 onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="YER">YER</option>
-                <option value="SAR">SAR</option>
-                <option value="EUR">EUR</option>
-              </select>
+                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50 text-center"
+                readOnly={lookupResults?.found}
+              />
             </div>
           </div>
 
@@ -321,63 +486,52 @@ const AddNewItemForm = ({ user }) => {
               name="selling_price"
               value={formData.selling_price}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="0.00"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
             />
           </div>
+        </div>
 
+        {/* User Input Fields */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">
+            User Input Required
+          </h3>
+          
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
             <input
               type="number"
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="0"
+              placeholder="Enter quantity"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
             <input
               type="date"
               name="expiry_date"
               value={formData.expiry_date}
               onChange={handleChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
-        </div>
-
-        {/* Category Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2">Category</h3>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            >
-              <option value="">Select Department</option>
-              <option value="01-FMG">01-FMG</option>
-              <option value="01-CGD">01-CGD</option>
-              <option value="01-OPSS">01-OPSS</option>
-            </select>
-          </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-            <input
-              type="text"
-              name="section"
-              value={formData.section}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              name="notes"
+              value={formData.notes}
               onChange={handleChange}
+              rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter section"
+              placeholder="Additional notes or comments"
             />
           </div>
 
@@ -388,20 +542,8 @@ const AddNewItemForm = ({ user }) => {
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter product description"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Additional notes"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+              readOnly={lookupResults?.found}
             />
           </div>
         </div>
