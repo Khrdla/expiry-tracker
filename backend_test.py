@@ -728,6 +728,17 @@ class ExpiryTrackerAPITester:
         currency_working = any(test['name'] == 'Currency Display Check' and test['success'] for test in self.test_results)
         print(f"💱 Currency Display: {'WORKING' if currency_working else 'NEEDS ATTENTION'}")
         
+        # NEW: Barcode functionality summary
+        barcode_tests = [test for test in self.test_results if 'Barcode' in test['name']]
+        barcode_passed = sum(1 for test in barcode_tests if test['success'])
+        barcode_total = len(barcode_tests)
+        
+        if barcode_total > 0:
+            barcode_working = barcode_passed == barcode_total
+            print(f"🔍 Barcode Scanner API: {'WORKING' if barcode_working else 'FAILED'} ({barcode_passed}/{barcode_total} tests passed)")
+        else:
+            print(f"🔍 Barcode Scanner API: NOT TESTED")
+        
         return self.tests_passed == self.tests_run
 
 def main():
