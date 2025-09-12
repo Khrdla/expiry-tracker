@@ -833,6 +833,21 @@ async def search_products(
         logger.error(f"Error in search_products: {str(e)}")
         return []
 
+# Clear products endpoint (for re-import)
+@api_router.delete("/products/clear")
+async def clear_all_products(
+    current_user: User = Depends(get_current_user)
+):
+    """Clear all products (admin only)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        result = await db.products.delete_many({})
+        return {"message": f"Cleared {result.deleted_count} products successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing products: {str(e)}")
+
 # Import Excel data endpoint
 @api_router.post("/import/excel")
 async def import_excel_data(
