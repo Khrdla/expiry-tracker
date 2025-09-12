@@ -93,7 +93,7 @@ class ExpiryTrackerAPITester:
         success, response = self.run_test(
             "API Health Check",
             "GET",
-            "",
+            "../health",  # Use /health endpoint instead of /api/
             200
         )
         return success
