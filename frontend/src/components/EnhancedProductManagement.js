@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Package, Plus, Edit, Trash2, Download, Upload, BarChart3, Camera } from 'lucide-react';
+import { Search, Filter, Package, Plus, Edit, Trash2, Download, Upload, BarChart3, Camera, X } from 'lucide-react';
 import BarcodeScanner from './BarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 
