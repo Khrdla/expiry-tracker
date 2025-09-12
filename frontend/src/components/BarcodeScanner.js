@@ -212,25 +212,47 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {cameraPermission === true && (
             <div className="space-y-4">
               {/* Scanner Controls */}
-              <div className="flex justify-center space-x-4">
+              <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
                 {!isScanning ? (
-                  <button
-                    onClick={startScanning}
-                    className="flex items-center space-x-2 bg-green-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
-                  >
-                    <Camera size={16} className="md:hidden" />
-                    <Camera size={20} className="hidden md:block" />
-                    <span>Start Scanning</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={startScanning}
+                      className="flex items-center justify-center space-x-2 bg-green-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
+                    >
+                      <Camera size={16} className="md:hidden" />
+                      <Camera size={20} className="hidden md:block" />
+                      <span>Start Camera Scan</span>
+                    </button>
+                    <button
+                      onClick={() => setShowManualInput(!showManualInput)}
+                      className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
+                    >
+                      <Keyboard size={16} className="md:hidden" />
+                      <Keyboard size={20} className="hidden md:block" />
+                      <span>Manual Entry</span>
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    onClick={stopScanning}
-                    className="flex items-center space-x-2 bg-red-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-red-600 transition-colors text-sm md:text-base"
-                  >
-                    <CameraOff size={16} className="md:hidden" />
-                    <CameraOff size={20} className="hidden md:block" />
-                    <span>Stop Scanning</span>
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={stopScanning}
+                      className="flex items-center space-x-2 bg-red-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-red-600 transition-colors text-sm md:text-base"
+                    >
+                      <CameraOff size={16} className="md:hidden" />
+                      <CameraOff size={20} className="hidden md:block" />
+                      <span>Stop Scanning</span>
+                    </button>
+                    {retryCount > 0 && (
+                      <button
+                        onClick={startScanning}
+                        className="flex items-center space-x-2 bg-orange-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-orange-600 transition-colors text-sm md:text-base"
+                      >
+                        <RefreshCw size={16} className="md:hidden" />
+                        <RefreshCw size={20} className="hidden md:block" />
+                        <span>Retry</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
