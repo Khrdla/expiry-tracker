@@ -208,6 +208,7 @@ class ReportRequest(BaseModel):
 class DashboardData(BaseModel):
     user_role: UserRole
     accessible_departments: List[Department]
+    sections: Optional[List[str]] = []
     kpis: List[DepartmentKPI]
     recent_alerts: List[Alert]
     stock_distribution: Dict[str, int]
