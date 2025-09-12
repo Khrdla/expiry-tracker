@@ -232,8 +232,12 @@ const ReturnForm = ({ user }) => {
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="mb-6">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center">
-              <FileText size={24} className="text-white" />
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img 
+                src="/geant_logo.jpeg" 
+                alt="Geant Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-800">Geant Hypermarket</h2>
