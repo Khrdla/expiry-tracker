@@ -960,10 +960,9 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
                         src={imagePreview} 
                         alt="Product preview" 
                         className="w-full h-full object-cover"
-                        onLoad={() => console.log('Image loaded successfully:', imagePreview)}
                         onError={(e) => {
-                          console.error('Image failed to load:', imagePreview);
-                          console.error('Error details:', e);
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
                         }}
                       />
                     </div>
