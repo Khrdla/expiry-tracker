@@ -336,9 +336,22 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
               className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
               onClick={() => handleProductClick(product)}
             >
-              {/* Product Image Placeholder */}
-              <div className="h-32 md:h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-                <Package size={window.innerWidth > 768 ? 48 : 32} className="text-green-600" />
+              {/* Product Image */}
+              <div className="h-32 md:h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center relative overflow-hidden">
+                {product.image_url ? (
+                  <img 
+                    src={`${BACKEND_URL}${product.image_url}`}
+                    alt={product.product_name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className={`w-full h-full flex items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
+                  <Package size={window.innerWidth > 768 ? 48 : 32} className="text-green-600" />
+                </div>
               </div>
 
               <div className="p-3 md:p-4">
