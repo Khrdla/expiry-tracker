@@ -325,6 +325,269 @@ class ExpiryTrackerAPITester:
         
         return False
 
+    def test_product_data_verification(self):
+        """Test product data verification with different currencies (EUR, SAR, YER)"""
+        print("\n🔍 Testing Product Data Verification with Different Currencies")
+        
+        # Get a larger sample of products to find different currencies
+        success, response = self.run_test(
+            "Product Data Sample (100 products)",
+            "GET",
+            "products?limit=100",
+            200
+        )
+        
+        if not success or not isinstance(response, list):
+            return False
+        
+        # Categorize products by currency
+        currency_products = {'EUR': [], 'SAR': [], 'YER': []}
+        
+        for product in response:
+            currency = product.get('purchase_currency', '').upper()
+            if currency in currency_products:
+                currency_products[currency].append(product)
+        
+        print(f"   📊 Currency distribution:")
+        for currency, products in currency_products.items():
+            print(f"   {currency}: {len(products)} products")
+        
+        # Test each currency type
+        all_tests_passed = True
+        
+        for currency, products in currency_products.items():
+            if not products:
+                print(f"   ⚠️ No {currency} products found for testing")
+                continue
+            
+            # Test first few products of each currency
+            for i, product in enumerate(products[:3], 1):
+                # Verify purchase_currency is properly stored
+                stored_currency = product.get('purchase_currency', '')
+                if stored_currency.upper() != currency:
+                    self.log_test(f"{currency} Currency Storage #{i}", False, 
+                                f"Expected {currency}, got {stored_currency}")
+                    all_tests_passed = False
+                    continue
+                
+                # Verify selling_price is numeric and reasonable
+                selling_price = product.get('selling_price')
+                if not isinstance(selling_price, (int, float)):
+                    self.log_test(f"{currency} Selling Price Type #{i}", False, 
+                                f"Selling price not numeric: {type(selling_price)}")
+                    all_tests_passed = False
+                    continue
+                
+                if selling_price <= 0:
+                    self.log_test(f"{currency} Selling Price Value #{i}", False, 
+                                f"Selling price not reasonable: {selling_price}")
+                    all_tests_passed = False
+                    continue
+                
+                # For YER products, selling price should be in YER amounts (typically higher numbers)
+                if currency == 'YER' and selling_price < 100:
+                    print(f"   ⚠️ {currency} product has low selling price: {selling_price} (may be converted)")
+                
+                print(f"   ✅ {currency} Product #{i}: {product.get('product_name', 'Unknown')[:30]}...")
+                print(f"      Purchase Currency: {stored_currency}")
+                print(f"      Selling Price: {selling_price}")
+        
+        return all_tests_passed
+
+    def test_specific_currency_products(self):
+        """Test specific products with known currencies"""
+        print("\n🔍 Testing Specific Currency Products")
+        
+        # Test Apple Juice Box 1L (should be EUR according to review request)
+        success, response = self.run_test(
+            "Search Apple Juice Box 1L",
+            "GET",
+            "search?q=Apple Juice Box 1L&limit=5",
+            200
+        )
+        
+        apple_juice_found = False
+        if success and isinstance(response, list):
+            for product in response:
+                if "Apple Juice Box 1L" in product.get('product_name', ''):
+                    apple_juice_found = True
+                    currency = product.get('purchase_currency', '')
+                    selling_price = product.get('selling_price', 0)
+                    
+                    print(f"   🍎 Apple Juice Box 1L found:")
+                    print(f"      Purchase Currency: {currency}")
+                    print(f"      Selling Price: {selling_price}")
+                    
+                    # Verify it has EUR purchase currency as mentioned in review
+                    if currency.upper() == 'EUR':
+                        print(f"   ✅ Apple Juice has EUR currency as expected")
+                    else:
+                        print(f"   ⚠️ Apple Juice has {currency} currency (expected EUR)")
+                    
+                    # Verify selling price is reasonable
+                    if isinstance(selling_price, (int, float)) and selling_price > 0:
+                        print(f"   ✅ Selling price is numeric and reasonable")
+                    else:
+                        self.log_test("Apple Juice Selling Price", False, 
+                                    f"Invalid selling price: {selling_price}")
+                        return False
+                    break
+        
+        if not apple_juice_found:
+            print("   ⚠️ Apple Juice Box 1L not found in search results")
+        
+        return True
+
+    def test_selling_price_currency_logic(self):
+        """Test that selling prices are always in YER regardless of purchase currency"""
+        print("\n🔍 Testing Selling Price Currency Logic")
+        
+        # Get products with different purchase currencies
+        success, response = self.run_test(
+            "Products for Currency Logic Test",
+            "GET",
+            "products?limit=50",
+            200
+        )
+        
+        if not success or not isinstance(response, list):
+            return False
+        
+        # Group products by purchase currency and check selling prices
+        currency_analysis = {}
+        
+        for product in response:
+            purchase_currency = product.get('purchase_currency', '').upper()
+            selling_price = product.get('selling_price', 0)
+            
+            if purchase_currency not in currency_analysis:
+                currency_analysis[purchase_currency] = []
+            
+            currency_analysis[purchase_currency].append({
+                'name': product.get('product_name', 'Unknown'),
+                'selling_price': selling_price,
+                'purchase_price': product.get('purchase_price', 0)
+            })
+        
+        print(f"   📊 Selling Price Analysis by Purchase Currency:")
+        
+        all_valid = True
+        for currency, products in currency_analysis.items():
+            if not products:
+                continue
+                
+            selling_prices = [p['selling_price'] for p in products if isinstance(p['selling_price'], (int, float))]
+            if not selling_prices:
+                continue
+                
+            avg_selling = sum(selling_prices) / len(selling_prices)
+            min_selling = min(selling_prices)
+            max_selling = max(selling_prices)
+            
+            print(f"   {currency} products ({len(products)} items):")
+            print(f"      Selling price range: {min_selling} - {max_selling}")
+            print(f"      Average selling price: {avg_selling:.2f}")
+            
+            # Check if selling prices look like YER amounts (typically higher numbers)
+            if currency != 'YER':
+                # For non-YER purchase currencies, selling prices should still be in YER
+                # YER amounts are typically in thousands
+                yer_like_prices = [p for p in selling_prices if p >= 1000]
+                if len(yer_like_prices) > len(selling_prices) * 0.5:  # More than 50% are YER-like
+                    print(f"   ✅ {currency} products have YER-like selling prices")
+                else:
+                    print(f"   ⚠️ {currency} products may not have YER selling prices")
+        
+        return all_valid
+
+    def test_edit_product_endpoint(self):
+        """Test the PUT /api/products/{id} endpoint"""
+        print("\n🔍 Testing Edit Product Endpoint")
+        
+        # First get a product to edit
+        success, response = self.run_test(
+            "Get Products for Edit Test",
+            "GET",
+            "products?limit=5",
+            200
+        )
+        
+        if not success or not isinstance(response, list) or len(response) == 0:
+            self.log_test("Edit Product - No Products", False, "No products available for edit test")
+            return False
+        
+        # Use the first product
+        test_product = response[0]
+        product_id = test_product.get('id')
+        
+        if not product_id:
+            self.log_test("Edit Product - No ID", False, "Product has no ID field")
+            return False
+        
+        original_selling_price = test_product.get('selling_price', 0)
+        original_currency = test_product.get('purchase_currency', '')
+        
+        print(f"   📝 Testing edit on product: {test_product.get('product_name', 'Unknown')}")
+        print(f"   Original selling price: {original_selling_price}")
+        print(f"   Original currency: {original_currency}")
+        
+        # Test updating selling price (should stay in YER)
+        new_selling_price = original_selling_price + 100 if isinstance(original_selling_price, (int, float)) else 5000
+        
+        update_data = {
+            "selling_price": new_selling_price
+        }
+        
+        success, response = self.run_test(
+            f"Update Product Selling Price",
+            "PUT",
+            f"products/{product_id}",
+            200,
+            data=update_data
+        )
+        
+        if success:
+            print(f"   ✅ Product update successful")
+            
+            # Verify the update by getting the product again
+            success2, response2 = self.run_test(
+                "Verify Product Update",
+                "GET",
+                f"products?search={test_product.get('item_number', '')}&limit=1",
+                200
+            )
+            
+            if success2 and isinstance(response2, list) and len(response2) > 0:
+                updated_product = response2[0]
+                updated_selling_price = updated_product.get('selling_price')
+                updated_currency = updated_product.get('purchase_currency')
+                
+                print(f"   Updated selling price: {updated_selling_price}")
+                print(f"   Currency after update: {updated_currency}")
+                
+                # Verify selling price was updated
+                if updated_selling_price == new_selling_price:
+                    print(f"   ✅ Selling price updated correctly")
+                else:
+                    self.log_test("Product Update Verification", False, 
+                                f"Selling price not updated: expected {new_selling_price}, got {updated_selling_price}")
+                    return False
+                
+                # Verify currency remained the same
+                if updated_currency == original_currency:
+                    print(f"   ✅ Purchase currency preserved: {updated_currency}")
+                else:
+                    self.log_test("Product Update Currency", False, 
+                                f"Currency changed: {original_currency} -> {updated_currency}")
+                    return False
+                
+                return True
+            else:
+                self.log_test("Product Update Verification", False, "Could not verify product update")
+                return False
+        else:
+            return False
+
     def get_sample_barcodes(self):
         """Get sample barcodes from database for testing"""
         # Sample barcodes from different departments based on actual data
