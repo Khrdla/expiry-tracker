@@ -84,6 +84,30 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Product Image */}
+          {product.image_url && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">
+                Product Image
+              </h3>
+              <div className="flex justify-center">
+                <img 
+                  src={`${import.meta.env.REACT_APP_BACKEND_URL}${product.image_url}`}
+                  alt={product.product_name}
+                  className="max-w-full max-h-64 object-contain rounded-lg shadow-md border"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <div className="hidden text-center text-gray-500 p-8 bg-gray-50 rounded-lg">
+                  <Package size={48} className="mx-auto text-gray-400 mb-2" />
+                  <p>Image not available</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Product Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
