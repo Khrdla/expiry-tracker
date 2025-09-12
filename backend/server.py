@@ -499,6 +499,8 @@ async def get_product_by_barcode(
     current_user: User = Depends(get_current_user)
 ):
     """Get product details by barcode scan"""
+    from bson import ObjectId
+    
     accessible_departments = get_accessible_departments(current_user)
     
     # Find product by exact barcode match
