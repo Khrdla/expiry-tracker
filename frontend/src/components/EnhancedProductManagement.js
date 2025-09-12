@@ -191,33 +191,36 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Product Management</h1>
-            <p className="text-green-100">Manage inventory across all departments</p>
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 md:p-6 rounded-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          <div className="text-center lg:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold">Product Management</h1>
+            <p className="text-green-100 text-sm md:text-base">Manage inventory across all departments</p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-3">
             <button
               onClick={() => setShowScanner(true)}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
             >
               <Camera size={16} />
-              <span>Scan Barcode</span>
+              <span className="hidden sm:inline">Scan Barcode</span>
+              <span className="sm:hidden">Scan</span>
             </button>
             <button
               onClick={exportData}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
             >
               <Download size={16} />
-              <span>Export</span>
+              <span className="hidden sm:inline">Export</span>
+              <span className="sm:hidden">📊</span>
             </button>
             <button
               onClick={() => setShowModal(true)}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
             >
               <Plus size={16} />
-              <span>Add Product</span>
+              <span className="hidden sm:inline">Add Product</span>
+              <span className="sm:hidden">Add</span>
             </button>
           </div>
         </div>
