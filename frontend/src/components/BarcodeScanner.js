@@ -37,17 +37,23 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  const handleBarcodeScan = async (result) => {
-    if (!result || result === lastScanned || loading) return;
+  const processBarcode = async (barcode) => {
+    if (!barcode || barcode === lastScanned || loading) return;
     
-    setLastScanned(result);
+    // Prevent rapid duplicate scans
+    const now = Date.now();
+    if (now - lastScanTime.current < SCAN_COOLDOWN) return;
+    lastScanTime.current = now;
+    
+    setLastScanned(barcode);
     setLoading(true);
     setError('');
     setSuccess('');
+    setScanAttempts(prev => prev + 1);
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${BACKEND_URL}/api/barcode/${result}`, {
+      const response = await fetch(`${BACKEND_URL}/api/barcode/${barcode}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -56,28 +62,48 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
       if (response.ok) {
         const product = await response.json();
-        setSuccess(`Found: ${product.product_name}`);
+        setSuccess(`✅ Found: ${product.product_name}`);
+        setRetryCount(0);
+        setScanAttempts(0);
         
         // Call the callback with product data
         if (onProductFound) {
           onProductFound(product);
         }
         
-        // Auto-close after 2 seconds
+        // Auto-close after success
         setTimeout(() => {
           onClose();
-        }, 2000);
+        }, 1500);
         
       } else if (response.status === 404) {
-        setError('Product not found in inventory');
+        setError('❌ Product not found in inventory');
+        handleScanFailure();
       } else {
-        setError('Error looking up product');
+        setError('❌ Error looking up product');
+        handleScanFailure();
       }
     } catch (error) {
       console.error('Barcode lookup error:', error);
-      setError('Network error - please try again');
+      setError('❌ Network error - please try again');
+      handleScanFailure();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScanFailure = () => {
+    setRetryCount(prev => prev + 1);
+    if (retryCount >= MAX_RETRY_ATTEMPTS) {
+      setError('❌ Multiple scan failures. Try manual entry.');
+      setShowManualInput(true);
+      setIsScanning(false);
+    }
+  };
+
+  const handleBarcodeScan = (result) => {
+    if (result && typeof result === 'string') {
+      processBarcode(result.trim());
     }
   };
 
