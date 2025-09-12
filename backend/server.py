@@ -590,7 +590,7 @@ async def get_inventory(
                 "cost_price": {"$arrayElemAt": ["$product.cost_price", 0]},
                 "is_low_stock": {"$lt": ["$current_stock", "$min_stock"]}
             }},
-            {"$project": {"product": 0}}
+            {"$project": {"product": 0, "_id": 0}}
         ]
         
         if low_stock_only:
