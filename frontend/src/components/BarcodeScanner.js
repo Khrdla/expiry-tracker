@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
-import { X, Camera, CameraOff, AlertCircle, Package, CheckCircle } from 'lucide-react';
+import { X, Camera, CameraOff, AlertCircle, Package, CheckCircle, RefreshCw, Keyboard } from 'lucide-react';
 
 const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [isScanning, setIsScanning] = useState(false);
