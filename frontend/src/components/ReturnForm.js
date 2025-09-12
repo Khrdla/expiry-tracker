@@ -30,6 +30,10 @@ const ReturnForm = ({ user }) => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResults, setLookupResults] = useState(null);
+  const [showLookupResults, setShowLookupResults] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
