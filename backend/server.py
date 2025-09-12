@@ -624,7 +624,7 @@ async def get_product_inventory(product_id: str):
                 "cost_price": {"$arrayElemAt": ["$product.cost_price", 0]},
                 "is_low_stock": {"$lt": ["$current_stock", "$min_stock"]}
             }},
-            {"$project": {"product": 0}}
+            {"$project": {"product": 0, "_id": 0}}
         ]
         
         inventory = await db.inventory.aggregate(pipeline).to_list(1)
