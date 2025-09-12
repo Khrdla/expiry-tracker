@@ -336,6 +336,30 @@ frontend:
         agent: "testing"
         comment: "NOT IMPLEMENTED - Add Product button is visible in products page header but functionality is not implemented. Edit Product button appears in product detail modal but is not functional. This is a medium priority feature that needs implementation."
 
+  - task: "ExpiryTracker Excel lookup integration"
+    implemented: true
+    working: "NA"
+    file: "ExpiryTracker.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Excel lookup integration implemented in Add New Item form, needs testing"
+
+  - task: "ReturnForm Excel lookup integration"
+    implemented: true
+    working: "NA"
+    file: "ReturnForm.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Excel lookup integration implemented in Return Form, needs testing"
+
   - task: "Fix department/section display from uploaded data"
     implemented: true
     working: true
