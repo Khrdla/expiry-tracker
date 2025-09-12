@@ -574,7 +574,14 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
                   Close
                 </button>
                 {(user?.role === 'admin' || user?.role === 'manager') && (
-                  <button className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+                  <button 
+                    onClick={() => {
+                      setEditFormData(selectedProduct);
+                      setShowModal(false);
+                      setShowEditModal(true);
+                    }}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  >
                     <Edit size={16} />
                     <span>Edit Product</span>
                   </button>
