@@ -1236,6 +1236,14 @@ class ExpiryTrackerAPITester:
         # Currency display testing (CRITICAL)
         self.test_currency_display()
         
+        # CURRENCY AND PRODUCT DATA VERIFICATION TESTS (FROM REVIEW REQUEST)
+        print("\n💱 CURRENCY AND PRODUCT DATA VERIFICATION TESTS")
+        print("-" * 55)
+        self.test_product_data_verification()
+        self.test_specific_currency_products()
+        self.test_selling_price_currency_logic()
+        self.test_edit_product_endpoint()
+        
         # NEW BARCODE SCANNER FUNCTIONALITY TESTS (PRIORITY HIGH)
         print("\n🔍 BARCODE SCANNER FUNCTIONALITY TESTS (NEW)")
         print("-" * 50)
