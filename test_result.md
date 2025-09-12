@@ -335,6 +335,7 @@ test_plan:
   test_priority: "high_first"
   frontend_testing_completed: true
   barcode_testing_completed: true
+  barcode_frontend_testing_completed: true
 
 agent_communication:
   - agent: "main"
