@@ -896,6 +896,10 @@ async def import_excel_data(
                     continue
                 
                 # Create product
+                # Debug currency value
+                if product_data.get("product_name") == "Apple Juice Box 1L":
+                    print(f"DEBUG: Currency for Apple Juice Box 1L: '{product_data['purchase_currency']}'")
+                
                 product = Product(**product_data)
                 
                 # Check if product exists (by item_number or barcode)
