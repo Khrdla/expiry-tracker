@@ -170,16 +170,30 @@ const ReturnForm = ({ user }) => {
     });
   };
 
-  const exportToPDF = () => {
-    // This would generate a PDF of the return form
-    console.log('Exporting to PDF:', returnData);
-    alert('PDF export functionality will be implemented');
+  const exportToPDF = (returnId = null) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to export reports');
+      return;
+    }
+
+    if (returnId) {
+      // Export specific return form as PDF
+      window.open(`${BACKEND_URL}/api/export/return-form/${returnId}/pdf?token=${token}`, '_blank');
+    } else {
+      alert('Please save the return form first before exporting to PDF');
+    }
   };
 
   const exportToExcel = () => {
-    // This would generate an Excel file of the return form
-    console.log('Exporting to Excel:', returnData);
-    alert('Excel export functionality will be implemented');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to export reports');
+      return;
+    }
+
+    // Export all return forms as Excel
+    window.open(`${BACKEND_URL}/api/export/return-forms?token=${token}`, '_blank');
   };
 
   return (
