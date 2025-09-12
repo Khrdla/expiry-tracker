@@ -138,51 +138,54 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   return (
     <div className="space-y-6 p-6">
       {/* Header with Department Filter */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-xl">
-        <div>
-          <h1 className="text-3xl font-bold">Expiry Tracker</h1>
-          <p className="text-green-100">Inventory Management Dashboard</p>
-          <p className="text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium"
-          >
-            <option value="all">All Departments</option>
-            {dashboardData.accessible_departments.map(dept => (
-              <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
-            ))}
-          </select>
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 md:p-6 rounded-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          <div className="text-center lg:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
+            <p className="text-green-100 text-sm md:text-base">Inventory Management Dashboard</p>
+            <p className="text-xs md:text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-4">
+            <select
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              className="w-full sm:w-auto bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium text-sm md:text-base"
+            >
+              <option value="all">All Departments</option>
+              {dashboardData.accessible_departments.map(dept => (
+                <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
+              ))}
+            </select>
 
-          <select
-            value={selectedSection}
-            onChange={(e) => setSelectedSection(e.target.value)}
-            className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium"
-          >
-            <option value="all">All Sections</option>
-            {dashboardData.sections?.map(section => (
-              <option key={section} value={section}>{section}</option>
-            ))}
-          </select>
-          
-          <button
-            onClick={() => setShowScanner(true)}
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
-            title="Scan Barcode for Quick Item Lookup"
-          >
-            <Camera size={16} />
-            <span>Scan Item</span>
-          </button>
-          
-          <button
-            onClick={fetchDashboardData}
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all"
-          >
-            🔄 Refresh
-          </button>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className="w-full sm:w-auto bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium text-sm md:text-base"
+            >
+              <option value="all">All Sections</option>
+              {dashboardData.sections?.map(section => (
+                <option key={section} value={section}>{section}</option>
+              ))}
+            </select>
+            
+            <button
+              onClick={() => setShowScanner(true)}
+              className="w-full sm:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
+              title="Scan Barcode for Quick Item Lookup"
+            >
+              <Camera size={16} />
+              <span className="hidden sm:inline">Scan Item</span>
+              <span className="sm:hidden">Scan</span>
+            </button>
+            
+            <button
+              onClick={fetchDashboardData}
+              className="w-full sm:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all text-sm md:text-base"
+            >
+              🔄 <span className="hidden sm:inline ml-1">Refresh</span>
+            </button>
+          </div>
         </div>
       </div>
 
