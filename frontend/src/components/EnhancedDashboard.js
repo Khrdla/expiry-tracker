@@ -23,6 +23,9 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const [loading, setLoading] = useState(true);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [refreshInterval, setRefreshInterval] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showProductDetails, setShowProductDetails] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
