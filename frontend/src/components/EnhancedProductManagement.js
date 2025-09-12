@@ -694,10 +694,12 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
   useEffect(() => {
     if (product) {
       setFormData(product);
-      const imageUrl = product.image_url ? `${BACKEND_URL}${product.image_url}` : null;
+      // For development/local testing, try internal URL first
+      const internalBackendUrl = 'http://localhost:8001';
+      const imageUrl = product.image_url ? `${internalBackendUrl}${product.image_url}` : null;
       console.log('EditProductModal - Product image_url:', product.image_url);
-      console.log('EditProductModal - Full image URL:', imageUrl);
-      console.log('EditProductModal - BACKEND_URL:', BACKEND_URL);
+      console.log('EditProductModal - Using internal URL:', imageUrl);
+      console.log('EditProductModal - BACKEND_URL (external):', BACKEND_URL);
       setImagePreview(imageUrl);
     }
   }, [product, BACKEND_URL]);
