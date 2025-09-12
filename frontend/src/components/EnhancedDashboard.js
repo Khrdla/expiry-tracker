@@ -334,14 +334,14 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       </div>
 
       {/* Top Suppliers Section */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Suppliers</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Top Suppliers</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {dashboardData.top_suppliers.map((supplier, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+            <div key={index} className="border border-gray-200 rounded-lg p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors">
               <div className="flex items-center mb-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <h4 className="font-medium text-gray-800 text-sm leading-tight">{supplier.supplier_name}</h4>
+                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2 flex-shrink-0"></div>
+                <h4 className="font-medium text-gray-800 text-xs md:text-sm leading-tight break-words">{supplier.supplier_name}</h4>
               </div>
               
               <div className="space-y-1 text-xs">
@@ -355,7 +355,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Value:</span>
-                  <span className="font-medium text-green-600">
+                  <span className="font-medium text-green-600 text-xs break-all">
                     {supplier.stock_value.toLocaleString()} {supplier.purchase_currency}
                   </span>
                 </div>
