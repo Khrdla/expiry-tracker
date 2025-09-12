@@ -175,7 +175,7 @@ const ReturnForm = ({ user }) => {
   const exportToPDF = (returnId = null) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Please login to export reports');
+      console.error('No authentication token found');
       return;
     }
 
@@ -183,14 +183,14 @@ const ReturnForm = ({ user }) => {
       // Export specific return form as PDF
       window.open(`${BACKEND_URL}/api/export/return-form/${returnId}/pdf?token=${token}`, '_blank');
     } else {
-      alert('Please save the return form first before exporting to PDF');
+      console.warn('Please save the return form first before exporting to PDF');
     }
   };
 
   const exportToExcel = () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Please login to export reports');
+      console.error('No authentication token found');
       return;
     }
 
