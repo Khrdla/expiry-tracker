@@ -227,17 +227,17 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
               placeholder="Search products, SKU, barcode..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
             />
           </div>
 
@@ -245,7 +245,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
           <select
             value={filters.department}
             onChange={(e) => handleFilterChange('department', e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
           >
             <option value="all">All Departments</option>
             {filterOptions.departments.map(dept => (
@@ -259,7 +259,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
           <select
             value={filters.section}
             onChange={(e) => handleFilterChange('section', e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
           >
             <option value="all">All Sections</option>
             {filterOptions.sections.map(section => (
@@ -273,7 +273,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
           >
             <option value="all">All Status</option>
             <option value="in_stock">In Stock</option>
@@ -289,7 +289,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
             placeholder="Filter by supplier..."
             value={filters.supplier}
             onChange={(e) => handleFilterChange('supplier', e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
           />
         </div>
 
