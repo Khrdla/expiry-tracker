@@ -761,11 +761,8 @@ async def upload_product_image(
             content = await image.read()
             buffer.write(content)
         
-        # Update product with image URL - use full URL for external access
-        # In production, this should be the full external URL
-        base_url = os.environ.get('EXTERNAL_URL', 'https://hypermarket-stock.preview.emergentagent.com')
-        image_url = f"{base_url}/api/uploads/{filename}"
-        
+        # Update product with image URL
+        image_url = f"/uploads/{filename}"
         await db.products.update_one(
             {"id": product_id},
             {"$set": {"image_url": image_url, "updated_at": datetime.utcnow()}}
