@@ -137,7 +137,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       {/* Header with Department Filter */}
       <div className="flex items-center justify-between bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-xl">
         <div>
-          <h1 className="text-3xl font-bold">Geant Hypermarket</h1>
+          <h1 className="text-3xl font-bold">Expiry Tracker</h1>
           <p className="text-green-100">Inventory Management Dashboard</p>
           <p className="text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
         </div>
