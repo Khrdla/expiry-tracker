@@ -455,7 +455,8 @@ async def get_products(
             {"$project": {
                 "category": 0,
                 "supplier": 0,
-                "inventory": 0
+                "inventory": 0,
+                "_id": 0
             }},
             {"$skip": skip},
             {"$limit": limit}
