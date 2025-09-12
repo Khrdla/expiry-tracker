@@ -388,8 +388,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Add product add/edit cards functionality"
-    - "Add return to supplier functionality"
+    - "Excel lookup functionality for auto-fill in forms"
+    - "ExpiryTracker Excel lookup integration"
+    - "ReturnForm Excel lookup integration" 
+    - "Export functionality for all forms and KPI dashboards"
+    - "Mobile responsiveness audit for iOS and Android"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
