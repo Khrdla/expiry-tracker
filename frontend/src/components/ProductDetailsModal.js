@@ -4,6 +4,8 @@ import { X, Package, MapPin, Users, Calendar, DollarSign, Hash, Barcode } from '
 const ProductDetailsModal = ({ product, isOpen, onClose }) => {
   if (!isOpen || !product) return null;
 
+  const BACKEND_URL = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+
   const formatCurrency = (amount, currency = 'YER') => {
     const numAmount = parseFloat(amount) || 0;
     
