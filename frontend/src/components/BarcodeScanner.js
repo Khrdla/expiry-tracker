@@ -92,38 +92,41 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto max-h-screen overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-              <Package size={20} className="text-white" />
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+              <Package size={16} className="text-white md:hidden" />
+              <Package size={20} className="text-white hidden md:block" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Barcode Scanner</h2>
-              <p className="text-sm text-gray-600">Scan product barcode for details</p>
+              <h2 className="text-lg md:text-xl font-bold text-gray-800">Barcode Scanner</h2>
+              <p className="text-xs md:text-sm text-gray-600">Scan product barcode for details</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X size={24} className="text-gray-600" />
+            <X size={20} className="text-gray-600 md:hidden" />
+            <X size={24} className="text-gray-600 hidden md:block" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Camera Permission Check */}
           {cameraPermission === false && (
-            <div className="text-center py-8">
-              <CameraOff size={48} className="text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Camera Access Required</h3>
-              <p className="text-gray-600 mb-4">Please allow camera access to scan barcodes</p>
+            <div className="text-center py-6 md:py-8">
+              <CameraOff size={40} className="text-gray-400 mx-auto mb-4 md:hidden" />
+              <CameraOff size={48} className="text-gray-400 mx-auto mb-4 hidden md:block" />
+              <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Camera Access Required</h3>
+              <p className="text-sm md:text-base text-gray-600 mb-4">Please allow camera access to scan barcodes</p>
               <button
                 onClick={checkCameraPermission}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
               >
                 Grant Camera Access
               </button>
@@ -138,17 +141,19 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 {!isScanning ? (
                   <button
                     onClick={startScanning}
-                    className="flex items-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                    className="flex items-center space-x-2 bg-green-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
                   >
-                    <Camera size={20} />
+                    <Camera size={16} className="md:hidden" />
+                    <Camera size={20} className="hidden md:block" />
                     <span>Start Scanning</span>
                   </button>
                 ) : (
                   <button
                     onClick={stopScanning}
-                    className="flex items-center space-x-2 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors"
+                    className="flex items-center space-x-2 bg-red-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-red-600 transition-colors text-sm md:text-base"
                   >
-                    <CameraOff size={20} />
+                    <CameraOff size={16} className="md:hidden" />
+                    <CameraOff size={20} className="hidden md:block" />
                     <span>Stop Scanning</span>
                   </button>
                 )}
@@ -160,7 +165,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-black">
                     <BarcodeScannerComponent
                       width="100%"
-                      height={300}
+                      height={window.innerWidth > 768 ? 300 : 200}
                       onUpdate={(err, result) => {
                         if (result) {
                           handleBarcodeScan(result.text);
@@ -175,46 +180,24 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <div className="absolute inset-0 pointer-events-none">
                     <div className="relative w-full h-full">
                       {/* Scanning Frame */}
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-green-500 rounded-lg">
-                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-500 rounded-tl-lg"></div>
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-500 rounded-tr-lg"></div>
-                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-500 rounded-bl-lg"></div>
-                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-500 rounded-br-lg"></div>
+                      <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${window.innerWidth > 768 ? 'w-64 h-64' : 'w-40 h-40'} border-2 border-green-500 rounded-lg`}>
+                        <div className="absolute top-0 left-0 w-6 h-6 md:w-8 md:h-8 border-t-4 border-l-4 border-green-500 rounded-tl-lg"></div>
+                        <div className="absolute top-0 right-0 w-6 h-6 md:w-8 md:h-8 border-t-4 border-r-4 border-green-500 rounded-tr-lg"></div>
+                        <div className="absolute bottom-0 left-0 w-6 h-6 md:w-8 md:h-8 border-b-4 border-l-4 border-green-500 rounded-bl-lg"></div>
+                        <div className="absolute bottom-0 right-0 w-6 h-6 md:w-8 md:h-8 border-b-4 border-r-4 border-green-500 rounded-br-lg"></div>
                       </div>
                       
                       {/* Instructions */}
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg">
-                        <p className="text-sm text-center">Position barcode within the frame</p>
+                      <div className="absolute bottom-2 md:bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 md:px-4 py-1 md:py-2 rounded-lg">
+                        <p className="text-xs md:text-sm text-center">Position barcode within the frame</p>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Status Messages */}
-              {loading && (
-                <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                  <span className="text-blue-700">Looking up product...</span>
-                </div>
-              )}
-
-              {error && (
-                <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle size={20} className="text-red-500" />
-                  <span className="text-red-700">{error}</span>
-                </div>
-              )}
-
-              {success && (
-                <div className="flex items-center space-x-2 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <CheckCircle size={20} className="text-green-500" />
-                  <span className="text-green-700">{success}</span>
-                </div>
-              )}
-
               {/* Instructions */}
-              <div className="text-center text-sm text-gray-600 space-y-2">
+              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2">
                 <p>📱 <strong>Instructions:</strong></p>
                 <p>1. Click "Start Scanning" to activate camera</p>
                 <p>2. Point camera at barcode</p>
@@ -226,9 +209,9 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
           {/* Loading Camera */}
           {cameraPermission === null && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Checking camera access...</p>
+            <div className="text-center py-6 md:py-8">
+              <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+              <p className="text-sm md:text-base text-gray-600">Checking camera access...</p>
             </div>
           )}
         </div>
