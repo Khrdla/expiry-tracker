@@ -516,20 +516,52 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
             <div className="text-xs md:text-sm font-medium">Near Expiry Items</div>
           </button>
           
-          <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
-            onClick={() => {
-              const token = localStorage.getItem('token');
-              if (token) {
-                window.open(`${BACKEND_URL}/api/export/excel?token=${token}`, '_blank');
-              } else {
-                alert('Please login to export reports');
-              }
-            }}
-          >
-            <div className="text-xl md:text-2xl mb-2">📊</div>
-            <div className="text-xs md:text-sm font-medium">Export Report</div>
-          </button>
+          <div className="relative">
+            <button 
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer w-full"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+            >
+              <div className="text-xl md:text-2xl mb-2">📊</div>
+              <div className="text-xs md:text-sm font-medium">Export Reports</div>
+            </button>
+            
+            {showExportDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
+                <div className="py-2">
+                  <button
+                    onClick={() => handleExport('inventory')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                  >
+                    📋 Inventory Excel
+                  </button>
+                  <button
+                    onClick={() => handleExport('dashboard-excel')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                  >
+                    📊 Dashboard Excel
+                  </button>
+                  <button
+                    onClick={() => handleExport('dashboard-pdf')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                  >
+                    📄 Dashboard PDF
+                  </button>
+                  <button
+                    onClick={() => handleExport('expiry-tracker')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                  >
+                    ⏰ Expiry Tracker
+                  </button>
+                  <button
+                    onClick={() => handleExport('return-forms')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                  >
+                    🔄 Return Forms
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           
           <button 
             className="bg-white bg-opacity-20 hover:bg-opacity-30 p-3 md:p-4 rounded-lg transition-all text-center cursor-pointer"
