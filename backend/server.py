@@ -722,7 +722,7 @@ async def get_stock_transactions(
                 "product_name": {"$arrayElemAt": ["$product.name", 0]},
                 "product_sku": {"$arrayElemAt": ["$product.sku", 0]}
             }},
-            {"$project": {"product": 0}},
+            {"$project": {"product": 0, "_id": 0}},
             {"$sort": {"created_at": -1}},
             {"$skip": skip},
             {"$limit": limit}
