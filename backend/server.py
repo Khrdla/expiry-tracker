@@ -867,7 +867,7 @@ async def export_to_excel(
         worksheet = workbook.add_worksheet('Inventory Report')
         
         # Add company header
-        worksheet.merge_range('A1:L1', 'Geant Hypermarket - Inventory Report', 
+        worksheet.merge_range('A1:L1', 'Expiry Tracker - Inventory Report', 
                             workbook.add_format({'bold': True, 'font_size': 16, 'align': 'center', 'bg_color': '#3b82f6', 'font_color': 'white'}))
         worksheet.merge_range('A2:L2', f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}',
                             workbook.add_format({'align': 'center', 'italic': True}))
