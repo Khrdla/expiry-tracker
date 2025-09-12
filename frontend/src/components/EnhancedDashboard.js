@@ -156,6 +156,17 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
             ))}
           </select>
+
+          <select
+            value={selectedSection}
+            onChange={(e) => setSelectedSection(e.target.value)}
+            className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium"
+          >
+            <option value="all">All Sections</option>
+            {dashboardData.sections?.map(section => (
+              <option key={section} value={section}>{section}</option>
+            ))}
+          </select>
           
           <button
             onClick={() => setShowScanner(true)}
