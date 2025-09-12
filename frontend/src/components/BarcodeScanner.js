@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarcodeScannerComponent } from 'react-qr-barcode-scanner';
+import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import { X, Camera, CameraOff, AlertCircle, Package, CheckCircle } from 'lucide-react';
 
 const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
