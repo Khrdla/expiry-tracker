@@ -89,6 +89,77 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
     }).format(amount);
   };
 
+  // Export functions
+  const handleExport = (type) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to export reports');
+      return;
+    }
+
+    let url = '';
+    switch (type) {
+      case 'inventory':
+        url = `${BACKEND_URL}/api/export/excel`;
+        break;
+      case 'dashboard-excel':
+        url = `${BACKEND_URL}/api/export/dashboard/excel`;
+        break;
+      case 'dashboard-pdf':
+        url = `${BACKEND_URL}/api/export/dashboard/pdf`;
+        break;
+      case 'expiry-tracker':
+        url = `${BACKEND_URL}/api/export/expiry-tracker`;
+        break;
+      case 'return-forms':
+        url = `${BACKEND_URL}/api/export/return-forms`;
+        break;
+      default:
+        return;
+    }
+
+    // For GET requests, just open the URL
+    if (type === 'dashboard-excel' || type === 'dashboard-pdf' || type === 'return-forms') {
+      window.open(`${url}?token=${token}`, '_blank');
+    } else {
+      // For POST requests, create a form
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      form.target = '_blank';
+      
+      // Add authorization token
+      const tokenInput = document.createElement('input');
+      tokenInput.type = 'hidden';
+      tokenInput.name = 'token';
+      tokenInput.value = token;
+      form.appendChild(tokenInput);
+      
+      // Add filters if any
+      if (selectedDepartment !== 'all') {
+        const deptInput = document.createElement('input');
+        deptInput.type = 'hidden';
+        deptInput.name = 'department';
+        deptInput.value = selectedDepartment;
+        form.appendChild(deptInput);
+      }
+      
+      if (selectedSection !== 'all') {
+        const sectionInput = document.createElement('input');
+        sectionInput.type = 'hidden';
+        sectionInput.name = 'section';
+        sectionInput.value = selectedSection;
+        form.appendChild(sectionInput);
+      }
+      
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    }
+    
+    setShowExportDropdown(false);
+  };
+
   const getFilteredKPIs = () => {
     if (!dashboardData) return [];
     if (selectedDepartment === 'all') return dashboardData.kpis;
