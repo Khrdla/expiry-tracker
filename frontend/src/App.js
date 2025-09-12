@@ -361,7 +361,13 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
           </div>
 
           <button
-            onClick={onLogout}
+            onClick={() => {
+              // Auto-close mobile menu before logout
+              if (window.innerWidth < 1024) {
+                setSidebarOpen(false);
+              }
+              onLogout();
+            }}
             className={`w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ${
               sidebarOpen || 'lg:justify-start'
             } ${!sidebarOpen && 'justify-center lg:justify-start'}`}
