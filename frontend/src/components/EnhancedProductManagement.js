@@ -759,6 +759,8 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
           if (imageResponse.ok) {
             const imageData = await imageResponse.json();
             updatedProduct.image_url = imageData.image_url;
+            // Update the preview to show the uploaded image from server
+            setImagePreview(`${BACKEND_URL}${imageData.image_url}`);
           }
         }
 
