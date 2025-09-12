@@ -402,10 +402,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "ExpiryTracker Excel lookup integration"
-    - "ReturnForm Excel lookup integration" 
     - "Export functionality for all forms and KPI dashboards"
-    - "Mobile responsiveness audit for iOS and Android"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -413,6 +410,9 @@ test_plan:
   barcode_testing_completed: true
   barcode_frontend_testing_completed: true
   excel_lookup_backend_testing_completed: true
+  excel_lookup_frontend_testing_completed: true
+  mobile_responsiveness_testing_completed: true
+  comprehensive_regression_testing_completed: true
 
 agent_communication:
   - agent: "main"
