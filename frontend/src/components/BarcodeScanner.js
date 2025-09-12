@@ -9,8 +9,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [cameraPermission, setCameraPermission] = useState(null);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState('');
+  const [scanAttempts, setScanAttempts] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const scannerRef = useRef(null);
+  const lastScanTime = useRef(0);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const BACKEND_URL = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+  const MAX_RETRY_ATTEMPTS = 3;
+  const SCAN_COOLDOWN = 2000; // 2 seconds between scans
 
   useEffect(() => {
     if (isOpen) {
