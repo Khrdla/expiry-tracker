@@ -81,12 +81,21 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   };
 
   const formatCurrency = (amount, currency = 'YER') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency === 'SAR' ? 'SAR' : currency === 'EUR' ? 'EUR' : 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+    const numAmount = parseFloat(amount) || 0;
+    
+    // Handle different currencies with proper symbols
+    switch (currency?.toUpperCase()) {
+      case 'YER':
+        return `${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} YER`;
+      case 'SAR':
+        return `${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} SAR`;
+      case 'EUR':
+        return `€${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      case 'USD':
+        return `$${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      default:
+        return `${numAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency || 'YER'}`;
+    }
   };
 
   // Export functions
