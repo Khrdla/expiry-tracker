@@ -402,32 +402,60 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
-            onClick={() => onProductClick && onProductClick('out_of_stock', 'all')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            onClick={() => {
+              if (onProductClick) {
+                onProductClick('low_stock', 'all');
+              } else {
+                // Navigate to products page with filter
+                window.location.href = '/products?status=low_stock';
+              }
+            }}
           >
-            <div className="text-2xl mb-2">🚨</div>
-            <div className="text-sm font-medium">View Out of Stock</div>
+            <div className="text-2xl mb-2">⚠️</div>
+            <div className="text-sm font-medium">Low Stock Items</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
-            onClick={() => onProductClick && onProductClick('near_expiry', 'all')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            onClick={() => {
+              if (onProductClick) {
+                onProductClick('near_expiry', 'all');
+              } else {
+                // Navigate to products page with filter
+                window.location.href = '/products?status=near_expiry';
+              }
+            }}
           >
             <div className="text-2xl mb-2">⏰</div>
             <div className="text-sm font-medium">Near Expiry Items</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
-            onClick={() => window.open(`${BACKEND_URL}/api/export/excel`, '_blank')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            onClick={() => {
+              const token = localStorage.getItem('token');
+              if (token) {
+                window.open(`${BACKEND_URL}/api/export/excel?token=${token}`, '_blank');
+              } else {
+                alert('Please login to export reports');
+              }
+            }}
           >
             <div className="text-2xl mb-2">📊</div>
             <div className="text-sm font-medium">Export Report</div>
           </button>
           
           <button 
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center"
-            onClick={() => onProductClick && onProductClick('all', 'all')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 p-4 rounded-lg transition-all text-center cursor-pointer"
+            onClick={() => {
+              if (onProductClick) {
+                onProductClick('all', 'all');
+              } else {
+                // Navigate to products page
+                window.location.href = '/products';
+              }
+            }}
           >
             <div className="text-2xl mb-2">📦</div>
             <div className="text-sm font-medium">View All Items</div>
