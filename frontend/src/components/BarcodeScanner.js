@@ -196,6 +196,30 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </div>
               )}
 
+              {/* Status Messages */}
+              {loading && (
+                <div className="flex items-center justify-center space-x-2 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-blue-500"></div>
+                  <span className="text-blue-700 text-sm md:text-base">Looking up product...</span>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex items-center space-x-2 p-3 md:p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle size={16} className="text-red-500 md:hidden" />
+                  <AlertCircle size={20} className="text-red-500 hidden md:block" />
+                  <span className="text-red-700 text-sm md:text-base">{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="flex items-center space-x-2 p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle size={16} className="text-green-500 md:hidden" />
+                  <CheckCircle size={20} className="text-green-500 hidden md:block" />
+                  <span className="text-green-700 text-sm md:text-base">{success}</span>
+                </div>
+              )}
+
               {/* Instructions */}
               <div className="text-center text-xs md:text-sm text-gray-600 space-y-2">
                 <p>📱 <strong>Instructions:</strong></p>
