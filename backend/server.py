@@ -727,13 +727,13 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                     })
         
         # Create email content
-        subject = f"Geant Hypermarket - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
+        subject = f"Expiry Tracker - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
         
         body = f"""
         <html>
         <body style="font-family: Arial, sans-serif;">
             <div style="background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 20px; color: white; text-align: center;">
-                <h1>Geant Hypermarket</h1>
+                <h1>Expiry Tracker</h1>
                 <h2>Daily Inventory Alert Report</h2>
                 <p>Date: {datetime.now().strftime('%B %d, %Y')}</p>
             </div>
