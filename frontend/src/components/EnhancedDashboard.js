@@ -157,6 +157,15 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
           </select>
           
           <button
+            onClick={() => setShowScanner(true)}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+            title="Scan Barcode for Quick Item Lookup"
+          >
+            <Camera size={16} />
+            <span>Scan Item</span>
+          </button>
+          
+          <button
             onClick={fetchDashboardData}
             className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all"
           >
