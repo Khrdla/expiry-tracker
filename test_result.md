@@ -101,3 +101,130 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  User reported multiple issues with the current inventory system:
+  1. Company logo not appearing - showing "Geant Hypermarket" instead of proper branding
+  2. Stock value needs to be with purchase currency from uploaded file (YER, SAR, EUR)
+  3. Department and section not showing uploaded data properly
+  4. Return to supplier form not available
+  5. Supplier service level and stock value not exist
+  6. Summary and add/edit product cards not available
+  7. Products page shows "No products found" despite dashboard showing 1,807 products
+
+backend:
+  - task: "Fix products API endpoint - no products showing"
+    implemented: false
+    working: false
+    file: "server_enhanced.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Dashboard shows 1,807 products but products page shows 'No products found'"
+  
+  - task: "Fix currency display to show original purchase currencies"
+    implemented: false
+    working: false
+    file: "server_enhanced.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Stock values showing in USD format instead of YER/SAR/EUR from imported data"
+
+  - task: "Add return to supplier functionality"
+    implemented: false
+    working: false
+    file: "server_enhanced.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Missing return to supplier form and API endpoints"
+
+  - task: "Add supplier service level and detailed supplier management"
+    implemented: false
+    working: false
+    file: "server_enhanced.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need detailed supplier pages with service levels, lead times, policies"
+
+frontend:
+  - task: "Fix company branding - remove hardcoded 'Geant Hypermarket'"
+    implemented: false
+    working: false
+    file: "App.js, EnhancedDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Company name hardcoded as 'Geant Hypermarket' instead of reading from settings"
+
+  - task: "Fix products page - showing 'No products found'"
+    implemented: false
+    working: false
+    file: "EnhancedProductManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Dashboard shows products but products page empty, likely API filtering issue"
+
+  - task: "Add product add/edit cards functionality"
+    implemented: false
+    working: false
+    file: "EnhancedProductManagement.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Missing UI for adding and editing products"
+
+  - task: "Fix department/section display from uploaded data"
+    implemented: false
+    working: false
+    file: "EnhancedDashboard.js, EnhancedProductManagement.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Department/section names not displaying properly from imported Excel data"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Fix products API endpoint - no products showing"
+    - "Fix company branding - remove hardcoded 'Geant Hypermarket'"
+    - "Fix currency display to show original purchase currencies"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "User reported multiple issues. Dashboard shows 1,807 products but products page empty. Need to fix API endpoints, branding, currency display, and add missing supplier/product management features."
