@@ -250,28 +250,33 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {/* Department Overview Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Department Overview</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+          <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Department Overview</h3>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={prepareChartData()}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="department" 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 10 }}
                 angle={-45}
                 textAnchor="end"
-                height={100}
+                height={80}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 10 }} />
               <Tooltip 
                 formatter={(value, name) => [
                   name === 'Stock Value' ? formatCurrency(value) : value.toLocaleString(),
                   name
                 ]}
+                contentStyle={{
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb'
+                }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
               <Bar dataKey="Total Items" fill="#22c55e" />
               <Bar dataKey="Out of Stock" fill="#ef4444" />
               <Bar dataKey="Low Stock" fill="#f59e0b" />
@@ -280,18 +285,22 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         </div>
 
         {/* Stock Status Pie Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Overall Stock Status</h3>
-          <ResponsiveContainer width="100%" height={350}>
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+          <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Overall Stock Status</h3>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
                 data={prepareExpiryData()}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={120}
-                innerRadius={40}
+                label={({ name, value, percent }) => 
+                  window.innerWidth > 768 
+                    ? `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+                    : `${(percent * 100).toFixed(0)}%`
+                }
+                outerRadius={window.innerWidth > 768 ? 100 : 80}
+                innerRadius={window.innerWidth > 768 ? 30 : 20}
                 fill="#8884d8"
                 dataKey="value"
                 strokeWidth={2}
@@ -307,7 +316,8 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                   backgroundColor: 'rgba(255, 255, 255, 0.95)',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  fontSize: '12px'
                 }}
               />
               <Legend 
@@ -315,7 +325,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 height={36}
                 wrapperStyle={{
                   paddingTop: '20px',
-                  fontSize: '14px'
+                  fontSize: '11px'
                 }}
               />
             </PieChart>
