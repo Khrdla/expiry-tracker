@@ -325,6 +325,223 @@ class ExpiryTrackerAPITester:
         
         return False
 
+    def get_sample_barcodes(self):
+        """Get sample barcodes from database for testing"""
+        # Sample barcodes from different departments based on actual data
+        return [
+            {"barcode": "9501100046987", "department": "01-FMG", "product_name": "Al Hana Orange Nectar 235 ml"},
+            {"barcode": "3222471052747", "department": "01-CGD", "product_name": "Lemonade 150Cl"},
+            {"barcode": "3222471075722", "department": "01-CGD", "product_name": "Mountain Water 6X50Cl"},
+            {"barcode": "3222471081273", "department": "01-CGD", "product_name": "Orange Peach Apricot Nectar Box 1L"},
+            {"barcode": "3222471081716", "department": "01-CGD", "product_name": "Apple Juice Box 1L"}
+        ]
+
+    def test_barcode_lookup_valid(self):
+        """Test barcode lookup with valid barcodes - NEW FUNCTIONALITY"""
+        sample_barcodes = self.get_sample_barcodes()
+        all_success = True
+        
+        print(f"\n🔍 Testing barcode lookup with {len(sample_barcodes)} sample barcodes")
+        
+        for i, barcode_data in enumerate(sample_barcodes, 1):
+            barcode = barcode_data["barcode"]
+            expected_product = barcode_data["product_name"]
+            expected_dept = barcode_data["department"]
+            
+            success, response = self.run_test(
+                f"Barcode Lookup #{i} ({barcode})",
+                "GET",
+                f"barcode/{barcode}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                # Verify response contains expected fields
+                required_fields = ['product_name', 'item_number', 'barcode', 'department', 
+                                 'section', 'purchase_price', 'purchase_currency', 'selling_price', 
+                                 'supplier', 'quantity', 'status']
+                
+                missing_fields = [field for field in required_fields if field not in response]
+                if missing_fields:
+                    self.log_test(f"Barcode Response Fields #{i}", False, f"Missing fields: {missing_fields}")
+                    all_success = False
+                    continue
+                
+                # Verify product matches expected
+                actual_product = response.get('product_name', '')
+                actual_dept = response.get('department', '')
+                
+                if actual_product != expected_product:
+                    self.log_test(f"Barcode Product Match #{i}", False, f"Expected '{expected_product}', got '{actual_product}'")
+                    all_success = False
+                    continue
+                
+                if actual_dept != expected_dept:
+                    self.log_test(f"Barcode Department Match #{i}", False, f"Expected '{expected_dept}', got '{actual_dept}'")
+                    all_success = False
+                    continue
+                
+                # Verify ObjectId serialization
+                response_str = str(response)
+                if "ObjectId" in response_str:
+                    self.log_test(f"Barcode ObjectId Serialization #{i}", False, "ObjectId found in barcode response")
+                    all_success = False
+                    continue
+                
+                # Verify status calculation
+                status = response.get('status')
+                if not status:
+                    self.log_test(f"Barcode Status Calculation #{i}", False, "No status field in response")
+                    all_success = False
+                    continue
+                
+                print(f"   ✅ Barcode {barcode}: {actual_product} ({actual_dept}) - Status: {status}")
+                
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_barcode_lookup_invalid(self):
+        """Test barcode lookup with invalid barcodes"""
+        invalid_barcodes = [
+            "0000000000000",  # Non-existent barcode
+            "invalid_barcode",  # Invalid format
+            "999999999999999",  # Another non-existent
+            "",  # Empty barcode
+        ]
+        
+        all_success = True
+        
+        for i, barcode in enumerate(invalid_barcodes, 1):
+            success, response = self.run_test(
+                f"Invalid Barcode #{i} ({barcode or 'empty'})",
+                "GET",
+                f"barcode/{barcode}",
+                404
+            )
+            
+            if success:
+                print(f"   ✅ Invalid barcode '{barcode}' correctly returned 404")
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_barcode_authentication(self):
+        """Test barcode endpoint requires authentication"""
+        # Temporarily remove token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Barcode Endpoint - No Auth",
+            "GET",
+            "barcode/9501100046987",
+            401
+        )
+        
+        # Restore token
+        self.token = original_token
+        
+        if success:
+            print("   ✅ Barcode endpoint correctly requires authentication")
+            return True
+        else:
+            self.log_test("Barcode Authentication", False, "Barcode endpoint should require authentication")
+            return False
+
+    def test_barcode_department_access(self):
+        """Test barcode endpoint respects department access control"""
+        # This test assumes admin user has access to all departments
+        # In a real scenario, we'd test with department-specific users
+        
+        sample_barcodes = self.get_sample_barcodes()
+        
+        # Test that admin can access products from all departments
+        departments_accessed = set()
+        
+        for barcode_data in sample_barcodes[:3]:  # Test first 3
+            barcode = barcode_data["barcode"]
+            expected_dept = barcode_data["department"]
+            
+            success, response = self.run_test(
+                f"Barcode Dept Access ({expected_dept})",
+                "GET",
+                f"barcode/{barcode}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                actual_dept = response.get('department')
+                departments_accessed.add(actual_dept)
+        
+        # Verify we can access multiple departments
+        if len(departments_accessed) > 1:
+            print(f"   ✅ Admin can access products from departments: {departments_accessed}")
+            return True
+        else:
+            self.log_test("Barcode Department Access", False, f"Only accessed departments: {departments_accessed}")
+            return False
+
+    def test_barcode_response_format(self):
+        """Test barcode response format and data integrity"""
+        barcode = "9501100046987"  # Known good barcode
+        
+        success, response = self.run_test(
+            "Barcode Response Format",
+            "GET",
+            f"barcode/{barcode}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            # Check required fields are present and have correct types
+            field_checks = {
+                'product_name': str,
+                'item_number': str,
+                'barcode': str,
+                'department': str,
+                'section': str,
+                'purchase_price': (int, float),
+                'purchase_currency': str,
+                'selling_price': (int, float),
+                'supplier': str,
+                'quantity': (int, float),
+                'status': str
+            }
+            
+            all_valid = True
+            for field, expected_type in field_checks.items():
+                if field not in response:
+                    self.log_test("Barcode Response Format", False, f"Missing field: {field}")
+                    return False
+                
+                value = response[field]
+                if value is not None and not isinstance(value, expected_type):
+                    self.log_test("Barcode Response Format", False, f"Field {field} has wrong type: {type(value)}, expected {expected_type}")
+                    all_valid = False
+            
+            # Check that barcode in response matches requested barcode
+            if response.get('barcode') != barcode:
+                self.log_test("Barcode Response Format", False, f"Response barcode {response.get('barcode')} doesn't match requested {barcode}")
+                return False
+            
+            # Verify no ObjectId or other non-serializable objects
+            try:
+                import json
+                json.dumps(response)
+                print("   ✅ Barcode response is JSON serializable")
+            except Exception as e:
+                self.log_test("Barcode Response Format", False, f"Response not JSON serializable: {str(e)}")
+                return False
+            
+            if all_valid:
+                print("   ✅ All required fields present with correct types")
+                return True
+        
+        return False
+
     def test_suppliers_endpoint(self):
         """Test suppliers endpoint"""
         success, response = self.run_test(
