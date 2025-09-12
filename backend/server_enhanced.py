@@ -125,18 +125,18 @@ def get_accessible_departments(user: User) -> List[Department]:
     else:
         return []
 
-async def calculate_product_status(product: dict) -> ProductStatus:
+async def calculate_product_status(product: dict) -> str:
     """Calculate product status based on quantity and expiry date"""
     if product['quantity'] <= 0:
-        return ProductStatus.OUT_OF_STOCK
+        return ProductStatus.OUT_OF_STOCK.value
     elif product['quantity'] <= product.get('low_stock_threshold', 10):
-        return ProductStatus.LOW_STOCK
+        return ProductStatus.LOW_STOCK.value
     
     expiry_date = product.get('expiry_date')
     if expiry_date:
         now = datetime.utcnow()
         if expiry_date < now:
-            return ProductStatus.EXPIRED
+            return ProductStatus.EXPIRED.value
         
         # Get expiry threshold based on section
         settings = await db.email_settings.find_one() or {}
@@ -145,9 +145,9 @@ async def calculate_product_status(product: dict) -> ProductStatus:
             threshold_days = settings.get('beverage_expiry_threshold_days', 15)
         
         if expiry_date < now + timedelta(days=threshold_days):
-            return ProductStatus.NEAR_EXPIRY
+            return ProductStatus.NEAR_EXPIRY.value
     
-    return ProductStatus.IN_STOCK
+    return ProductStatus.IN_STOCK.value
 
 # Authentication Endpoints
 @api_router.post("/auth/register")
