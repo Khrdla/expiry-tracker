@@ -22,6 +22,8 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showProductDetails, setShowProductDetails] = useState(false);
   const [pagination, setPagination] = useState({
     skip: 0,
     limit: 50,
