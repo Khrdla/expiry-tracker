@@ -38,7 +38,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 # Enhanced FastAPI app with comprehensive inventory management
 app = FastAPI(
-    title="Geant Hypermarket Inventory Management System",
+    title="Expiry Tracker Inventory Management System",
     description="Comprehensive inventory management with per-department dashboards, role-based access, and automated alerts",
     version="2.0.0"
 )
