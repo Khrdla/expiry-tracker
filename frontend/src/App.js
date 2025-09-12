@@ -117,6 +117,8 @@ function App() {
             <Routes>
               <Route path="/" element={<EnhancedDashboard user={user} />} />
               <Route path="/products" element={<EnhancedProductManagement user={user} />} />
+              <Route path="/expiry-tracker" element={<ExpiryTracker user={user} />} />
+              <Route path="/return-form" element={<ReturnForm user={user} />} />
               <Route path="/settings" element={<SettingsPanel user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
