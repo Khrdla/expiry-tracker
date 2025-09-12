@@ -692,7 +692,7 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
   useEffect(() => {
     if (product) {
       setFormData(product);
-      setImagePreview(product.image_url || null);
+      setImagePreview(product.image_url ? `${BACKEND_URL}${product.image_url}` : null);
     }
   }, [product]);
 
