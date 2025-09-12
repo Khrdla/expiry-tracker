@@ -94,7 +94,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
               </h3>
               <div className="flex justify-center">
                 <img 
-                  src={`${import.meta.env.REACT_APP_BACKEND_URL}${product.image_url}`}
+                  src={`${BACKEND_URL}${product.image_url}`}
                   alt={product.product_name}
                   className="max-w-full max-h-64 object-contain rounded-lg shadow-md border"
                   onError={(e) => {
