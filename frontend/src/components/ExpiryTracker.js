@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, Calendar, Package, AlertTriangle, Clock, Search } from 'lucide-react';
+import { Plus, Filter, Calendar, Package, AlertTriangle, Clock, Search, Download } from 'lucide-react';
 
 const ExpiryTracker = ({ user }) => {
   const [activeTab, setActiveTab] = useState('add-item');  // 'add-item' or 'expiry-list'
