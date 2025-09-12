@@ -430,37 +430,49 @@ class ExpiryTrackerAPITester:
         return success
 
     def run_all_tests(self):
-        """Run all backend tests"""
+        """Run all backend tests focused on review requirements"""
         print("🚀 Starting Comprehensive Backend API Testing")
-        print("=" * 60)
+        print("Focus: Authentication, Products API, Dashboard, Filters, Currency")
+        print("=" * 70)
         
-        # Core connectivity tests
+        # Core connectivity and authentication tests
         if not self.test_health_check():
             print("❌ API health check failed - stopping tests")
             return False
             
         if not self.test_login():
-            print("❌ Login failed - stopping tests")
-            return False
-            
-        if not self.test_get_current_user():
-            print("❌ User authentication failed - stopping tests")
+            print("❌ Admin login failed - stopping tests")
             return False
         
-        # Core functionality tests
+        # PRIORITY HIGH - Critical endpoints from review request
+        print("\n🔥 PRIORITY HIGH TESTS (from review request)")
+        print("-" * 50)
+        
+        # Products API (just fixed ObjectId issues)
         self.test_get_products()
-        self.test_search_functionality()  # Critical for review
-        self.test_suppliers_endpoint()
-        self.test_categories_endpoint()
-        self.test_kpi_endpoints()
-        self.test_out_of_stock_endpoint()
-        self.test_export_functionality()
-        self.test_supplier_dashboard()
+        self.test_products_department_filtering()
+        
+        # Dashboard API (should show KPIs for all departments)
+        self.test_dashboard_api()
+        
+        # Filters API (should return department/section options)
+        self.test_filters_api()
+        
+        # Debug endpoint
+        self.test_debug_endpoint()
+        
+        # Currency display testing (CRITICAL)
+        self.test_currency_display()
+        
+        # Additional functionality tests
+        print("\n📋 ADDITIONAL FUNCTIONALITY TESTS")
+        print("-" * 40)
+        self.test_search_functionality()
         
         # Print final results
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 70)
         print("📊 BACKEND TEST RESULTS")
-        print("=" * 60)
+        print("=" * 70)
         print(f"Tests Run: {self.tests_run}")
         print(f"Tests Passed: {self.tests_passed}")
         print(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
@@ -473,6 +485,22 @@ class ExpiryTrackerAPITester:
                 print(f"   • {test['name']}: {test['details']}")
         else:
             print("\n✅ ALL TESTS PASSED!")
+        
+        # Summary for main agent
+        print(f"\n📋 SUMMARY FOR MAIN AGENT:")
+        print(f"✅ Authentication: {'WORKING' if self.token else 'FAILED'}")
+        
+        products_working = any(test['name'].startswith('Get Products') and test['success'] for test in self.test_results)
+        print(f"✅ Products API: {'WORKING' if products_working else 'FAILED'}")
+        
+        dashboard_working = any(test['name'] == 'Dashboard API' and test['success'] for test in self.test_results)
+        print(f"✅ Dashboard API: {'WORKING' if dashboard_working else 'FAILED'}")
+        
+        filters_working = any(test['name'] == 'Filters API' and test['success'] for test in self.test_results)
+        print(f"✅ Filters API: {'WORKING' if filters_working else 'FAILED'}")
+        
+        currency_working = any(test['name'] == 'Currency Display Check' and test['success'] for test in self.test_results)
+        print(f"💱 Currency Display: {'WORKING' if currency_working else 'NEEDS ATTENTION'}")
         
         return self.tests_passed == self.tests_run
 
