@@ -375,11 +375,12 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, value, percent }) => 
-                  window.innerWidth > 768 
-                    ? `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
-                    : `${(percent * 100).toFixed(0)}%`
-                }
+                label={({ name, value, percent }) => {
+                  const shortName = name.replace('OUT OF STOCK', 'OUT_STOCK').replace('NEAR EXPIRY', 'NEAR_EXP');
+                  return window.innerWidth > 768 && value > 0
+                    ? `${shortName}: ${value}`
+                    : value > 0 ? `${(percent * 100).toFixed(0)}%` : '';
+                }}
                 outerRadius={window.innerWidth > 768 ? 100 : 80}
                 innerRadius={window.innerWidth > 768 ? 30 : 20}
                 fill="#8884d8"
