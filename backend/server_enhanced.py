@@ -325,21 +325,30 @@ async def get_products(
     from bson import ObjectId
     
     accessible_departments = get_accessible_departments(current_user)
-    filter_dict = {"department": {"$in": [d.value for d in accessible_departments]}}
     
+    # Build department filter without $in operator to avoid issues
     if department and department in [d.value for d in accessible_departments]:
-        filter_dict["department"] = department
+        filter_dict = {"department": department}
+    else:
+        # Use $or instead of $in for better compatibility
+        filter_dict = {"$or": [{"department": d.value} for d in accessible_departments]}
+    
     if section:
         filter_dict["section"] = section
     if supplier:
         filter_dict["supplier"] = {"$regex": supplier, "$options": "i"}
     if search:
-        filter_dict["$or"] = [
+        search_conditions = [
             {"product_name": {"$regex": search, "$options": "i"}},
             {"item_number": {"$regex": search, "$options": "i"}},
             {"barcode": {"$regex": search, "$options": "i"}},
             {"supplier": {"$regex": search, "$options": "i"}}
         ]
+        if "$or" in filter_dict:
+            # Combine department filter with search
+            filter_dict = {"$and": [{"$or": filter_dict["$or"]}, {"$or": search_conditions}]}
+        else:
+            filter_dict["$or"] = search_conditions
     
     products_cursor = db.products.find(filter_dict).skip(skip).limit(limit)
     products = []
