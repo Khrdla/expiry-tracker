@@ -284,6 +284,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "FIXED - Departments showing correctly: Fresh & Food Grocery, Consumer Goods & Drinks, Operations & Special Services"
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Dashboard shows all 3 departments with correct names: Fresh & Food Grocery (711 items), Consumer Goods & Drinks (44 items), Operations & Special Services (1,052 items). Department filter dropdown shows all expected options. Minor: Department codes (01-FMG, 01-CGD, 01-OPSS) not visible in UI but department names are correct."
 
 metadata:
   created_by: "main_agent"
