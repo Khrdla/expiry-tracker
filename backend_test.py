@@ -1041,6 +1041,17 @@ class ExpiryTrackerAPITester:
         else:
             print(f"🔍 Barcode Scanner API: NOT TESTED")
         
+        # NEW: Excel lookup functionality summary
+        excel_tests = [test for test in self.test_results if 'Excel Lookup' in test['name']]
+        excel_passed = sum(1 for test in excel_tests if test['success'])
+        excel_total = len(excel_tests)
+        
+        if excel_total > 0:
+            excel_working = excel_passed == excel_total
+            print(f"📊 Excel Lookup API: {'WORKING' if excel_working else 'FAILED'} ({excel_passed}/{excel_total} tests passed)")
+        else:
+            print(f"📊 Excel Lookup API: NOT TESTED")
+        
         return self.tests_passed == self.tests_run
 
 def main():
