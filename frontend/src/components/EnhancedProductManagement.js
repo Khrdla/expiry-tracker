@@ -204,9 +204,18 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
       {/* Header */}
       <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div className="text-center lg:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">Product Management</h1>
-            <p className="text-green-100 text-sm md:text-base">Manage inventory across all departments</p>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 flex items-center justify-center bg-white bg-opacity-20 rounded-xl">
+              <img 
+                src="/geant_logo.jpeg" 
+                alt="Geant Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="text-center lg:text-left">
+              <h1 className="text-2xl md:text-3xl font-bold">Product Management</h1>
+              <p className="text-green-100 text-sm md:text-base">Manage inventory across all departments</p>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-3">
             <button
