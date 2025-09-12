@@ -127,14 +127,17 @@ backend:
       - working: true
         agent: "main"
         comment: "FIXED - ObjectId serialization issues resolved, products API now returns 50 products correctly"
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Products API returns 100 products by default, ObjectId serialization fixed, department filtering works (01-FMG: 100, 01-CGD: 44, 01-OPSS: 100 products). All critical functionality working."
   
   - task: "Fix currency display to show original purchase currencies"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
@@ -142,6 +145,57 @@ backend:
       - working: false
         agent: "main"
         comment: "PARTIALLY FIXED - Individual product currencies showing correctly (YER), but dashboard stock values still in USD format"
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Currency display working correctly. Products show YER currency, dashboard shows stock values with proper currency handling. Top suppliers show YER currency correctly."
+
+  - task: "Authentication API with admin credentials"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Admin login with credentials imadqejji/066380531I works perfectly, returns valid JWT token."
+
+  - task: "Dashboard API with department KPIs"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Dashboard API returns KPIs for all 3 departments (01-FMG, 01-CGD, 01-OPSS). Stock values calculated correctly: FMG=42,742.74, CGD=0.0, OPSS=0.0. Top suppliers with currency info working."
+
+  - task: "Filters API for department/section options"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CONFIRMED WORKING - Filters API returns 3 departments, 5 sections, 43 suppliers. All expected departments (01-FMG, 01-CGD, 01-OPSS) present in filter options."
+
+  - task: "Search functionality API"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Minor Issue - Search endpoint returns 500 error due to ObjectId serialization issues in search results. Core products API works fine, but search needs ObjectId handling fix."
 
   - task: "Add return to supplier functionality"
     implemented: false
