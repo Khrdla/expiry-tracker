@@ -78,9 +78,18 @@ const ExpiryTracker = ({ user }) => {
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          <div className="text-center lg:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
-            <p className="text-orange-100 text-sm md:text-base">Manage product expiry dates and add new items</p>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 flex items-center justify-center bg-white bg-opacity-20 rounded-xl">
+              <img 
+                src="/geant_logo.jpeg" 
+                alt="Geant Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="text-center lg:text-left">
+              <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
+              <p className="text-orange-100 text-sm md:text-base">Manage product expiry dates and add new items</p>
+            </div>
           </div>
           
           <div className="mt-4 lg:mt-0">
