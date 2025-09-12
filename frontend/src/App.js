@@ -263,7 +263,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
             <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
               <Package size={16} className="text-white" />
             </div>
-            <span className="font-semibold text-gray-800">Geant</span>
+            <span className="font-semibold text-gray-800">Expiry</span>
           </div>
 
           <div className="flex items-center space-x-3">
