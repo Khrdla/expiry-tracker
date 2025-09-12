@@ -292,7 +292,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
               <Package size={20} className="text-white" />
             </div>
             <div className={`${sidebarOpen || 'lg:block'} ${!sidebarOpen && 'hidden'}`}>
-              <h1 className="text-xl font-bold text-gray-800">Geant Hypermarket</h1>
+              <h1 className="text-xl font-bold text-gray-800">Expiry Tracker</h1>
               <p className="text-sm text-gray-600">Inventory System</p>
             </div>
           </div>
