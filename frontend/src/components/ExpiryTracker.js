@@ -77,9 +77,28 @@ const ExpiryTracker = ({ user }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 md:p-6 rounded-xl">
-        <div className="text-center lg:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
-          <p className="text-orange-100 text-sm md:text-base">Manage product expiry dates and add new items</p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <div className="text-center lg:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
+            <p className="text-orange-100 text-sm md:text-base">Manage product expiry dates and add new items</p>
+          </div>
+          
+          <div className="mt-4 lg:mt-0">
+            <button
+              onClick={() => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                  window.open(`${BACKEND_URL}/api/export/expiry-tracker?token=${token}`, '_blank');
+                } else {
+                  alert('Please login to export reports');
+                }
+              }}
+              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              <Download size={16} />
+              <span>Export Expiry Data</span>
+            </button>
+          </div>
         </div>
       </div>
 
