@@ -338,9 +338,14 @@ async def get_products(
     products = []
     
     async for product_doc in products_cursor:
-        # Remove ObjectId to avoid serialization issues
+        # Remove ObjectId and handle serialization issues
         if '_id' in product_doc:
             del product_doc['_id']
+        
+        # Convert datetime objects to ISO strings
+        for key, value in product_doc.items():
+            if isinstance(value, datetime):
+                product_doc[key] = value.isoformat()
         
         # Calculate status for each product
         product_doc["status"] = await calculate_product_status(product_doc)
