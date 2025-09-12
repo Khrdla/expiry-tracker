@@ -136,11 +136,11 @@ class ExpiryTrackerAPITester:
         return success
 
     def test_get_products(self):
-        """Test getting products list"""
+        """Test getting products list - PRIORITY HIGH (just fixed ObjectId issues)"""
         success, response = self.run_test(
-            "Get Products List",
+            "Get Products List (50 default)",
             "GET",
-            "products?limit=10",
+            "products",
             200
         )
         
@@ -149,8 +149,132 @@ class ExpiryTrackerAPITester:
             if len(response) > 0:
                 product = response[0]
                 print(f"   Sample product: {product.get('product_name', 'Unknown')}")
+                print(f"   Department: {product.get('department', 'Unknown')}")
+                print(f"   Currency: {product.get('purchase_currency', 'Unknown')}")
                 # Store first product for further testing
                 self.sample_product = product
+                
+                # Verify ObjectId serialization is working (no ObjectId strings)
+                product_str = json.dumps(product)
+                if "ObjectId" in product_str:
+                    self.log_test("ObjectId Serialization Check", False, "ObjectId found in response")
+                    return False
+                else:
+                    self.log_test("ObjectId Serialization Check", True, "No ObjectId serialization issues")
+        
+        return success
+
+    def test_products_department_filtering(self):
+        """Test department filtering for products - verify 01-FMG, 01-CGD, 01-OPSS"""
+        departments = ["01-FMG", "01-CGD", "01-OPSS"]
+        all_success = True
+        
+        for dept in departments:
+            success, response = self.run_test(
+                f"Get Products - Department {dept}",
+                "GET",
+                f"products?department={dept}",
+                200
+            )
+            
+            if success and isinstance(response, list):
+                print(f"   📂 Department {dept}: {len(response)} products")
+                if len(response) > 0:
+                    # Verify all products belong to this department
+                    for product in response[:3]:  # Check first 3
+                        if product.get('department') != dept:
+                            self.log_test(f"Department Filter {dept}", False, f"Product has wrong department: {product.get('department')}")
+                            all_success = False
+                            break
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_dashboard_api(self):
+        """Test dashboard API - should show KPIs for all departments"""
+        success, response = self.run_test(
+            "Dashboard API",
+            "GET",
+            "dashboard",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            kpis = response.get('kpis', [])
+            print(f"   📊 Dashboard KPIs for {len(kpis)} departments")
+            
+            # Verify expected departments are present
+            dept_names = [kpi.get('department') for kpi in kpis]
+            expected_depts = ["01-FMG", "01-CGD", "01-OPSS"]
+            
+            for dept in expected_depts:
+                if dept not in dept_names:
+                    self.log_test("Dashboard Department Coverage", False, f"Missing department: {dept}")
+                    return False
+            
+            # Check currency handling in stock values
+            for kpi in kpis:
+                dept = kpi.get('department')
+                stock_value = kpi.get('total_stock_value', 0)
+                print(f"   💰 {dept}: Stock value {stock_value}")
+            
+            # Verify top suppliers have currency info
+            top_suppliers = response.get('top_suppliers', [])
+            print(f"   🏢 Top suppliers: {len(top_suppliers)}")
+            for supplier in top_suppliers[:3]:
+                currency = supplier.get('purchase_currency', 'Unknown')
+                print(f"   Supplier {supplier.get('supplier_name')}: {currency}")
+        
+        return success
+
+    def test_filters_api(self):
+        """Test filters API - should return department/section options"""
+        success, response = self.run_test(
+            "Filters API",
+            "GET",
+            "filters",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            departments = response.get('departments', [])
+            sections = response.get('sections', [])
+            suppliers = response.get('suppliers', [])
+            
+            print(f"   🔍 Filters: {len(departments)} departments, {len(sections)} sections, {len(suppliers)} suppliers")
+            
+            # Verify expected departments
+            dept_values = [d.get('value') for d in departments]
+            expected_depts = ["01-FMG", "01-CGD", "01-OPSS"]
+            
+            for dept in expected_depts:
+                if dept not in dept_values:
+                    self.log_test("Filters Department Options", False, f"Missing department option: {dept}")
+                    return False
+            
+            print(f"   ✅ All expected departments present in filters")
+        
+        return success
+
+    def test_debug_endpoint(self):
+        """Test debug endpoint - should return 5 sample products"""
+        success, response = self.run_test(
+            "Test Products Debug Endpoint",
+            "GET",
+            "test-products",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            count = response.get('count', 0)
+            products = response.get('products', [])
+            print(f"   🔧 Debug endpoint: {count} products returned")
+            
+            if count > 0 and len(products) > 0:
+                sample = products[0]
+                print(f"   Sample: {sample.get('product_name')} - {sample.get('department')}")
+                print(f"   Currency: {sample.get('purchase_currency')}")
         
         return success
 
