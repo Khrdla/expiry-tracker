@@ -203,6 +203,13 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
           </div>
           <div className="flex space-x-3">
             <button
+              onClick={() => setShowScanner(true)}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
+            >
+              <Camera size={16} />
+              <span>Scan Barcode</span>
+            </button>
+            <button
               onClick={exportData}
               className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all flex items-center space-x-2"
             >
