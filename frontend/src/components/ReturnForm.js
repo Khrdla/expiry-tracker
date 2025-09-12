@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FileText, Download, Upload, Signature, User, Building } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Download, Upload, Signature, User, Building, Search } from 'lucide-react';
 
 const ReturnForm = ({ user }) => {
   const [returnData, setReturnData] = useState({
