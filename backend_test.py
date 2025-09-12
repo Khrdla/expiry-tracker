@@ -99,21 +99,21 @@ class ExpiryTrackerAPITester:
         return success
 
     def test_login(self):
-        """Test login with testuser credentials"""
+        """Test login with admin credentials from review request"""
         success, response = self.run_test(
-            "User Login",
+            "Admin Login (imadqejji)",
             "POST",
             "auth/login",
             200,
-            data={"username": "testuser", "password": "testpass123"}
+            data={"username": self.admin_username, "password": self.admin_password}
         )
         
         if success and isinstance(response, dict) and 'access_token' in response:
             self.token = response['access_token']
-            print(f"   🔑 Token obtained: {self.token[:20]}...")
+            print(f"   🔑 Admin token obtained: {self.token[:20]}...")
             return True
         else:
-            print(f"   ❌ Login failed: {response}")
+            print(f"   ❌ Admin login failed: {response}")
             return False
 
     def test_get_current_user(self):
