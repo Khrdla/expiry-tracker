@@ -93,7 +93,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const handleExport = (type) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Please login to export reports');
+      console.error('No authentication token found');
       return;
     }
 
