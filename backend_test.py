@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Comprehensive Backend API Testing for Expiry Tracker
-Tests all critical API endpoints with authentication
+Tests all critical API endpoints after major ObjectId serialization fixes
+Focus: Authentication, Products API, Dashboard, Filters, Currency handling
 """
 
 import requests
@@ -18,6 +19,9 @@ class ExpiryTrackerAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
+        # Admin credentials from review request
+        self.admin_username = "imadqejji"
+        self.admin_password = "066380531I"
 
     def log_test(self, name, success, details="", response_data=None):
         """Log test results"""
