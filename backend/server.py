@@ -65,7 +65,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 
 # Static files and uploads
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # API Router
