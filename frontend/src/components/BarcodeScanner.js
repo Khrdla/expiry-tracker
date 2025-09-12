@@ -148,14 +148,20 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const startScanning = () => {
+    resetScanner();
     setIsScanning(true);
-    setError('');
-    setSuccess('');
-    setLastScanned('');
+    // Give a moment for the camera to initialize
+    setTimeout(() => {
+      if (scannerRef.current) {
+        console.log('Scanner started successfully');
+      }
+    }, 500);
   };
 
   const stopScanning = () => {
     setIsScanning(false);
+    // Clear any pending scans
+    lastScanTime.current = 0;
   };
 
   if (!isOpen) return null;
