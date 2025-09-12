@@ -518,7 +518,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-600">Selling Price:</span>
                         <span className="font-semibold">
-                          {formatCurrency(selectedProduct.selling_price, selectedProduct.purchase_currency)}
+                          {formatCurrency(selectedProduct.selling_price, 'YER')}
                         </span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
