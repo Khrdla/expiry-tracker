@@ -958,13 +958,22 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
                 <div className="space-y-3">
-                  {imagePreview && (
-                    <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
+                  {imagePreview ? (
+                    <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden border border-blue-500">
                       <img 
                         src={imagePreview} 
                         alt="Product preview" 
                         className="w-full h-full object-cover"
+                        onLoad={() => console.log('Image loaded successfully:', imagePreview)}
+                        onError={(e) => {
+                          console.error('Image failed to load:', imagePreview);
+                          console.error('Error details:', e);
+                        }}
                       />
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center border border-red-500">
+                      <span className="text-gray-500 text-sm">No image</span>
                     </div>
                   )}
                   <input
