@@ -611,6 +611,298 @@ class ExpiryTrackerAPITester:
         
         return success
 
+    def test_excel_lookup_valid_queries(self):
+        """Test Excel lookup with valid product names and barcodes"""
+        # Test queries based on common product patterns
+        test_queries = [
+            {"query": "Orange", "description": "Partial product name match"},
+            {"query": "Water", "description": "Common product name"},
+            {"query": "Juice", "description": "Product category"},
+            {"query": "9501100046987", "description": "Valid barcode"},
+            {"query": "3222471052747", "description": "Another valid barcode"},
+            {"query": "Al Hana", "description": "Brand name"},
+            {"query": "Lemonade", "description": "Specific product name"}
+        ]
+        
+        all_success = True
+        
+        print(f"\n🔍 Testing Excel lookup with {len(test_queries)} valid queries")
+        
+        for i, test_data in enumerate(test_queries, 1):
+            query = test_data["query"]
+            description = test_data["description"]
+            
+            success, response = self.run_test(
+                f"Excel Lookup #{i} ({description})",
+                "GET",
+                f"excel-lookup?query={query}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                # Check if product was found
+                found = response.get('found', False)
+                if found:
+                    # Verify response contains required fields
+                    required_fields = [
+                        'product_name', 'item_number', 'department', 'section',
+                        'supplier', 'purchase_price', 'purchase_currency', 'selling_price'
+                    ]
+                    
+                    missing_fields = [field for field in required_fields if field not in response]
+                    if missing_fields:
+                        self.log_test(f"Excel Lookup Response Fields #{i}", False, f"Missing fields: {missing_fields}")
+                        all_success = False
+                        continue
+                    
+                    # Verify data types and values
+                    product_name = response.get('product_name', '')
+                    purchase_price = response.get('purchase_price', 0)
+                    currency = response.get('purchase_currency', '')
+                    
+                    if not product_name:
+                        self.log_test(f"Excel Lookup Data Quality #{i}", False, "Empty product name")
+                        all_success = False
+                        continue
+                    
+                    if not isinstance(purchase_price, (int, float)):
+                        self.log_test(f"Excel Lookup Data Quality #{i}", False, f"Invalid purchase price type: {type(purchase_price)}")
+                        all_success = False
+                        continue
+                    
+                    if not currency:
+                        self.log_test(f"Excel Lookup Data Quality #{i}", False, "Empty currency")
+                        all_success = False
+                        continue
+                    
+                    print(f"   ✅ Query '{query}': Found '{product_name}' - {purchase_price} {currency}")
+                    
+                else:
+                    print(f"   ⚠️ Query '{query}': No match found (this may be expected)")
+                    
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_excel_lookup_authentication(self):
+        """Test Excel lookup endpoint requires authentication"""
+        # Temporarily remove token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Excel Lookup - No Auth",
+            "GET",
+            "excel-lookup?query=Orange",
+            403  # FastAPI returns 403 for missing auth
+        )
+        
+        # Restore token
+        self.token = original_token
+        
+        if success:
+            print("   ✅ Excel lookup endpoint correctly requires authentication")
+            return True
+        else:
+            self.log_test("Excel Lookup Authentication", False, "Excel lookup endpoint should require authentication")
+            return False
+
+    def test_excel_lookup_error_scenarios(self):
+        """Test Excel lookup error handling"""
+        error_scenarios = [
+            {"query": "", "description": "Empty query", "expected_status": 422},  # FastAPI validation error
+            {"query": "   ", "description": "Whitespace only query", "expected_status": 200},  # Should handle gracefully
+            {"query": "!@#$%^&*()", "description": "Special characters", "expected_status": 200},
+            {"query": "NONEXISTENTPRODUCT12345", "description": "Non-existent product", "expected_status": 200}
+        ]
+        
+        all_success = True
+        
+        print(f"\n🔍 Testing Excel lookup error scenarios")
+        
+        for i, scenario in enumerate(error_scenarios, 1):
+            query = scenario["query"]
+            description = scenario["description"]
+            expected_status = scenario["expected_status"]
+            
+            # URL encode the query properly
+            import urllib.parse
+            encoded_query = urllib.parse.quote(query)
+            
+            success, response = self.run_test(
+                f"Excel Lookup Error #{i} ({description})",
+                "GET",
+                f"excel-lookup?query={encoded_query}",
+                expected_status
+            )
+            
+            if success:
+                if expected_status == 200 and isinstance(response, dict):
+                    found = response.get('found', False)
+                    if query.strip() == "" or query == "NONEXISTENTPRODUCT12345":
+                        if not found:
+                            print(f"   ✅ Query '{query}': Correctly returned not found")
+                        else:
+                            self.log_test(f"Excel Lookup Error Handling #{i}", False, f"Should not find match for '{query}'")
+                            all_success = False
+                    else:
+                        print(f"   ✅ Query '{query}': Handled gracefully")
+                else:
+                    print(f"   ✅ Query '{query}': Correct error response")
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_excel_lookup_data_validation(self):
+        """Test Excel lookup data validation and format"""
+        # Test with a known good query
+        success, response = self.run_test(
+            "Excel Lookup Data Validation",
+            "GET",
+            "excel-lookup?query=Orange",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            found = response.get('found', False)
+            
+            if found:
+                # Validate response structure
+                expected_structure = {
+                    'found': bool,
+                    'product_name': str,
+                    'item_number': str,
+                    'department': str,
+                    'section': str,
+                    'family': str,
+                    'sub_family': str,
+                    'supplier_code': str,
+                    'supplier': str,
+                    'barcode': str,
+                    'purchase_price': (int, float),
+                    'purchase_currency': str,
+                    'selling_price': (int, float),
+                    'arabic_description': str,
+                    'location': str,
+                    'brand': str,
+                    'all_matches': int,
+                    'search_query': str
+                }
+                
+                all_valid = True
+                for field, expected_type in expected_structure.items():
+                    if field not in response:
+                        self.log_test("Excel Lookup Structure", False, f"Missing field: {field}")
+                        return False
+                    
+                    value = response[field]
+                    if value is not None and not isinstance(value, expected_type):
+                        self.log_test("Excel Lookup Structure", False, f"Field {field} has wrong type: {type(value)}, expected {expected_type}")
+                        all_valid = False
+                
+                # Verify JSON serializable
+                try:
+                    import json
+                    json.dumps(response)
+                    print("   ✅ Excel lookup response is JSON serializable")
+                except Exception as e:
+                    self.log_test("Excel Lookup JSON Serialization", False, f"Response not JSON serializable: {str(e)}")
+                    return False
+                
+                # Verify search query matches
+                if response.get('search_query') != 'Orange':
+                    self.log_test("Excel Lookup Query Match", False, f"Search query mismatch: {response.get('search_query')}")
+                    return False
+                
+                # Verify currency is valid
+                currency = response.get('purchase_currency', '')
+                valid_currencies = ['YER', 'SAR', 'EUR', 'USD']
+                if currency not in valid_currencies:
+                    print(f"   ⚠️ Unexpected currency: {currency} (may be valid)")
+                
+                if all_valid:
+                    print("   ✅ All required fields present with correct types")
+                    print(f"   📦 Product: {response.get('product_name')}")
+                    print(f"   🏢 Department: {response.get('department')}")
+                    print(f"   💰 Price: {response.get('purchase_price')} {response.get('purchase_currency')}")
+                    print(f"   🔍 Matches found: {response.get('all_matches')}")
+                    return True
+            else:
+                print("   ⚠️ No product found for 'Orange' query - this may indicate Excel file issues")
+                return True  # Not necessarily a failure
+        
+        return False
+
+    def test_excel_lookup_partial_matches(self):
+        """Test Excel lookup partial matching functionality"""
+        partial_queries = [
+            {"query": "Al", "description": "Brand prefix"},
+            {"query": "Juice", "description": "Product type"},
+            {"query": "1L", "description": "Size specification"},
+            {"query": "Box", "description": "Package type"}
+        ]
+        
+        all_success = True
+        
+        print(f"\n🔍 Testing Excel lookup partial matching")
+        
+        for i, test_data in enumerate(partial_queries, 1):
+            query = test_data["query"]
+            description = test_data["description"]
+            
+            success, response = self.run_test(
+                f"Excel Partial Match #{i} ({description})",
+                "GET",
+                f"excel-lookup?query={query}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                found = response.get('found', False)
+                all_matches = response.get('all_matches', 0)
+                
+                if found:
+                    product_name = response.get('product_name', '')
+                    print(f"   ✅ Query '{query}': Found '{product_name}' ({all_matches} total matches)")
+                    
+                    # Verify the found product actually contains the search term
+                    if query.lower() not in product_name.lower():
+                        print(f"   ⚠️ Product name '{product_name}' doesn't contain '{query}' - may be barcode/item number match")
+                else:
+                    print(f"   ⚠️ Query '{query}': No matches found")
+            else:
+                all_success = False
+        
+        return all_success
+
+    def test_excel_file_accessibility(self):
+        """Test that Excel file is accessible and readable"""
+        # This is tested indirectly through the API, but we can check the error handling
+        success, response = self.run_test(
+            "Excel File Accessibility Test",
+            "GET",
+            "excel-lookup?query=test",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            # If we get a proper response structure, the file is accessible
+            if 'found' in response:
+                print("   ✅ Excel file is accessible and readable")
+                return True
+            else:
+                self.log_test("Excel File Accessibility", False, "Unexpected response structure")
+                return False
+        else:
+            # Check if it's a 500 error indicating file not found
+            if not success:
+                self.log_test("Excel File Accessibility", False, "Excel file may not be accessible")
+                return False
+        
+        return True
+
     def test_export_functionality(self):
         """Test export functionality"""
         # Test Excel export
