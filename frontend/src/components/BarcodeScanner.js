@@ -23,8 +23,22 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   useEffect(() => {
     if (isOpen) {
       checkCameraPermission();
+      resetScanner();
+    } else {
+      // Cleanup when closing
+      setIsScanning(false);
+      resetScanner();
     }
   }, [isOpen]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (isScanning) {
+        setIsScanning(false);
+      }
+    };
+  }, []);
 
   const checkCameraPermission = async () => {
     try {
