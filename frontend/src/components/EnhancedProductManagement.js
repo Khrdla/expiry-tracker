@@ -599,6 +599,27 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
           </button>
         </div>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onProductFound={(product) => {
+          setSelectedProduct(product);
+          setShowScanner(false);
+          setShowProductDetails(true);
+        }}
+      />
+
+      {/* Product Details Modal (for scanned products) */}
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={showProductDetails}
+        onClose={() => {
+          setShowProductDetails(false);
+          setSelectedProduct(null);
+        }}
+      />
     </div>
   );
 };
