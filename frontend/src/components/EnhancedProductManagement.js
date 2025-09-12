@@ -683,7 +683,9 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(product?.image_url || null);
+  const [imagePreview, setImagePreview] = useState(
+    product?.image_url ? `${process.env.REACT_APP_BACKEND_URL}${product.image_url}` : null
+  );
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
