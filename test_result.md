@@ -287,9 +287,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix currency display to show original purchase currencies"
     - "Add product add/edit cards functionality"
     - "Add return to supplier functionality"
+    - "Search functionality API"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
