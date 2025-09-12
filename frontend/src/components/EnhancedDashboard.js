@@ -22,6 +22,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedSection, setSelectedSection] = useState('all');
   const [refreshInterval, setRefreshInterval] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
   const [showProductDetails, setShowProductDetails] = useState(false);
