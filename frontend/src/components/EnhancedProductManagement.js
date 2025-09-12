@@ -340,7 +340,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
               <div className="h-32 md:h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center relative overflow-hidden">
                 {product.image_url ? (
                   <img 
-                    src={`${BACKEND_URL}${product.image_url}`}
+                    src={`${BACKEND_URL}/api${product.image_url}`}
                     alt={product.product_name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
