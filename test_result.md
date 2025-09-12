@@ -248,6 +248,42 @@ backend:
         agent: "main"
         comment: "Need detailed supplier pages with service levels, lead times, policies - TO BE IMPLEMENTED"
 
+  - task: "Excel lookup functionality for auto-fill in forms"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Excel lookup API endpoint (/api/excel-lookup) implemented, needs testing with frontend components"
+
+  - task: "Export functionality for all forms and KPI dashboards"
+    implemented: false
+    working: false
+    file: "multiple"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "User requested export options for all forms and KPI dashboards - TO BE IMPLEMENTED"
+
+  - task: "Mobile responsiveness audit for iOS and Android"
+    implemented: false
+    working: false
+    file: "multiple"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "User requested comprehensive mobile-friendly audit and improvements for iOS/Android - TO BE IMPLEMENTED"
+
 frontend:
   - task: "Fix company branding - remove hardcoded 'Geant Hypermarket'"
     implemented: true
