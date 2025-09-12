@@ -694,9 +694,6 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
       setFormData(product);
       // Use API endpoint to serve images (this will be properly routed)
       const imageUrl = product.image_url ? `${BACKEND_URL}/api${product.image_url}` : null;
-      console.log('EditProductModal - Product image_url:', product.image_url);
-      console.log('EditProductModal - Full API image URL:', imageUrl);
-      console.log('EditProductModal - BACKEND_URL:', BACKEND_URL);
       setImagePreview(imageUrl);
     }
   }, [product, BACKEND_URL]);
