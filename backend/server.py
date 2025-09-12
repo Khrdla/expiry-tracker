@@ -1132,6 +1132,107 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
         logger.error(f"Error sending daily alerts: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error sending daily alerts: {str(e)}")
 
+# Helper functions for exports
+async def generate_dashboard_data(current_user: User):
+    """Generate dashboard data for exports"""
+    accessible_departments = get_accessible_departments(current_user)
+    
+    # Calculate KPIs for each accessible department
+    kpis = []
+    for dept in accessible_departments:
+        # Get products for this department
+        products = await db.products.find({"department": dept.value}).to_list(None)
+        
+        total_items = len(products)
+        expired_items = 0
+        near_expiry_items = 0
+        out_of_stock_items = 0
+        low_stock_items = 0
+        total_stock_value = 0.0
+        
+        for product in products:
+            status = await calculate_product_status(product)
+            total_stock_value += (product.get('quantity', 0) * product.get('purchase_price', 0))
+            
+            if status == ProductStatus.EXPIRED.value:
+                expired_items += 1
+            elif status == ProductStatus.NEAR_EXPIRY.value:
+                near_expiry_items += 1
+            elif status == ProductStatus.OUT_OF_STOCK.value:
+                out_of_stock_items += 1
+            elif status == ProductStatus.LOW_STOCK.value:
+                low_stock_items += 1
+        
+        kpi = {
+            'department': dept.value,
+            'total_items': total_items,
+            'expired_items': expired_items,
+            'near_expiry_items': near_expiry_items,
+            'out_of_stock_items': out_of_stock_items,
+            'low_stock_items': low_stock_items,
+            'total_stock_value': total_stock_value
+        }
+        kpis.append(kpi)
+    
+    # Get top suppliers
+    top_suppliers = []
+    suppliers_pipeline = [
+        {"$match": {"department": {"$in": [d.value for d in accessible_departments]}}},
+        {"$group": {
+            "_id": "$supplier",
+            "total_items": {"$sum": 1},
+            "total_value": {"$sum": {"$multiply": ["$quantity", "$purchase_price"]}},
+            "out_of_stock": {"$sum": {"$cond": [{"$lte": ["$quantity", 0]}, 1, 0]}},
+            "currency": {"$first": "$purchase_currency"}
+        }},
+        {"$sort": {"total_items": -1}},
+        {"$limit": 10}
+    ]
+    
+    async for supplier_data in db.products.aggregate(suppliers_pipeline):
+        supplier_detail = {
+            'supplier_name': supplier_data["_id"],
+            'total_items': supplier_data["total_items"],
+            'out_of_stock_items': supplier_data["out_of_stock"],
+            'stock_value': supplier_data["total_value"],
+            'purchase_currency': supplier_data.get("currency", "YER")
+        }
+        top_suppliers.append(supplier_detail)
+    
+    return {
+        'kpis': kpis,
+        'top_suppliers': top_suppliers
+    }
+
+def get_stock_status(quantity: int, expiry_date=None, section=None):
+    """Get stock status for a product"""
+    if quantity <= 0:
+        return ProductStatus.OUT_OF_STOCK
+    elif quantity <= 10:  # Low stock threshold
+        return ProductStatus.LOW_STOCK
+    
+    if expiry_date:
+        if isinstance(expiry_date, str):
+            try:
+                expiry_date_obj = datetime.fromisoformat(expiry_date.replace('Z', '+00:00'))
+            except:
+                return ProductStatus.IN_STOCK
+        elif isinstance(expiry_date, datetime):
+            expiry_date_obj = expiry_date
+        else:
+            return ProductStatus.IN_STOCK
+        
+        now = datetime.utcnow()
+        if expiry_date_obj < now:
+            return ProductStatus.EXPIRED
+        
+        # Check if near expiry (7 days default, 15 for beverages)
+        threshold_days = 15 if section == "BEVERAGE" else 7
+        if expiry_date_obj < now + timedelta(days=threshold_days):
+            return ProductStatus.NEAR_EXPIRY
+    
+    return ProductStatus.IN_STOCK
+
 # Export endpoints
 @api_router.post("/export/excel")
 async def export_to_excel(
