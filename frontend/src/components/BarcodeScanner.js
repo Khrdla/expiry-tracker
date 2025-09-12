@@ -109,7 +109,42 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const handleError = (error) => {
     console.error('Barcode scanner error:', error);
-    setError('Scanner error - please try again');
+    
+    // Handle different types of errors
+    if (error?.name === 'NotAllowedError') {
+      setError('❌ Camera access denied. Please allow camera access.');
+      setCameraPermission(false);
+    } else if (error?.name === 'NotFoundError') {
+      setError('❌ No camera found on this device.');
+      setShowManualInput(true);
+    } else if (error?.name === 'NotReadableError') {
+      setError('❌ Camera is being used by another app.');
+      setShowManualInput(true);
+    } else {
+      setError('❌ Scanner error - trying manual entry');
+      handleScanFailure();
+    }
+    
+    setIsScanning(false);
+  };
+
+  const resetScanner = () => {
+    setError('');
+    setSuccess('');
+    setLastScanned('');
+    setRetryCount(0);
+    setScanAttempts(0);
+    setShowManualInput(false);
+    setManualBarcode('');
+    lastScanTime.current = 0;
+  };
+
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    if (manualBarcode.trim()) {
+      processBarcode(manualBarcode.trim());
+      setManualBarcode('');
+    }
   };
 
   const startScanning = () => {
