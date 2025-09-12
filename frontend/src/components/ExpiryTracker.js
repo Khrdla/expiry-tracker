@@ -90,7 +90,7 @@ const ExpiryTracker = ({ user }) => {
                 if (token) {
                   window.open(`${BACKEND_URL}/api/export/expiry-tracker?token=${token}`, '_blank');
                 } else {
-                  alert('Please login to export reports');
+                  console.error('No authentication token found');
                 }
               }}
               className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors"
