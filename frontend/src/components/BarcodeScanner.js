@@ -344,13 +344,23 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </div>
               )}
 
+              {/* Scan Statistics */}
+              {scanAttempts > 0 && (
+                <div className="text-center text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  Scan attempts: {scanAttempts} | Retries: {retryCount}/{MAX_RETRY_ATTEMPTS}
+                </div>
+              )}
+
               {/* Instructions */}
-              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2">
-                <p>📱 <strong>Instructions:</strong></p>
-                <p>1. Click "Start Scanning" to activate camera</p>
-                <p>2. Point camera at barcode</p>
-                <p>3. Keep barcode within the green frame</p>
-                <p>4. Product details will appear automatically</p>
+              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2 bg-blue-50 p-3 rounded-lg">
+                <p>📱 <strong>Scanning Tips:</strong></p>
+                <p>• Use back camera for better results</p>
+                <p>• Ensure good lighting</p>
+                <p>• Hold steady and close to barcode</p>
+                <p>• Try manual entry if camera fails</p>
+                {retryCount > 0 && (
+                  <p className="text-orange-600 font-medium">• Having trouble? Try the "Manual Entry" option</p>
+                )}
               </div>
             </div>
           )}
