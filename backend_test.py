@@ -438,7 +438,7 @@ class ExpiryTrackerAPITester:
             "Barcode Endpoint - No Auth",
             "GET",
             "barcode/9501100046987",
-            401
+            403  # FastAPI returns 403 for missing auth, not 401
         )
         
         # Restore token
