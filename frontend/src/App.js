@@ -22,7 +22,9 @@ import {
   BarChart3,
   AlertTriangle,
   Calendar,
-  Download
+  Download,
+  Clock,
+  RotateCcw
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
