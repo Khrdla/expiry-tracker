@@ -141,7 +141,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 md:p-6 rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="text-center lg:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">Expiry Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Geant Hypermarket</h1>
             <p className="text-green-100 text-sm md:text-base">Inventory Management Dashboard</p>
             <p className="text-xs md:text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
           </div>
