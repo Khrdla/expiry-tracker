@@ -187,15 +187,30 @@ backend:
 
   - task: "Search functionality API"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "Minor Issue - Search endpoint returns 500 error due to ObjectId serialization issues in search results. Core products API works fine, but search needs ObjectId handling fix."
+      - working: true
+        agent: "testing"
+        comment: "FIXED - Applied ObjectId serialization fix to search endpoint. Search now returns 200 OK and finds products correctly across multiple fields (product_name, item_number, barcode, supplier, brand, arabic_description). Tested with 'product' query and returned 6 results successfully."
+
+  - task: "Barcode scanner functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED - NEW BARCODE SCANNER FUNCTIONALITY WORKING PERFECTLY. ✅ Barcode Lookup API (GET /api/barcode/{barcode}): All 5 sample barcodes tested successfully (9501100046987, 3222471052747, 3222471075722, 3222471081273, 3222471081716). ✅ Authentication: Correctly requires Bearer token (returns 403 without auth). ✅ Department Access Control: Admin can access products from all departments (01-FMG, 01-CGD, 01-OPSS). ✅ Error Handling: Invalid barcodes correctly return 404 Not Found. ✅ Response Format: All required fields present (product_name, item_number, barcode, department, section, purchase_price, purchase_currency, selling_price, supplier, quantity, status). ✅ ObjectId Serialization: No ObjectId issues, response is JSON serializable. ✅ Status Calculation: Product status correctly calculated (all tested products showed 'out_of_stock' status). SUCCESS RATE: 14/14 tests passed (100%). The barcode scanner API is production-ready and fully functional."
 
   - task: "Add return to supplier functionality"
     implemented: false
