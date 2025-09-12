@@ -398,6 +398,38 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
           </button>
         </div>
       </div>
+
+      {/* Floating Barcode Scanner Button */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setShowScanner(true)}
+          className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center"
+          title="Scan Barcode"
+        >
+          <Camera size={24} />
+        </button>
+      </div>
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onProductFound={(product) => {
+          setSelectedProduct(product);
+          setShowScanner(false);
+          setShowProductDetails(true);
+        }}
+      />
+
+      {/* Product Details Modal */}
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={showProductDetails}
+        onClose={() => {
+          setShowProductDetails(false);
+          setSelectedProduct(null);
+        }}
+      />
     </div>
   );
 };
