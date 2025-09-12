@@ -434,6 +434,7 @@ test_plan:
   mobile_responsiveness_testing_completed: true
   comprehensive_regression_testing_completed: true
   export_functionality_completed: true
+  currency_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
