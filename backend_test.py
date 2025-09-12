@@ -982,6 +982,16 @@ class ExpiryTrackerAPITester:
         self.test_barcode_department_access()
         self.test_barcode_response_format()
         
+        # NEW EXCEL LOOKUP FUNCTIONALITY TESTS (PRIORITY HIGH)
+        print("\n📊 EXCEL LOOKUP FUNCTIONALITY TESTS (NEW - HIGH PRIORITY)")
+        print("-" * 60)
+        self.test_excel_file_accessibility()
+        self.test_excel_lookup_valid_queries()
+        self.test_excel_lookup_authentication()
+        self.test_excel_lookup_data_validation()
+        self.test_excel_lookup_partial_matches()
+        self.test_excel_lookup_error_scenarios()
+        
         # Additional functionality tests
         print("\n📋 ADDITIONAL FUNCTIONALITY TESTS")
         print("-" * 40)
