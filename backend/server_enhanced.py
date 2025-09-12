@@ -134,6 +134,11 @@ async def calculate_product_status(product: dict) -> str:
     
     expiry_date = product.get('expiry_date')
     if expiry_date:
+        # Handle ObjectId or other non-datetime objects
+        if not isinstance(expiry_date, datetime):
+            # Skip expiry calculation if not a valid datetime
+            return ProductStatus.IN_STOCK.value
+            
         now = datetime.utcnow()
         if expiry_date < now:
             return ProductStatus.EXPIRED.value
