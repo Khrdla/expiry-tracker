@@ -324,7 +324,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Value:</span>
                   <span className="font-medium text-green-600">
-                    {formatCurrency(supplier.stock_value, supplier.purchase_currency)}
+                    {supplier.stock_value.toLocaleString()} {supplier.purchase_currency}
                   </span>
                 </div>
                 <div className="flex justify-between">
