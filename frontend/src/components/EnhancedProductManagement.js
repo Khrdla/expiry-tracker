@@ -315,10 +315,10 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
       {/* Products Grid */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+          <div className="animate-spin rounded-full h-16 w-16 md:h-32 md:w-32 border-b-2 border-green-500"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {products.map((product) => (
             <div
               key={product.id}
@@ -326,52 +326,57 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
               onClick={() => handleProductClick(product)}
             >
               {/* Product Image Placeholder */}
-              <div className="h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-                <Package size={48} className="text-green-600" />
+              <div className="h-32 md:h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
+                <Package size={window.innerWidth > 768 ? 48 : 32} className="text-green-600" />
               </div>
 
-              <div className="p-4">
+              <div className="p-3 md:p-4">
                 {/* Product Name */}
-                <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
                   {product.product_name}
                 </h3>
 
                 {/* Item Number & Department */}
-                <div className="text-sm text-gray-600 mb-2">
-                  <div>Item: {product.item_number || 'N/A'}</div>
+                <div className="text-xs md:text-sm text-gray-600 mb-2">
+                  <div>#{product.item_number || 'N/A'}</div>
                   <div>{getDepartmentName(product.department)}</div>
                 </div>
 
-                {/* Status Badge */}
+                {/* Pricing Information */}
+                <div className="mb-3 space-y-1">
+                  <div className="flex justify-between items-center text-xs md:text-sm">
+                    <span className="text-gray-600">Purchase:</span>
+                    <span className="font-medium text-green-600">
+                      {product.purchase_price ? `${product.purchase_price.toFixed(2)} ${product.purchase_currency || 'YER'}` : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs md:text-sm">
+                    <span className="text-gray-600">Stock Value:</span>
+                    <span className="font-medium text-blue-600">
+                      {product.purchase_price && product.quantity 
+                        ? `${(product.purchase_price * product.quantity).toFixed(2)} ${product.purchase_currency || 'YER'}`
+                        : '0'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quantity & Status */}
                 <div className="flex justify-between items-center mb-3">
+                  <div className="text-xs md:text-sm">
+                    <span className="text-gray-600">Qty: </span>
+                    <span className="font-bold">{product.quantity || 0}</span>
+                  </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
                     {getStatusIcon(product.status)} {product.status?.replace('_', ' ').toUpperCase()}
                   </span>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {product.quantity} units
-                  </span>
-                </div>
-
-                {/* Price Information */}
-                <div className="border-t border-gray-200 pt-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Purchase:</span>
-                    <span className="font-medium">
-                      {formatCurrency(product.purchase_price, product.purchase_currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Stock Value:</span>
-                    <span className="font-semibold text-green-600">
-                      {formatCurrency(product.quantity * product.purchase_price, product.purchase_currency)}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Supplier */}
-                <div className="mt-2 text-xs text-gray-500 truncate">
-                  Supplier: {product.supplier}
-                </div>
+                {product.supplier && (
+                  <div className="text-xs text-gray-500 truncate">
+                    Supplier: {product.supplier}
+                  </div>
+                )}
               </div>
             </div>
           ))}
