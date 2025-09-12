@@ -300,9 +300,15 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
         )
         top_suppliers.append(supplier_detail)
     
+    # Get all available sections for accessible departments
+    sections = []
+    section_docs = await db.products.distinct("section", {"department": {"$in": [d.value for d in accessible_departments]}})
+    sections = [section for section in section_docs if section]  # Filter out None values
+    
     return DashboardData(
         user_role=current_user.role,
         accessible_departments=accessible_departments,
+        sections=sections,
         kpis=kpis,
         recent_alerts=recent_alerts,
         stock_distribution=stock_distribution,
