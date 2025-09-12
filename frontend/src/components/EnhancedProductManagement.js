@@ -613,6 +613,24 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
         </div>
       )}
 
+      {/* Edit Product Modal */}
+      {showEditModal && (
+        <EditProductModal
+          product={editFormData}
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditFormData({});
+          }}
+          onSave={(updatedProduct) => {
+            // Update the product in the list
+            setProducts(products.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+            setShowEditModal(false);
+            setEditFormData({});
+          }}
+        />
+      )}
+
       {/* Barcode Scanner Modal */}
       <BarcodeScanner
         isOpen={showScanner}
