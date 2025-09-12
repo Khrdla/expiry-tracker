@@ -1062,7 +1062,7 @@ app.include_router(api_router)
 # Health check
 @app.get("/")
 async def root():
-    return {"message": "Expiry Tracker Inventory Management System API v2.0"}
+    return {"message": "Geant Hypermarket Inventory Management System API v2.0"}
 
 @app.get("/health")
 async def health_check():
