@@ -191,10 +191,10 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
     if (!dashboardData) return [];
     const expiry = dashboardData.expiry_status;
     return Object.entries(expiry).map(([key, value]) => ({
-      name: key.replace('_', ' ').toUpperCase(),
+      name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       value: value,
       color: COLORS[key]
-    }));
+    })).filter(item => item.value > 0); // Only show non-zero values
   };
 
   if (loading) {
