@@ -500,7 +500,8 @@ async def get_product(product_id: str):
             {"$project": {
                 "category": 0,
                 "supplier": 0,
-                "inventory": 0
+                "inventory": 0,
+                "_id": 0
             }}
         ]
         
