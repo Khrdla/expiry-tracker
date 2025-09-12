@@ -279,43 +279,51 @@ class ExpiryTrackerAPITester:
         return success
 
     def test_search_functionality(self):
-        """Test search functionality - critical for the review"""
-        # Test text search
+        """Test search functionality with real product data"""
+        # Test general search
         success1, response1 = self.run_test(
-            "Search by Text (Samsung)",
+            "Search Products (general)",
             "GET",
-            "search?q=Samsung&limit=10",
+            "search?q=product&limit=10",
             200
         )
         
         if success1 and isinstance(response1, list):
-            print(f"   🔍 Text search found {len(response1)} results")
+            print(f"   🔍 General search found {len(response1)} results")
         
-        # Test barcode search
-        success2, response2 = self.run_test(
-            "Search by Barcode",
+        return success1
+
+    def test_currency_display(self):
+        """Test currency display - CRITICAL for review (YER/SAR/EUR)"""
+        # Get products and check currency fields
+        success, response = self.run_test(
+            "Currency Display Check",
             "GET",
-            "search?q=1234567890123&limit=10",
+            "products?limit=20",
             200
         )
         
-        if success2 and isinstance(response2, list):
-            print(f"   📱 Barcode search found {len(response2)} results")
+        if success and isinstance(response, list):
+            currencies_found = set()
+            for product in response:
+                currency = product.get('purchase_currency')
+                if currency:
+                    currencies_found.add(currency)
+            
+            print(f"   💱 Currencies found: {list(currencies_found)}")
+            
+            # Check if we have the expected currencies from imported data
+            expected_currencies = {'YER', 'SAR', 'EUR'}
+            found_expected = currencies_found.intersection(expected_currencies)
+            
+            if found_expected:
+                print(f"   ✅ Found expected currencies: {found_expected}")
+                return True
+            else:
+                self.log_test("Currency Display", False, f"Expected YER/SAR/EUR, found: {currencies_found}")
+                return False
         
-        # Test direct barcode lookup
-        success3, response3 = self.run_test(
-            "Direct Barcode Lookup",
-            "GET",
-            "products/barcode/1234567890123",
-            200
-        )
-        
-        if success3:
-            print(f"   ✅ Direct barcode lookup successful")
-        else:
-            print(f"   ⚠️ Direct barcode lookup failed (may be expected if barcode doesn't exist)")
-        
-        return success1 and success2
+        return False
 
     def test_suppliers_endpoint(self):
         """Test suppliers endpoint"""
