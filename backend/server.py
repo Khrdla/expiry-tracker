@@ -535,28 +535,57 @@ async def search_products(
     limit: int = Query(10, ge=1, le=50),
     current_user: User = Depends(get_current_user)
 ):
-    accessible_departments = get_accessible_departments(current_user)
+    from bson import ObjectId
+    from datetime import datetime
     
-    # Enhanced search across multiple fields
-    search_filter = {
-        "department": {"$in": [d.value for d in accessible_departments]},
-        "$or": [
-            {"product_name": {"$regex": q, "$options": "i"}},
-            {"item_number": {"$regex": q, "$options": "i"}},
-            {"barcode": q},  # Exact match for barcode
-            {"supplier": {"$regex": q, "$options": "i"}},
-            {"brand": {"$regex": q, "$options": "i"}},
-            {"arabic_description": {"$regex": q, "$options": "i"}}
-        ]
-    }
-    
-    products = await db.products.find(search_filter).limit(limit).to_list(limit)
-    
-    # Calculate status for each product
-    for product in products:
-        product["status"] = await calculate_product_status(product)
-    
-    return products
+    try:
+        accessible_departments = get_accessible_departments(current_user)
+        
+        # Enhanced search across multiple fields
+        search_filter = {
+            "department": {"$in": [d.value for d in accessible_departments]},
+            "$or": [
+                {"product_name": {"$regex": q, "$options": "i"}},
+                {"item_number": {"$regex": q, "$options": "i"}},
+                {"barcode": q},  # Exact match for barcode
+                {"supplier": {"$regex": q, "$options": "i"}},
+                {"brand": {"$regex": q, "$options": "i"}},
+                {"arabic_description": {"$regex": q, "$options": "i"}}
+            ]
+        }
+        
+        products_cursor = db.products.find(search_filter).limit(limit)
+        products = []
+        
+        async for product_doc in products_cursor:
+            # Create a clean product dict with only safe values
+            clean_product = {}
+            
+            # Copy only safe string/number fields
+            safe_fields = [
+                'id', 'product_name', 'item_number', 'department', 'section', 
+                'family', 'sub_family', 'supplier_code', 'supplier', 'quantity',
+                'barcode', 'purchase_price', 'purchase_currency', 'selling_price',
+                'arabic_description', 'description', 'location', 'brand', 'image_url'
+            ]
+            
+            for field in safe_fields:
+                if field in product_doc:
+                    value = product_doc[field]
+                    # Only include if it's a basic type
+                    if isinstance(value, (str, int, float, bool)) or value is None:
+                        clean_product[field] = value
+            
+            # Add status
+            clean_product["status"] = await calculate_product_status(product_doc)
+            
+            products.append(clean_product)
+        
+        return products
+        
+    except Exception as e:
+        logger.error(f"Error in search_products: {str(e)}")
+        return []
 
 # Import Excel data endpoint
 @api_router.post("/import/excel")
