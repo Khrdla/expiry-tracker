@@ -322,7 +322,13 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
               return (
                 <li key={item.path}>
                   <button
-                    onClick={() => navigate(item.path)}
+                    onClick={() => {
+                      navigate(item.path);
+                      // Auto-close mobile menu after navigation
+                      if (window.innerWidth < 1024) { // lg breakpoint
+                        setSidebarOpen(false);
+                      }
+                    }}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
                         ? 'bg-green-50 text-green-700 border border-green-200'
