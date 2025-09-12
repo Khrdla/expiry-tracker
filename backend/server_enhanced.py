@@ -322,6 +322,8 @@ async def get_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
 ):
+    from bson import ObjectId
+    
     accessible_departments = get_accessible_departments(current_user)
     filter_dict = {"department": {"$in": [d.value for d in accessible_departments]}}
     
@@ -343,13 +345,17 @@ async def get_products(
     products = []
     
     async for product_doc in products_cursor:
-        # Remove ObjectId and handle serialization issues
+        # Remove ObjectId and handle all serialization issues
         if '_id' in product_doc:
             del product_doc['_id']
         
-        # Convert datetime objects to ISO strings
-        for key, value in product_doc.items():
-            if isinstance(value, datetime):
+        # Handle ObjectId fields in the document
+        for key, value in list(product_doc.items()):
+            if isinstance(value, ObjectId):
+                # Remove ObjectId fields as they can't be serialized
+                del product_doc[key]
+            elif isinstance(value, datetime):
+                # Convert datetime objects to ISO strings
                 product_doc[key] = value.isoformat()
         
         # Calculate status for each product
