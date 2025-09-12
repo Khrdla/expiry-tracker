@@ -318,11 +318,11 @@ test_plan:
   current_focus:
     - "Add product add/edit cards functionality"
     - "Add return to supplier functionality"
-    - "Search functionality API"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
   frontend_testing_completed: true
+  barcode_testing_completed: true
 
 agent_communication:
   - agent: "main"
