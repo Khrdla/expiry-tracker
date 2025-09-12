@@ -755,7 +755,7 @@ async def get_low_stock_report():
                 "unit_price": {"$arrayElemAt": ["$product.unit_price", 0]},
                 "shortage": {"$subtract": ["$min_stock", "$current_stock"]}
             }},
-            {"$project": {"product": 0}},
+            {"$project": {"product": 0, "_id": 0}},
             {"$sort": {"shortage": -1}}
         ]
         
