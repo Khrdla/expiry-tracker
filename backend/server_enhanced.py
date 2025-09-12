@@ -334,11 +334,17 @@ async def get_products(
             {"supplier": {"$regex": search, "$options": "i"}}
         ]
     
-    products = await db.products.find(filter_dict).skip(skip).limit(limit).to_list(limit)
+    products_cursor = db.products.find(filter_dict).skip(skip).limit(limit)
+    products = []
     
-    # Calculate status for each product
-    for product in products:
-        product["status"] = await calculate_product_status(product)
+    async for product_doc in products_cursor:
+        # Remove ObjectId to avoid serialization issues
+        if '_id' in product_doc:
+            del product_doc['_id']
+        
+        # Calculate status for each product
+        product_doc["status"] = await calculate_product_status(product_doc)
+        products.append(product_doc)
     
     # Filter by status if requested
     if status:
