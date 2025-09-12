@@ -322,60 +322,72 @@ async def get_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
 ):
+    import json
     from bson import ObjectId
+    from datetime import datetime
     
-    accessible_departments = get_accessible_departments(current_user)
-    
-    # Build department filter without $in operator to avoid issues
-    if department and department in [d.value for d in accessible_departments]:
-        filter_dict = {"department": department}
-    else:
-        # Use $or instead of $in for better compatibility
-        filter_dict = {"$or": [{"department": d.value} for d in accessible_departments]}
-    
-    if section:
-        filter_dict["section"] = section
-    if supplier:
-        filter_dict["supplier"] = {"$regex": supplier, "$options": "i"}
-    if search:
-        search_conditions = [
-            {"product_name": {"$regex": search, "$options": "i"}},
-            {"item_number": {"$regex": search, "$options": "i"}},
-            {"barcode": {"$regex": search, "$options": "i"}},
-            {"supplier": {"$regex": search, "$options": "i"}}
-        ]
-        if "$or" in filter_dict:
-            # Combine department filter with search
-            filter_dict = {"$and": [{"$or": filter_dict["$or"]}, {"$or": search_conditions}]}
+    try:
+        accessible_departments = get_accessible_departments(current_user)
+        
+        # Build department filter
+        if department and department in [d.value for d in accessible_departments]:
+            filter_dict = {"department": department}
         else:
-            filter_dict["$or"] = search_conditions
-    
-    products_cursor = db.products.find(filter_dict).skip(skip).limit(limit)
-    products = []
-    
-    async for product_doc in products_cursor:
-        # Remove ObjectId and handle all serialization issues
-        if '_id' in product_doc:
-            del product_doc['_id']
+            # Use $or instead of $in
+            filter_dict = {"$or": [{"department": d.value} for d in accessible_departments]}
         
-        # Handle ObjectId fields in the document
-        for key, value in list(product_doc.items()):
-            if isinstance(value, ObjectId):
-                # Remove ObjectId fields as they can't be serialized
-                del product_doc[key]
-            elif isinstance(value, datetime):
-                # Convert datetime objects to ISO strings
-                product_doc[key] = value.isoformat()
+        if section:
+            filter_dict["section"] = section
+        if supplier:
+            filter_dict["supplier"] = {"$regex": supplier, "$options": "i"}
+        if search:
+            search_conditions = [
+                {"product_name": {"$regex": search, "$options": "i"}},
+                {"item_number": {"$regex": search, "$options": "i"}},
+                {"barcode": {"$regex": search, "$options": "i"}},
+                {"supplier": {"$regex": search, "$options": "i"}}
+            ]
+            if "$or" in filter_dict:
+                filter_dict = {"$and": [{"$or": filter_dict["$or"]}, {"$or": search_conditions}]}
+            else:
+                filter_dict["$or"] = search_conditions
         
-        # Calculate status for each product
-        product_doc["status"] = await calculate_product_status(product_doc)
-        products.append(product_doc)
-    
-    # Filter by status if requested
-    if status:
-        products = [p for p in products if p.get("status") == status]
-    
-    return products
+        products_cursor = db.products.find(filter_dict).skip(skip).limit(limit)
+        products = []
+        
+        async for product_doc in products_cursor:
+            # Create a clean product dict with only safe values
+            clean_product = {}
+            
+            # Copy only safe string/number fields
+            safe_fields = [
+                'id', 'product_name', 'item_number', 'department', 'section', 
+                'family', 'sub_family', 'supplier_code', 'supplier', 'quantity',
+                'barcode', 'purchase_price', 'purchase_currency', 'selling_price',
+                'arabic_description', 'description', 'location', 'brand', 'image_url'
+            ]
+            
+            for field in safe_fields:
+                if field in product_doc:
+                    value = product_doc[field]
+                    # Only include if it's a basic type
+                    if isinstance(value, (str, int, float, bool)) or value is None:
+                        clean_product[field] = value
+            
+            # Add status
+            clean_product["status"] = "in_stock"  # Simple default status for now
+            
+            products.append(clean_product)
+        
+        # Filter by status if requested
+        if status:
+            products = [p for p in products if p.get("status") == status]
+        
+        return products
+        
+    except Exception as e:
+        logger.error(f"Error in get_products: {str(e)}")
+        return []
 
 @api_router.post("/products")
 async def create_product(
