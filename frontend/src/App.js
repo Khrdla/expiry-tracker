@@ -158,7 +158,7 @@ const LoginForm = ({ onLogin }) => {
           <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Package size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Expiry Tracker</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Geant Hypermarket</h1>
           <p className="text-gray-600">Inventory Management System</p>
         </div>
 
