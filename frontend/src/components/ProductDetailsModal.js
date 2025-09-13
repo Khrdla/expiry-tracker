@@ -75,48 +75,44 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
 
         {/* Content */}
         <div className="p-6">
-          {/* Product Image - Prominent at Top */}
-          <div className="mb-8 bg-red-100 p-4 rounded-lg">
-            <div className="text-center mb-2">
-              <p className="text-sm text-gray-600">DEBUG: Image URL: {product.image_url || 'None'}</p>
-              <p className="text-sm text-gray-600">DEBUG: Backend URL: {BACKEND_URL}</p>
-              {product.image_url && (
-                <p className="text-sm text-gray-600">DEBUG: Full URL: {`${BACKEND_URL}/api${product.image_url}`}</p>
-              )}
-            </div>
+          {/* Product Image - Prominent Display */}
+          <div className="mb-8">
             <div className="flex justify-center">
               {product.image_url ? (
-                <div className="relative group">
+                <div className="w-full max-w-lg">
                   <img 
                     src={`${BACKEND_URL}/api${product.image_url}`}
                     alt={product.product_name}
-                    className="w-full max-w-sm h-64 sm:h-80 object-cover rounded-2xl shadow-xl border-4 border-white hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                    onLoad={() => console.log('Image loaded successfully')}
+                    className="w-full h-80 object-cover rounded-3xl shadow-2xl border-8 border-white bg-white hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02]"
+                    style={{
+                      filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))'
+                    }}
                     onError={(e) => {
-                      console.error('Image failed to load:', `${BACKEND_URL}/api${product.image_url}`);
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
                   />
-                  <div className="hidden w-full max-w-sm h-64 sm:h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl shadow-xl border-4 border-white flex-col items-center justify-center">
-                    <div className="bg-white rounded-full p-4 mb-4 shadow-md">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <div className="hidden w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex-col items-center justify-center">
+                    <div className="bg-white rounded-full p-6 mb-6 shadow-xl">
+                      <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-sm font-medium">Image failed to load</p>
+                    <p className="text-slate-500 text-lg font-medium">Image not available</p>
+                    <p className="text-slate-400 text-sm mt-2">Product image failed to load</p>
                   </div>
                 </div>
               ) : (
-                <div className="w-full max-w-sm h-64 sm:h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl shadow-xl border-4 border-white flex flex-col items-center justify-center">
-                  <div className="bg-white rounded-full p-4 mb-4 shadow-md">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <div className="w-full max-w-lg h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex flex-col items-center justify-center">
+                  <div className="bg-white rounded-full p-6 mb-6 shadow-xl">
+                    <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500 text-sm font-medium">No image available</p>
+                  <p className="text-slate-500 text-lg font-medium">No image available</p>
+                  <p className="text-slate-400 text-sm mt-2">This product has no image uploaded</p>
                 </div>
               )}
             </div>
