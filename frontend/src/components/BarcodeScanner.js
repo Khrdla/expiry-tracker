@@ -31,68 +31,6 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     };
   }, []);
 
-  // Initialize Html5QrcodeScanner with optimized settings
-  useEffect(() => {
-    if (isOpen && cameraPermission === true) {
-      // Initialize scanner when modal opens and camera permission is granted
-      initializeScanner();
-    }
-    
-    return () => {
-      cleanupScanner();
-    };
-  }, [isOpen, cameraPermission]);
-
-  const initializeScanner = () => {
-    if (scannerRef.current) {
-      cleanupScanner();
-    }
-
-    // Html5QrcodeScanner configuration for optimal performance
-    const config = {
-      fps: 30, // High FPS for fast detection
-      qrbox: { width: 300, height: 150 }, // Optimized for barcode scanning
-      aspectRatio: 2.0, // Wide aspect ratio for barcodes
-      disableFlip: false,
-      videoConstraints: {
-        facingMode: "environment", // Back camera
-        width: { ideal: 1920, min: 1280 },
-        height: { ideal: 1080, min: 720 },
-        frameRate: { ideal: 60, min: 30 }
-      },
-      supportedScanTypes: [
-        Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-      ],
-      experimentalFeatures: {
-        useBarCodeLegacyMode: false
-      }
-    };
-
-    try {
-      scannerRef.current = new Html5QrcodeScanner(
-        "qr-reader",
-        config,
-        false // verbose logging disabled
-      );
-    } catch (error) {
-      console.error('Scanner initialization error:', error);
-      setError('❌ Scanner initialization failed');
-    }
-  };
-
-  const cleanupScanner = () => {
-    if (scannerRef.current) {
-      try {
-        scannerRef.current.clear().catch(err => {
-          console.warn('Scanner cleanup warning:', err);
-        });
-      } catch (error) {
-        console.warn('Scanner cleanup error:', error);
-      }
-      scannerRef.current = null;
-    }
-  };
-
   useEffect(() => {
     if (isOpen) {
       initializeCamera();
@@ -111,20 +49,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const initializeCamera = async () => {
     try {
-      // Get available cameras
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setAvailableCameras(videoDevices);
-      
-      // Prefer back camera for better barcode scanning
-      const backCamera = videoDevices.find(device => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('environment')
-      );
-      
-      setSelectedCamera(backCamera?.deviceId || videoDevices[0]?.deviceId || '');
+      // Request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraPermission(true);
+      // Stop the test stream
+      stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       console.error('Camera initialization error:', error);
       setCameraPermission(false);
@@ -133,45 +62,52 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const startScanning = async () => {
-    if (!codeReaderRef.current || !videoRef.current || !selectedCamera) {
-      setError('❌ Scanner not ready. Please try again.');
-      return;
-    }
-
+    if (!isMountedRef.current) return;
+    
     try {
       resetScanner();
       setIsScanning(true);
-      scanningRef.current = true;
 
-      // Enhanced camera constraints for better barcode detection
-      const constraints = {
-        deviceId: selectedCamera,
-        width: { ideal: 1920, min: 1280 },
-        height: { ideal: 1080, min: 720 },
-        frameRate: { ideal: 60, min: 30 },
-        focusMode: 'continuous',
-        exposureMode: 'continuous',
-        whiteBalanceMode: 'continuous'
+      // Initialize Html5QrcodeScanner with enhanced configuration
+      const config = {
+        fps: 30, // High FPS for fast detection
+        qrbox: { width: 350, height: 150 }, // Optimized for barcode scanning
+        aspectRatio: 2.33, // Wide aspect ratio for barcodes
+        disableFlip: false,
+        videoConstraints: {
+          facingMode: "environment", // Back camera preferred
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 60, min: 30 }
+        }
       };
 
-      // Start continuous scanning with optimized settings
-      await codeReaderRef.current.decodeFromVideoDevice(
-        selectedCamera,
-        videoRef.current,
-        (result, err) => {
-          if (result && scanningRef.current) {
-            handleSuccessfulScan(result.getText());
-          } else if (err && scanningRef.current) {
-            // Only handle actual errors, not "not found" messages
-            if (err.name !== 'NotFoundException') {
-              console.warn('Scan error:', err);
-            }
+      if (scannerInstanceRef.current) {
+        await cleanup();
+      }
+
+      // Dynamic import to avoid build issues
+      const { Html5QrcodeScanner } = await import('html5-qrcode');
+      
+      scannerInstanceRef.current = new Html5QrcodeScanner(
+        "qr-reader",
+        config,
+        false // verbose logging disabled for performance
+      );
+
+      scannerInstanceRef.current.render(
+        (decodedText) => {
+          if (isMountedRef.current) {
+            handleSuccessfulScan(decodedText);
+          }
+        },
+        (errorMessage) => {
+          // Only log actual errors, not "no barcode found" messages
+          if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
+            console.warn('Scan error:', errorMessage);
           }
         }
       );
-
-      // Add scanning animation
-      startScanAnimation();
 
     } catch (error) {
       console.error('Start scanning error:', error);
@@ -180,7 +116,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const handleSuccessfulScan = async (barcode) => {
-    if (!barcode || barcode === lastScanned || loading || !scanningRef.current) return;
+    if (!barcode || barcode === lastScanned || loading || !isMountedRef.current) return;
     
     // Prevent rapid duplicate scans
     const now = Date.now();
@@ -194,7 +130,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     setScanAttempts(prev => prev + 1);
     
     // Stop scanning immediately for faster response
-    stopScanning();
+    await stopScanning();
     
     await processBarcode(barcode);
   };
