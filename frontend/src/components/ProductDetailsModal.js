@@ -127,6 +127,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
           </div>
 
           {/* Product Information Grid */}
+          <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
             <div className="space-y-4">
