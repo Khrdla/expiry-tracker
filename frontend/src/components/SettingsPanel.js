@@ -331,7 +331,7 @@ const SettingsPanel = ({ user }) => {
                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                   />
                   <label htmlFor="daily_alerts" className="text-sm font-medium text-gray-700">
-                    Enable Daily Email Alerts (08:00 AM Aden time)
+                    Enable Daily Email Alerts (06:00 AM Aden time as requested)
                   </label>
                 </div>
 
