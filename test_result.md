@@ -420,7 +420,7 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 7
   run_ui: true
   frontend_testing_date: "2025-01-12"
   frontend_success_rate: "100%"
@@ -432,6 +432,8 @@ metadata:
   overall_success_rate: "98%"
   currency_testing_date: "2025-01-12"
   currency_testing_success_rate: "92.5%"
+  image_functionality_testing_date: "2025-01-12"
+  image_functionality_success_rate: "87.5%"
 
 test_plan:
   current_focus: []
