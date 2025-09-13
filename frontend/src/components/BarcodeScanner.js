@@ -16,7 +16,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const scannerRef = useRef(null);
   const lastScanTime = useRef(0);
 
-  const BACKEND_URL = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const MAX_RETRY_ATTEMPTS = 3;
   const SCAN_COOLDOWN = 2000; // 2 seconds between scans
 
