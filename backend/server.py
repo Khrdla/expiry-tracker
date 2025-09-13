@@ -1380,6 +1380,8 @@ async def get_email_status(current_user: User = Depends(get_admin_user)):
         # Check email configuration
         sender_email = os.environ.get('SENDER_EMAIL', 'inventory@geantyemen.com')
         email_password_configured = bool(os.environ.get('EMAIL_PASSWORD'))
+        demo_mode = os.environ.get('EMAIL_DEMO_MODE', 'false').lower() == 'true'
+        demo_password = os.environ.get('EMAIL_PASSWORD') == "demo_mode_email_testing"
         
         return {
             "current_aden_time": current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
@@ -1392,11 +1394,13 @@ async def get_email_status(current_user: User = Depends(get_admin_user)):
             "last_successful_email": settings.get('last_successful_email'),
             "recent_failures": settings.get('email_failures', [])[-5:],  # Last 5 failures
             "email_configured": email_password_configured,
+            "demo_mode": demo_mode and demo_password,
             "configuration_help": {
                 "smtp_server": "smtp.gmail.com:587",
                 "required_env": "EMAIL_PASSWORD",
-                "current_sender": sender_email
-            } if not email_password_configured else None
+                "current_sender": sender_email,
+                "demo_mode_active": demo_mode and demo_password
+            } if not (email_password_configured and not demo_password) else None
         }
         
     except Exception as e:
