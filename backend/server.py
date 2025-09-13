@@ -992,6 +992,7 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
     try:
         sender_email = os.environ.get('SENDER_EMAIL', 'inventory@geantyemen.com')
         sender_password = os.environ.get('EMAIL_PASSWORD', '')
+        demo_mode = os.environ.get('EMAIL_DEMO_MODE', 'false').lower() == 'true'
         
         if not sender_password:
             logger.warning("Email password not configured, email sending disabled")
@@ -1013,6 +1014,26 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
             except Exception as log_error:
                 logger.error(f"Failed to log email failure: {log_error}")
             return False
+        
+        # Demo mode - simulate successful email without actually sending
+        if demo_mode and sender_password == "demo_mode_email_testing":
+            logger.info(f"DEMO MODE: Simulating email send to {recipients}")
+            logger.info(f"DEMO MODE: Subject: {subject}")
+            logger.info(f"DEMO MODE: Body preview: {body[:100]}...")
+            
+            # Log successful demo email
+            try:
+                aden_tz = pytz.timezone('Asia/Aden')
+                current_aden_time = datetime.now(aden_tz)
+                await db.email_settings.update_one(
+                    {},
+                    {"$set": {"last_successful_email": current_aden_time}},
+                    upsert=True
+                )
+            except Exception as log_error:
+                logger.error(f"Failed to log demo email: {log_error}")
+            
+            return True
         
         # Create message
         msg = MIMEMultipart()
