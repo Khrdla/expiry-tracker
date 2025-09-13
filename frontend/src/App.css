@@ -148,6 +148,25 @@ div[style*="bottom: "] {
 /* Ensure form elements stay clickable and visible */
 form, 
 .form-group, 
+.scanner-button,
+button[title*="Scan"] {
+  position: relative;
+  z-index: 1002 !important;
+}
+
+/* Force scanner button to always be visible above watermarks */
+.scanner-button,
+div[class*="fixed"][class*="bottom"] button[title*="Scan"],
+button[title*="Scan Barcode"] {
+  z-index: 1002 !important;
+  position: relative !important;
+}
+
+/* Ensure scanner button container has high z-index */
+.fixed.bottom-20,
+.fixed.bottom-24 {
+  z-index: 1002 !important;
+}
 input[type="file"], 
 button[type="submit"],
 .file-upload {
