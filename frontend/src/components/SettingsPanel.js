@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Clock, Mail, Palette, Bell, Download, Settings } from 'lucide-react';
+import { Save, Clock, Mail, Palette, Bell, Download, Settings, TestTube, AlertCircle, CheckCircle } from 'lucide-react';
 
 const SettingsPanel = ({ user }) => {
   const [emailSettings, setEmailSettings] = useState({
