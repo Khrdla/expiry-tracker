@@ -520,8 +520,9 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
