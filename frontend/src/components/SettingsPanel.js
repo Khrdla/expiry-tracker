@@ -95,13 +95,20 @@ const SettingsPanel = ({ user }) => {
       });
 
       if (response.ok) {
-        setMessage('Email settings saved successfully!');
-        setTimeout(() => setMessage(''), 3000);
+        const result = await response.json();
+        setMessage(`✅ Email settings saved successfully! Time: ${result.daily_alert_time} (${result.timezone})`);
+        setTimeout(() => setMessage(''), 5000);
+        // Refresh email status after successful save
+        await fetchEmailStatus();
       } else {
-        setMessage('Failed to save email settings');
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        setMessage(`❌ Failed to save email settings: ${errorData.detail || 'Server error'}`);
+        setTimeout(() => setMessage(''), 8000);
       }
     } catch (error) {
-      setMessage('Error saving email settings');
+      console.error('Email settings save error:', error);
+      setMessage(`❌ Error saving email settings: ${error.message}`);
+      setTimeout(() => setMessage(''), 8000);
     } finally {
       setLoading(false);
     }
