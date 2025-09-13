@@ -136,6 +136,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const processBarcode = async (barcode) => {
+    if (!isMountedRef.current) return;
+    
     setLoading(true);
     setError('');
     setSuccess('');
@@ -165,7 +167,9 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         
         // Auto-close after success with slight delay
         setTimeout(() => {
-          onClose();
+          if (isMountedRef.current) {
+            onClose();
+          }
         }, 1200);
         
       } else if (response.status === 404) {
@@ -183,7 +187,9 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setScanStats(prev => ({ ...prev, failed: prev.failed + 1 }));
       handleScanFailure();
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -195,7 +201,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     } else {
       // Auto-retry with brief delay
       setTimeout(() => {
-        if (!isScanning && scanningRef.current) {
+        if (!isScanning && isMountedRef.current) {
           startScanning();
         }
       }, 1000);
@@ -223,26 +229,21 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     stopScanning();
   };
 
-  const stopScanning = () => {
-    scanningRef.current = false;
+  const stopScanning = async () => {
     setIsScanning(false);
     
-    if (codeReaderRef.current) {
+    if (scannerInstanceRef.current) {
       try {
-        codeReaderRef.current.reset();
+        await scannerInstanceRef.current.clear();
+        scannerInstanceRef.current = null;
       } catch (error) {
         console.warn('Error stopping scanner:', error);
       }
     }
-    
-    stopScanAnimation();
   };
 
-  const cleanup = () => {
-    stopScanning();
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+  const cleanup = async () => {
+    await stopScanning();
   };
 
   const resetScanner = () => {
@@ -270,36 +271,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  const startScanAnimation = () => {
-    const scanLine = document.getElementById('scan-line');
-    if (scanLine) {
-      scanLine.style.animation = 'scanAnimation 2s ease-in-out infinite';
-    }
-  };
-
-  const stopScanAnimation = () => {
-    const scanLine = document.getElementById('scan-line');
-    if (scanLine) {
-      scanLine.style.animation = 'none';
-    }
-  };
-
   const handleManualSubmit = (e) => {
     e.preventDefault();
     if (manualBarcode.trim()) {
       processBarcode(manualBarcode.trim());
       setManualBarcode('');
-    }
-  };
-
-  const switchCamera = () => {
-    const currentIndex = availableCameras.findIndex(cam => cam.deviceId === selectedCamera);
-    const nextIndex = (currentIndex + 1) % availableCameras.length;
-    setSelectedCamera(availableCameras[nextIndex]?.deviceId || '');
-    
-    if (isScanning) {
-      stopScanning();
-      setTimeout(() => startScanning(), 500);
     }
   };
 
