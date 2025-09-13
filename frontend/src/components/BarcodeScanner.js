@@ -13,57 +13,163 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [manualBarcode, setManualBarcode] = useState('');
   const [scanAttempts, setScanAttempts] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
-  const scannerRef = useRef(null);
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [selectedCamera, setSelectedCamera] = useState('');
+  const [scanStats, setScanStats] = useState({ successful: 0, failed: 0 });
+  
+  const videoRef = useRef(null);
+  const codeReaderRef = useRef(null);
+  const scanningRef = useRef(false);
   const lastScanTime = useRef(0);
+  const animationRef = useRef(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-  const MAX_RETRY_ATTEMPTS = 3;
-  const SCAN_COOLDOWN = 2000; // 2 seconds between scans
+  const MAX_RETRY_ATTEMPTS = 2;
+  const SCAN_COOLDOWN = 150; // Reduced to 150ms for sub-second response
+  const SCAN_TIMEOUT = 10000; // 10 seconds timeout for each scan attempt
+
+  // Initialize ZXing reader with optimized settings
+  useEffect(() => {
+    const hints = new Map();
+    // Enable all barcode formats for comprehensive support
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.CODE_93,
+      BarcodeFormat.CODABAR,
+      BarcodeFormat.ITF,
+      BarcodeFormat.QR_CODE,
+      BarcodeFormat.DATA_MATRIX,
+      BarcodeFormat.PDF_417
+    ]);
+    
+    // Optimize for accuracy and speed
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    hints.set(DecodeHintType.ALSO_INVERTED, true);
+
+    codeReaderRef.current = new BrowserMultiFormatReader(hints);
+    
+    return () => {
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      checkCameraPermission();
+      initializeCamera();
       resetScanner();
     } else {
-      // Cleanup when closing
-      setIsScanning(false);
-      resetScanner();
+      cleanup();
     }
   }, [isOpen]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isScanning) {
-        setIsScanning(false);
-      }
+      cleanup();
     };
   }, []);
 
-  const checkCameraPermission = async () => {
+  const initializeCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Get available cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(videoDevices);
+      
+      // Prefer back camera for better barcode scanning
+      const backCamera = videoDevices.find(device => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
+      );
+      
+      setSelectedCamera(backCamera?.deviceId || videoDevices[0]?.deviceId || '');
       setCameraPermission(true);
-      stream.getTracks().forEach(track => track.stop()); // Stop the test stream
     } catch (error) {
+      console.error('Camera initialization error:', error);
       setCameraPermission(false);
-      setError('Camera access denied. Please allow camera access and try again.');
+      setError('❌ Camera access denied. Please allow camera access and try again.');
     }
   };
 
-  const processBarcode = async (barcode) => {
-    if (!barcode || barcode === lastScanned || loading) return;
+  const startScanning = async () => {
+    if (!codeReaderRef.current || !videoRef.current || !selectedCamera) {
+      setError('❌ Scanner not ready. Please try again.');
+      return;
+    }
+
+    try {
+      resetScanner();
+      setIsScanning(true);
+      scanningRef.current = true;
+
+      // Enhanced camera constraints for better barcode detection
+      const constraints = {
+        deviceId: selectedCamera,
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
+        frameRate: { ideal: 60, min: 30 },
+        focusMode: 'continuous',
+        exposureMode: 'continuous',
+        whiteBalanceMode: 'continuous'
+      };
+
+      // Start continuous scanning with optimized settings
+      await codeReaderRef.current.decodeFromVideoDevice(
+        selectedCamera,
+        videoRef.current,
+        (result, err) => {
+          if (result && scanningRef.current) {
+            handleSuccessfulScan(result.getText());
+          } else if (err && scanningRef.current) {
+            // Only handle actual errors, not "not found" messages
+            if (err.name !== 'NotFoundException') {
+              console.warn('Scan error:', err);
+            }
+          }
+        }
+      );
+
+      // Add scanning animation
+      startScanAnimation();
+
+    } catch (error) {
+      console.error('Start scanning error:', error);
+      handleScanError(error);
+    }
+  };
+
+  const handleSuccessfulScan = async (barcode) => {
+    if (!barcode || barcode === lastScanned || loading || !scanningRef.current) return;
     
     // Prevent rapid duplicate scans
     const now = Date.now();
     if (now - lastScanTime.current < SCAN_COOLDOWN) return;
     lastScanTime.current = now;
+
+    // Trigger haptic feedback for successful scan
+    triggerHapticFeedback();
     
     setLastScanned(barcode);
+    setScanAttempts(prev => prev + 1);
+    
+    // Stop scanning immediately for faster response
+    stopScanning();
+    
+    await processBarcode(barcode);
+  };
+
+  const processBarcode = async (barcode) => {
     setLoading(true);
     setError('');
     setSuccess('');
-    setScanAttempts(prev => prev + 1);
 
     try {
       const token = localStorage.getItem('token');
@@ -77,29 +183,35 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       if (response.ok) {
         const product = await response.json();
         setSuccess(`✅ Found: ${product.product_name}`);
+        setScanStats(prev => ({ ...prev, successful: prev.successful + 1 }));
         setRetryCount(0);
-        setScanAttempts(0);
+        
+        // Trigger success haptic feedback
+        triggerSuccessHapticFeedback();
         
         // Call the callback with product data
         if (onProductFound) {
           onProductFound(product);
         }
         
-        // Auto-close after success
+        // Auto-close after success with slight delay
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, 1200);
         
       } else if (response.status === 404) {
         setError('❌ Product not found in inventory');
+        setScanStats(prev => ({ ...prev, failed: prev.failed + 1 }));
         handleScanFailure();
       } else {
         setError('❌ Error looking up product');
+        setScanStats(prev => ({ ...prev, failed: prev.failed + 1 }));
         handleScanFailure();
       }
     } catch (error) {
       console.error('Barcode lookup error:', error);
       setError('❌ Network error - please try again');
+      setScanStats(prev => ({ ...prev, failed: prev.failed + 1 }));
       handleScanFailure();
     } finally {
       setLoading(false);
@@ -109,19 +221,19 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const handleScanFailure = () => {
     setRetryCount(prev => prev + 1);
     if (retryCount >= MAX_RETRY_ATTEMPTS) {
-      setError('❌ Multiple scan failures. Try manual entry.');
+      setError('❌ Multiple scan failures. Try manual entry or reposition barcode.');
       setShowManualInput(true);
-      setIsScanning(false);
+    } else {
+      // Auto-retry with brief delay
+      setTimeout(() => {
+        if (!isScanning && scanningRef.current) {
+          startScanning();
+        }
+      }, 1000);
     }
   };
 
-  const handleBarcodeScan = (result) => {
-    if (result && typeof result === 'string') {
-      processBarcode(result.trim());
-    }
-  };
-
-  const handleError = (error) => {
+  const handleScanError = (error) => {
     console.error('Barcode scanner error:', error);
     
     // Handle different types of errors
@@ -136,10 +248,32 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setShowManualInput(true);
     } else {
       setError('❌ Scanner error - trying manual entry');
-      handleScanFailure();
+      setShowManualInput(true);
     }
     
+    stopScanning();
+  };
+
+  const stopScanning = () => {
+    scanningRef.current = false;
     setIsScanning(false);
+    
+    if (codeReaderRef.current) {
+      try {
+        codeReaderRef.current.reset();
+      } catch (error) {
+        console.warn('Error stopping scanner:', error);
+      }
+    }
+    
+    stopScanAnimation();
+  };
+
+  const cleanup = () => {
+    stopScanning();
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
   };
 
   const resetScanner = () => {
@@ -153,6 +287,34 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     lastScanTime.current = 0;
   };
 
+  const triggerHapticFeedback = () => {
+    // Trigger haptic feedback on mobile devices
+    if (navigator.vibrate) {
+      navigator.vibrate(100); // Short vibration for scan detection
+    }
+  };
+
+  const triggerSuccessHapticFeedback = () => {
+    // Trigger success haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100]); // Success pattern
+    }
+  };
+
+  const startScanAnimation = () => {
+    const scanLine = document.getElementById('scan-line');
+    if (scanLine) {
+      scanLine.style.animation = 'scanAnimation 2s ease-in-out infinite';
+    }
+  };
+
+  const stopScanAnimation = () => {
+    const scanLine = document.getElementById('scan-line');
+    if (scanLine) {
+      scanLine.style.animation = 'none';
+    }
+  };
+
   const handleManualSubmit = (e) => {
     e.preventDefault();
     if (manualBarcode.trim()) {
@@ -161,21 +323,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  const startScanning = () => {
-    resetScanner();
-    setIsScanning(true);
-    // Give a moment for the camera to initialize
-    setTimeout(() => {
-      if (scannerRef.current) {
-        console.log('Scanner started successfully');
-      }
-    }, 500);
-  };
-
-  const stopScanning = () => {
-    setIsScanning(false);
-    // Clear any pending scans
-    lastScanTime.current = 0;
+  const switchCamera = () => {
+    const currentIndex = availableCameras.findIndex(cam => cam.deviceId === selectedCamera);
+    const nextIndex = (currentIndex + 1) % availableCameras.length;
+    setSelectedCamera(availableCameras[nextIndex]?.deviceId || '');
+    
+    if (isScanning) {
+      stopScanning();
+      setTimeout(() => startScanning(), 500);
+    }
   };
 
   if (!isOpen) return null;
