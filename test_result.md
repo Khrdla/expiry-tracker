@@ -449,6 +449,7 @@ test_plan:
   comprehensive_regression_testing_completed: true
   export_functionality_completed: true
   currency_testing_completed: true
+  image_functionality_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
