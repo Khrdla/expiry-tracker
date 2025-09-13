@@ -3,15 +3,20 @@ import { Save, Clock, Mail, Palette, Bell, Download, Settings, TestTube, AlertCi
 
 const SettingsPanel = ({ user }) => {
   const [emailSettings, setEmailSettings] = useState({
-    daily_alert_time: '08:00',
+    daily_alert_time: '06:00',  // Updated to 06:00 AM as requested
     timezone: 'Asia/Aden',
     default_recipient: 'imad@geantyemen.com',
     department_recipients: {},
     weekly_reports_enabled: true,
     daily_alerts_enabled: true,
     expiry_threshold_days: 7,
-    beverage_expiry_threshold_days: 15
+    beverage_expiry_threshold_days: 15,
+    email_failures: [],
+    last_test_email: null
   });
+
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
 
   const [companySettings, setCompanySettings] = useState({
     company_name: 'Geant Hypermarket',
