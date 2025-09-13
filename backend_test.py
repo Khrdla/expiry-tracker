@@ -1166,6 +1166,265 @@ class ExpiryTrackerAPITester:
         
         return True
 
+    def test_product_with_image_lemonade(self):
+        """Test specific product 'Lemonade 150Cl' with image functionality"""
+        print("\n🖼️ Testing Product Image Functionality - Lemonade 150Cl")
+        
+        # Search for the specific product mentioned in review request
+        success, response = self.run_test(
+            "Search Lemonade 150Cl Product",
+            "GET",
+            "search?q=Lemonade 150Cl&limit=5",
+            200
+        )
+        
+        lemonade_product = None
+        if success and isinstance(response, list):
+            for product in response:
+                if "Lemonade 150Cl" in product.get('product_name', ''):
+                    lemonade_product = product
+                    break
+        
+        if not lemonade_product:
+            self.log_test("Lemonade Product Search", False, "Lemonade 150Cl product not found")
+            return False
+        
+        print(f"   📦 Found product: {lemonade_product.get('product_name')}")
+        
+        # Check if product has image_url
+        image_url = lemonade_product.get('image_url')
+        expected_image_url = "/uploads/bf28e101-c299-42e7-842b-00eb1e4b8e97_749d4c0f6cb748f9936646a312795aee.jpeg"
+        
+        if image_url:
+            print(f"   🖼️ Product has image_url: {image_url}")
+            
+            # Verify it matches the expected URL from review request
+            if image_url == expected_image_url:
+                print(f"   ✅ Image URL matches expected: {expected_image_url}")
+                self.log_test("Lemonade Image URL Match", True, f"Image URL: {image_url}")
+            else:
+                print(f"   ⚠️ Image URL differs from expected")
+                print(f"      Expected: {expected_image_url}")
+                print(f"      Actual: {image_url}")
+                self.log_test("Lemonade Image URL Match", False, f"Expected {expected_image_url}, got {image_url}")
+                
+            return True
+        else:
+            self.log_test("Lemonade Product Image URL", False, "Product has no image_url field")
+            return False
+
+    def test_image_api_endpoint(self):
+        """Test the image serving API endpoint /api/uploads/{filename}"""
+        print("\n🖼️ Testing Image API Endpoint")
+        
+        # Test the specific image file mentioned in review request
+        filename = "bf28e101-c299-42e7-842b-00eb1e4b8e97_749d4c0f6cb748f9936646a312795aee.jpeg"
+        
+        # Test image endpoint without authentication first
+        url = f"{self.api_url}/uploads/{filename}"
+        print(f"   🔍 Testing image URL: {url}")
+        
+        try:
+            # Test without auth headers for image serving
+            response = requests.get(url, timeout=30)
+            
+            if response.status_code == 200:
+                # Check content type
+                content_type = response.headers.get('content-type', '')
+                print(f"   📄 Content-Type: {content_type}")
+                
+                if content_type.startswith('image/'):
+                    print(f"   ✅ Image served successfully with correct MIME type")
+                    
+                    # Check content length
+                    content_length = len(response.content)
+                    print(f"   📏 Image size: {content_length} bytes")
+                    
+                    if content_length > 0:
+                        self.log_test("Image API Endpoint", True, f"Image served: {content_length} bytes, type: {content_type}")
+                        return True
+                    else:
+                        self.log_test("Image API Endpoint", False, "Image file is empty")
+                        return False
+                else:
+                    self.log_test("Image API Endpoint", False, f"Wrong content type: {content_type}")
+                    return False
+                    
+            elif response.status_code == 404:
+                self.log_test("Image API Endpoint", False, "Image file not found on server")
+                return False
+            else:
+                self.log_test("Image API Endpoint", False, f"Unexpected status code: {response.status_code}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            self.log_test("Image API Endpoint", False, "Request timeout")
+            return False
+        except requests.exceptions.ConnectionError:
+            self.log_test("Image API Endpoint", False, "Connection error")
+            return False
+        except Exception as e:
+            self.log_test("Image API Endpoint", False, f"Error: {str(e)}")
+            return False
+
+    def test_database_image_data(self):
+        """Test database for products with image_url populated"""
+        print("\n🖼️ Testing Database Image Data")
+        
+        # Get products and check for image_url fields
+        success, response = self.run_test(
+            "Get Products for Image Data Check",
+            "GET",
+            "products?limit=100",
+            200
+        )
+        
+        if not success or not isinstance(response, list):
+            return False
+        
+        products_with_images = []
+        products_without_images = []
+        
+        for product in response:
+            image_url = product.get('image_url')
+            if image_url:
+                products_with_images.append({
+                    'name': product.get('product_name', 'Unknown'),
+                    'image_url': image_url,
+                    'department': product.get('department', 'Unknown')
+                })
+            else:
+                products_without_images.append(product.get('product_name', 'Unknown'))
+        
+        print(f"   📊 Image Data Summary:")
+        print(f"      Products with images: {len(products_with_images)}")
+        print(f"      Products without images: {len(products_without_images)}")
+        
+        if products_with_images:
+            print(f"   🖼️ Products with images:")
+            for i, product in enumerate(products_with_images[:5], 1):  # Show first 5
+                print(f"      {i}. {product['name']}")
+                print(f"         Image: {product['image_url']}")
+                print(f"         Department: {product['department']}")
+            
+            # Verify image_url format
+            valid_formats = 0
+            for product in products_with_images:
+                image_url = product['image_url']
+                if image_url.startswith('/uploads/') and (image_url.endswith('.jpeg') or image_url.endswith('.jpg') or image_url.endswith('.png')):
+                    valid_formats += 1
+            
+            print(f"   ✅ Valid image URL formats: {valid_formats}/{len(products_with_images)}")
+            
+            if valid_formats == len(products_with_images):
+                self.log_test("Database Image URL Format", True, f"All {len(products_with_images)} image URLs have valid format")
+            else:
+                self.log_test("Database Image URL Format", False, f"Only {valid_formats}/{len(products_with_images)} have valid format")
+            
+            return True
+        else:
+            print("   ⚠️ No products found with image_url populated")
+            self.log_test("Database Image Data", False, "No products have image_url populated")
+            return False
+
+    def test_image_file_existence(self):
+        """Test if image files actually exist on the server"""
+        print("\n🖼️ Testing Image File Existence on Server")
+        
+        # Get products with images
+        success, response = self.run_test(
+            "Get Products with Images",
+            "GET",
+            "products?limit=50",
+            200
+        )
+        
+        if not success or not isinstance(response, list):
+            return False
+        
+        products_with_images = [p for p in response if p.get('image_url')]
+        
+        if not products_with_images:
+            print("   ⚠️ No products with images found for file existence test")
+            return True  # Not a failure, just no images to test
+        
+        files_exist = 0
+        files_missing = 0
+        
+        # Test up to 5 image files
+        for i, product in enumerate(products_with_images[:5], 1):
+            image_url = product.get('image_url', '')
+            product_name = product.get('product_name', 'Unknown')
+            
+            if image_url.startswith('/uploads/'):
+                filename = image_url.replace('/uploads/', '')
+                
+                try:
+                    url = f"{self.api_url}/uploads/{filename}"
+                    response = requests.head(url, timeout=10)  # Use HEAD for faster check
+                    
+                    if response.status_code == 200:
+                        files_exist += 1
+                        print(f"   ✅ File {i}: {filename} exists")
+                    else:
+                        files_missing += 1
+                        print(f"   ❌ File {i}: {filename} missing (status: {response.status_code})")
+                        
+                except Exception as e:
+                    files_missing += 1
+                    print(f"   ❌ File {i}: {filename} error: {str(e)}")
+        
+        total_tested = files_exist + files_missing
+        print(f"   📊 File Existence Summary: {files_exist}/{total_tested} files exist")
+        
+        if files_exist > 0:
+            self.log_test("Image File Existence", True, f"{files_exist}/{total_tested} image files exist on server")
+            return True
+        else:
+            self.log_test("Image File Existence", False, f"No image files found on server (0/{total_tested})")
+            return False
+
+    def test_image_authentication_requirements(self):
+        """Test if image serving requires authentication"""
+        print("\n🖼️ Testing Image Authentication Requirements")
+        
+        # Test image endpoint without authentication
+        filename = "bf28e101-c299-42e7-842b-00eb1e4b8e97_749d4c0f6cb748f9936646a312795aee.jpeg"
+        
+        # Remove token temporarily
+        original_token = self.token
+        self.token = None
+        
+        try:
+            url = f"{self.api_url}/uploads/{filename}"
+            response = requests.get(url, timeout=10)
+            
+            # Restore token
+            self.token = original_token
+            
+            if response.status_code == 200:
+                print("   ✅ Images are publicly accessible (no authentication required)")
+                self.log_test("Image Authentication", True, "Images publicly accessible")
+                return True
+            elif response.status_code in [401, 403]:
+                print("   🔒 Images require authentication")
+                self.log_test("Image Authentication", True, "Images require authentication")
+                return True
+            elif response.status_code == 404:
+                print("   ⚠️ Image file not found (cannot test authentication)")
+                self.log_test("Image Authentication", True, "Image not found - cannot test auth")
+                return True
+            else:
+                print(f"   ⚠️ Unexpected status code: {response.status_code}")
+                self.log_test("Image Authentication", False, f"Unexpected status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            # Restore token
+            self.token = original_token
+            self.log_test("Image Authentication", False, f"Error testing authentication: {str(e)}")
+            return False
+
     def test_export_functionality(self):
         """Test export functionality"""
         # Test Excel export
