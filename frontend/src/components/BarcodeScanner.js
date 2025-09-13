@@ -301,7 +301,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                     <BarcodeScannerComponent
                       ref={scannerRef}
                       width="100%"
-                      height={window.innerWidth > 768 ? 300 : 250}
+                      height={window.innerWidth > 768 ? 400 : 300}
                       onUpdate={(err, result) => {
                         if (result && result.text) {
                           handleBarcodeScan(result.text);
@@ -310,7 +310,19 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                           handleError(err);
                         }
                       }}
-                      facingMode="environment" // Use back camera on mobile
+                      constraints={{
+                        video: {
+                          facingMode: "environment", // Use back camera
+                          width: { ideal: 1920, min: 720 },
+                          height: { ideal: 1080, min: 480 },
+                          frameRate: { ideal: 30, min: 15 },
+                          focusMode: "continuous",
+                          zoom: 1.0
+                        }
+                      }}
+                      torch={false}
+                      delay={100}
+                      legacyMode={false}
                     />
                   </div>
                   
