@@ -624,14 +624,14 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         </div>
       </div>
 
-      {/* Floating Barcode Scanner Button */}
-      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40">
+      {/* Floating Barcode Scanner Button - Repositioned to avoid watermark */}
+      <div className="fixed bottom-20 right-4 md:bottom-24 md:right-6 z-50">
         <button
           onClick={() => setShowScanner(true)}
-          className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center"
-          title="Scan Barcode"
+          className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center ring-2 ring-white ring-opacity-30"
+          title="⚡ Scan Barcode - Lightning Fast Scanner"
         >
-          <Camera size={window.innerWidth > 768 ? 24 : 20} />
+          <Camera size={window.innerWidth > 768 ? 26 : 22} />
         </button>
       </div>
 
