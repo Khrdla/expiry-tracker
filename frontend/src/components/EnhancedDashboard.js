@@ -464,7 +464,29 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       {/* Recent Alerts */}
       {dashboardData.recent_alerts.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Alerts</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-800">Recent Alerts</h3>
+            <button
+              onClick={() => setShowAlerts(!showAlerts)}
+              className="flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              {showAlerts ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span>Hide Alerts</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span>Show Alerts ({dashboardData.recent_alerts.length})</span>
+                </>
+              )}
+            </button>
+          </div>
           <div className="space-y-3">
             {dashboardData.recent_alerts.map((alert, index) => (
               <div 
