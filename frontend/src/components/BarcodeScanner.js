@@ -357,14 +357,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       <CameraOff size={20} className="hidden md:block" />
                       <span>Stop Scanning</span>
                     </button>
-                    {availableCameras.length > 1 && (
+                    {retryCount > 0 && (
                       <button
-                        onClick={switchCamera}
-                        className="flex items-center space-x-2 bg-purple-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base"
+                        onClick={startScanning}
+                        className="flex items-center space-x-2 bg-orange-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-orange-600 transition-colors text-sm md:text-base"
                       >
                         <RefreshCw size={16} className="md:hidden" />
                         <RefreshCw size={20} className="hidden md:block" />
-                        <span>Switch Camera</span>
+                        <span>Retry</span>
                       </button>
                     )}
                   </div>
