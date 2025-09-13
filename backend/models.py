@@ -167,14 +167,16 @@ class Alert(BaseModel):
 
 class EmailSettings(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    daily_alert_time: str = "08:00"  # 08:00 AM Aden timezone
-    timezone: str = "Asia/Aden"
+    daily_alert_time: str = "06:00"  # 06:00 AM Aden timezone as requested
+    timezone: str = "Asia/Aden"  # GMT+3 Yemen timezone
     default_recipient: str = "imad@geantyemen.com"
     department_recipients: Dict[str, List[str]] = {}
     weekly_reports_enabled: bool = True
     daily_alerts_enabled: bool = True
     expiry_threshold_days: int = 7  # Default 7 days
     beverage_expiry_threshold_days: int = 15  # 15 days for S-10 Beverages
+    email_failures: List[Dict[str, Any]] = []  # Track email failures for debugging
+    last_test_email: Optional[datetime] = None  # Track last test email sent
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CompanySettings(BaseModel):
