@@ -1103,6 +1103,204 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
         
         return False
 
+async def generate_daily_alert_pdf(out_of_stock_items, near_expiry_items):
+    """Generate PDF report for daily alerts"""
+    try:
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch
+        from io import BytesIO
+        
+        output = BytesIO()
+        doc = SimpleDocTemplate(output, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        story = []
+        
+        # Header
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=colors.darkblue,
+            alignment=1
+        )
+        
+        story.append(Paragraph("Geant Hypermarket", title_style))
+        story.append(Paragraph(f"Daily Inventory Alert Report - {datetime.now().strftime('%Y-%m-%d')}", styles['Heading2']))
+        story.append(Spacer(1, 20))
+        
+        # Summary
+        summary_data = [
+            ['Report Summary', ''],
+            ['Out of Stock Items', str(len(out_of_stock_items))],
+            ['Near Expiry Items', str(len(near_expiry_items))],
+            ['Report Date', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+            ['Timezone', 'Asia/Aden (GMT+3)']
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[2.5*inch, 2*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(summary_table)
+        story.append(Spacer(1, 20))
+        
+        # Out of Stock Items
+        if out_of_stock_items:
+            story.append(Paragraph("🚨 Out of Stock Items", styles['Heading2']))
+            story.append(Spacer(1, 10))
+            
+            out_of_stock_data = [['Department', 'Product Name', 'Item Number', 'Section', 'Supplier']]
+            for item in out_of_stock_items[:50]:  # Limit to 50 items for PDF
+                out_of_stock_data.append([
+                    item['department'],
+                    item['product_name'][:30] + '...' if len(item['product_name']) > 30 else item['product_name'],
+                    item['item_number'],
+                    item['section'][:15] + '...' if len(item['section']) > 15 else item['section'],
+                    item['supplier'][:20] + '...' if len(item['supplier']) > 20 else item['supplier']
+                ])
+            
+            out_table = Table(out_of_stock_data, colWidths=[1*inch, 2*inch, 1*inch, 1*inch, 1.5*inch])
+            out_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.red),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(out_table)
+            story.append(Spacer(1, 20))
+        
+        # Near Expiry Items
+        if near_expiry_items:
+            story.append(Paragraph("⚠️ Near Expiry Items", styles['Heading2']))
+            story.append(Spacer(1, 10))
+            
+            near_expiry_data = [['Department', 'Product Name', 'Item Number', 'Expiry Date', 'Section']]
+            for item in near_expiry_items[:50]:  # Limit to 50 items for PDF
+                near_expiry_data.append([
+                    item['department'],
+                    item['product_name'][:30] + '...' if len(item['product_name']) > 30 else item['product_name'],
+                    item['item_number'],
+                    item['expiry_date'],
+                    item['section'][:20] + '...' if len(item['section']) > 20 else item['section']
+                ])
+            
+            near_table = Table(near_expiry_data, colWidths=[1*inch, 2*inch, 1*inch, 1*inch, 1.5*inch])
+            near_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.orange),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.lightyellow),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(near_table)
+        
+        # Build PDF
+        doc.build(story)
+        pdf_data = output.getvalue()
+        output.close()
+        
+        return pdf_data
+        
+    except Exception as e:
+        logger.error(f"Error generating PDF report: {str(e)}")
+        return b""
+
+async def generate_daily_alert_excel(out_of_stock_items, near_expiry_items):
+    """Generate Excel report for daily alerts"""
+    try:
+        import pandas as pd
+        from io import BytesIO
+        
+        output = BytesIO()
+        
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            # Summary sheet
+            summary_data = {
+                'Metric': ['Out of Stock Items', 'Near Expiry Items', 'Report Date', 'Timezone'],
+                'Value': [len(out_of_stock_items), len(near_expiry_items), 
+                         datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'Asia/Aden (GMT+3)']
+            }
+            summary_df = pd.DataFrame(summary_data)
+            summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            
+            # Out of Stock sheet
+            if out_of_stock_items:
+                out_df = pd.DataFrame(out_of_stock_items)
+                out_df.to_excel(writer, sheet_name='Out of Stock', index=False)
+                
+                # Format the worksheet
+                workbook = writer.book
+                worksheet = writer.sheets['Out of Stock']
+                
+                # Add formatting
+                header_format = workbook.add_format({
+                    'bold': True,
+                    'text_wrap': True,
+                    'valign': 'top',
+                    'fg_color': '#FF6B6B',
+                    'font_color': 'white',
+                    'border': 1
+                })
+                
+                for col_num, value in enumerate(out_df.columns.values):
+                    worksheet.write(0, col_num, value, header_format)
+                    worksheet.set_column(col_num, col_num, 20)
+            
+            # Near Expiry sheet
+            if near_expiry_items:
+                near_df = pd.DataFrame(near_expiry_items)
+                near_df.to_excel(writer, sheet_name='Near Expiry', index=False)
+                
+                if 'Near Expiry' in writer.sheets:
+                    workbook = writer.book
+                    worksheet = writer.sheets['Near Expiry']
+                    
+                    # Add formatting
+                    header_format = workbook.add_format({
+                        'bold': True,
+                        'text_wrap': True,
+                        'valign': 'top',
+                        'fg_color': '#FFB84D',
+                        'font_color': 'white',
+                        'border': 1
+                    })
+                    
+                    for col_num, value in enumerate(near_df.columns.values):
+                        worksheet.write(0, col_num, value, header_format)
+                        worksheet.set_column(col_num, col_num, 20)
+        
+        excel_data = output.getvalue()
+        output.close()
+        
+        return excel_data
+        
+    except Exception as e:
+        logger.error(f"Error generating Excel report: {str(e)}")
+        return b""
+
 @api_router.post("/alerts/send-daily")
 async def send_daily_alerts(background_tasks: BackgroundTasks):
     """Send daily alerts for out-of-stock and near-expiry items"""
