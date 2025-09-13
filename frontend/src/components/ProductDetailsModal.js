@@ -76,7 +76,14 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
         {/* Content */}
         <div className="p-6">
           {/* Product Image - Prominent at Top */}
-          <div className="mb-8">
+          <div className="mb-8 bg-red-100 p-4 rounded-lg">
+            <div className="text-center mb-2">
+              <p className="text-sm text-gray-600">DEBUG: Image URL: {product.image_url || 'None'}</p>
+              <p className="text-sm text-gray-600">DEBUG: Backend URL: {BACKEND_URL}</p>
+              {product.image_url && (
+                <p className="text-sm text-gray-600">DEBUG: Full URL: {`${BACKEND_URL}/api${product.image_url}`}</p>
+              )}
+            </div>
             <div className="flex justify-center">
               {product.image_url ? (
                 <div className="relative group">
@@ -84,7 +91,9 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                     src={`${BACKEND_URL}/api${product.image_url}`}
                     alt={product.product_name}
                     className="w-full max-w-sm h-64 sm:h-80 object-cover rounded-2xl shadow-xl border-4 border-white hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                    onLoad={() => console.log('Image loaded successfully')}
                     onError={(e) => {
+                      console.error('Image failed to load:', `${BACKEND_URL}/api${product.image_url}`);
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
@@ -96,7 +105,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-sm font-medium">No image available</p>
+                    <p className="text-gray-500 text-sm font-medium">Image failed to load</p>
                   </div>
                 </div>
               ) : (
