@@ -224,6 +224,18 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE FRONTEND BARCODE SCANNER TESTING COMPLETED - SUCCESS RATE: 100%. ✅ DASHBOARD FLOATING BUTTON: Floating barcode scanner button found in bottom-right corner with correct gradient styling and camera icon. Opens scanner modal successfully. ✅ PRODUCTS PAGE BUTTON: 'Scan Barcode' button found in products page header with consistent styling alongside Export and Add Product buttons. Camera icon present and functional. ✅ SCANNER MODAL: Professional UI with proper title 'Barcode Scanner' and description 'Scan product barcode for details'. Modal opens from both dashboard and products page. ✅ CAMERA PERMISSION HANDLING: Proper camera permission UI with 'Camera Access Required' message and 'Grant Camera Access' button. ✅ SCANNER CONTROLS: Start/Stop scanning functionality working correctly. ✅ MODAL CLOSE: Both X button and Escape key close modal properly. ✅ MOBILE RESPONSIVENESS: All components work correctly on mobile viewport (390x844). Scanner modal is responsive. ✅ NO REGRESSION: All existing functionality preserved - products display, navigation, KPI cards, charts all working. ✅ IMPORT FIX: Fixed BarcodeScannerComponent import from 'react-qr-barcode-scanner' package. The barcode scanner frontend implementation is production-ready and fully functional across all devices."
 
+  - task: "Optimize barcode scanner for lightning-fast performance and reliability"
+    implemented: false
+    working: false
+    file: "BarcodeScanner.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "User reported barcode scanner reliability issues despite 100% testing success. Requirements: sub-second response, smooth scanning in low-light/shaky conditions, support ALL formats (EAN, UPC, Code128, QR), visual guide frame, haptic feedback, auto-close after scan. Sample barcode for testing: 3222471081716 (Apple Juice Box 1L). Switching from react-qr-barcode-scanner to ZXing library for better performance and format support."
+
   - task: "Add return to supplier functionality"
     implemented: false
     working: false
