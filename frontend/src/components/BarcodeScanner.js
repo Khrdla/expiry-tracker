@@ -13,20 +13,23 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [manualBarcode, setManualBarcode] = useState('');
   const [scanAttempts, setScanAttempts] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
-  const [availableCameras, setAvailableCameras] = useState([]);
-  const [selectedCamera, setSelectedCamera] = useState('');
   const [scanStats, setScanStats] = useState({ successful: 0, failed: 0 });
   
-  const videoRef = useRef(null);
-  const codeReaderRef = useRef(null);
-  const scanningRef = useRef(false);
+  const scannerRef = useRef(null);
+  const scannerInstanceRef = useRef(null);
   const lastScanTime = useRef(0);
-  const animationRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const MAX_RETRY_ATTEMPTS = 2;
   const SCAN_COOLDOWN = 150; // Reduced to 150ms for sub-second response
-  const SCAN_TIMEOUT = 10000; // 10 seconds timeout for each scan attempt
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Initialize Html5QrcodeScanner with optimized settings
   useEffect(() => {
