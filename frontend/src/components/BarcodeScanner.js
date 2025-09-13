@@ -493,15 +493,6 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           )}
         </div>
       </div>
-      
-      {/* Add CSS for scan animation */}
-      <style jsx>{`
-        @keyframes scanAnimation {
-          0% { top: 0; opacity: 0; }
-          50% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 };
