@@ -369,6 +369,28 @@ const SettingsPanel = ({ user }) => {
                 </div>
               </div>
 
+              {/* Email Configuration Guide */}
+              {emailStatus && !emailStatus.email_configured && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-medium text-yellow-800 mb-2 flex items-center">
+                    <AlertCircle size={16} className="mr-2" />
+                    Email Configuration Required
+                  </h4>
+                  <div className="text-sm text-yellow-700 space-y-2">
+                    <p><strong>To enable email functionality:</strong></p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>The system administrator needs to set the <code className="bg-yellow-100 px-1 rounded">EMAIL_PASSWORD</code> environment variable</li>
+                      <li>This should be an app-specific password for: <code className="bg-yellow-100 px-1 rounded">{emailStatus.sender_email || 'inventory@geantyemen.com'}</code></li>
+                      <li>After configuration, restart the backend server</li>
+                      <li>Use "Send Test Email Now" to verify the setup</li>
+                    </ol>
+                    <p className="text-xs text-yellow-600 mt-2">
+                      <strong>Note:</strong> Until configured, email alerts and test emails will not be sent.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Email System Status */}
               {emailStatus && (
                 <div className="bg-gray-50 p-4 rounded-lg border">
@@ -409,12 +431,13 @@ const SettingsPanel = ({ user }) => {
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
                       <h5 className="font-medium text-red-800 flex items-center mb-2">
                         <AlertCircle size={14} className="mr-1" />
-                        Recent Email Failures
+                        Recent Email Failures ({emailStatus.recent_failures.length})
                       </h5>
                       <div className="space-y-1 text-xs">
                         {emailStatus.recent_failures.slice(-3).map((failure, index) => (
                           <div key={index} className="text-red-700">
                             <span className="font-medium">{new Date(failure.timestamp).toLocaleString()}:</span> {failure.error}
+                            {failure.type && <span className="text-red-500"> ({failure.type})</span>}
                           </div>
                         ))}
                       </div>
