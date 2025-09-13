@@ -155,6 +155,30 @@ const SettingsPanel = ({ user }) => {
     }
   };
 
+  const sendTestEmail = async () => {
+    setTestEmailLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/alerts/send-test-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setMessage(`✅ Test email sent successfully to ${result.sent_to[0]}! Check your inbox. Sent at: ${result.aden_time}`);
+        await fetchEmailStatus(); // Refresh status
+      } else {
+        const error = await response.json();
+        setMessage(`❌ Failed to send test email: ${error.detail}`);
+      }
+    } catch (error) {
+      setMessage(`❌ Error sending test email: ${error.message}`);
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
   const tabs = [
     { id: 'email', label: 'Email & Alerts', icon: Mail },
     { id: 'company', label: 'Company Settings', icon: Palette },
