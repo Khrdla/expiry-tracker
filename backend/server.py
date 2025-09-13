@@ -1356,15 +1356,26 @@ async def get_email_status(current_user: User = Depends(get_admin_user)):
         aden_tz = pytz.timezone('Asia/Aden')
         current_aden_time = datetime.now(aden_tz)
         
+        # Check email configuration
+        sender_email = os.environ.get('SENDER_EMAIL', 'inventory@geantyemen.com')
+        email_password_configured = bool(os.environ.get('EMAIL_PASSWORD'))
+        
         return {
             "current_aden_time": current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
             "timezone": "Asia/Aden (GMT+3)",
             "daily_alert_time": settings.get('daily_alert_time', '06:00'),
             "daily_alerts_enabled": settings.get('daily_alerts_enabled', True),
             "default_recipient": settings.get('default_recipient', 'imad@geantyemen.com'),
+            "sender_email": sender_email,
             "last_test_email": settings.get('last_test_email'),
+            "last_successful_email": settings.get('last_successful_email'),
             "recent_failures": settings.get('email_failures', [])[-5:],  # Last 5 failures
-            "email_configured": bool(os.environ.get('EMAIL_PASSWORD'))
+            "email_configured": email_password_configured,
+            "configuration_help": {
+                "smtp_server": "smtp.gmail.com:587",
+                "required_env": "EMAIL_PASSWORD",
+                "current_sender": sender_email
+            } if not email_password_configured else None
         }
         
     except Exception as e:
