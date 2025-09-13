@@ -269,6 +269,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
               </div>
             </div>
           )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-center space-x-4 pt-6 border-t border-gray-200">
