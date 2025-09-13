@@ -352,23 +352,86 @@ const SettingsPanel = ({ user }) => {
                 </div>
               </div>
 
-              <div className="flex space-x-4">
+              {/* Email System Status */}
+              {emailStatus && (
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+                    <Settings size={16} className="mr-2" />
+                    Email System Status
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Current Aden Time:</span>
+                      <br />
+                      <span className="text-gray-600">{emailStatus.current_aden_time}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Daily Alert Schedule:</span>
+                      <br />
+                      <span className="text-gray-600">{emailStatus.daily_alert_time} AM (Asia/Aden)</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Email Configuration:</span>
+                      <br />
+                      <span className={`${emailStatus.email_configured ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                        {emailStatus.email_configured ? '✅ Configured' : '❌ Not Configured'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Last Test Email:</span>
+                      <br />
+                      <span className="text-gray-600">
+                        {emailStatus.last_test_email ? new Date(emailStatus.last_test_email).toLocaleString() : 'Never sent'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Recent Email Failures */}
+                  {emailStatus.recent_failures && emailStatus.recent_failures.length > 0 && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                      <h5 className="font-medium text-red-800 flex items-center mb-2">
+                        <AlertCircle size={14} className="mr-1" />
+                        Recent Email Failures
+                      </h5>
+                      <div className="space-y-1 text-xs">
+                        {emailStatus.recent_failures.slice(-3).map((failure, index) => (
+                          <div key={index} className="text-red-700">
+                            <span className="font-medium">{new Date(failure.timestamp).toLocaleString()}:</span> {failure.error}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={saveEmailSettings}
                   disabled={loading}
-                  className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
                   <Save size={16} />
                   <span>{loading ? 'Saving...' : 'Save Settings'}</span>
                 </button>
 
                 <button
+                  onClick={sendTestEmail}
+                  disabled={testEmailLoading}
+                  className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <TestTube size={16} />
+                  <span>{testEmailLoading ? 'Sending...' : 'Send Test Email Now'}</span>
+                </button>
+
+                <button
                   onClick={sendTestAlert}
                   disabled={loading}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="flex items-center justify-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
                 >
                   <Bell size={16} />
-                  <span>Send Test Alert</span>
+                  <span>Send Daily Alert</span>
                 </button>
               </div>
             </div>
