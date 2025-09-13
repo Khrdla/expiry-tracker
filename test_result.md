@@ -470,6 +470,7 @@ test_plan:
   export_functionality_completed: true
   currency_testing_completed: true
   image_functionality_testing_completed: true
+  lightning_fast_scanner_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
