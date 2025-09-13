@@ -1168,7 +1168,159 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
         
     except Exception as e:
         logger.error(f"Error sending daily alerts: {str(e)}")
+        # Log the error in email settings for debugging
+        try:
+            await db.email_settings.update_one(
+                {},
+                {"$push": {"email_failures": {
+                    "timestamp": datetime.now(pytz.timezone("Asia/Aden")),
+                    "error": str(e),
+                    "type": "daily_alert"
+                }}},
+                upsert=True
+            )
+        except:
+            pass
         raise HTTPException(status_code=500, detail=f"Error sending daily alerts: {str(e)}")
+
+@api_router.post("/alerts/send-test-email")
+async def send_test_email(background_tasks: BackgroundTasks, current_user: User = Depends(get_admin_user)):
+    """Send a test email immediately to verify email functionality"""
+    try:
+        # Get email settings
+        settings = await db.email_settings.find_one() or {}
+        
+        recipients = [settings.get('default_recipient', 'imad@geantyemen.com')]
+        
+        # Create test email content with current Aden time
+        aden_tz = pytz.timezone('Asia/Aden')
+        current_aden_time = datetime.now(aden_tz)
+        
+        subject = f"Test Email - Geant Hypermarket Inventory System"
+        
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 20px; color: white; text-align: center;">
+                <h1>📧 Test Email - Geant Hypermarket</h1>
+                <p>Email System Verification</p>
+            </div>
+            
+            <div style="padding: 30px;">
+                <h2>✅ Email System Status: Working</h2>
+                
+                <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+                    <strong>🕰️ Test Email Details:</strong><br>
+                    • <strong>Sent Time (Aden):</strong> {current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z')}<br>
+                    • <strong>Timezone:</strong> Asia/Aden (GMT+3)<br>
+                    • <strong>Recipient:</strong> {recipients[0]}<br>
+                    • <strong>Daily Alert Time:</strong> {settings.get('daily_alert_time', '06:00')} AM Aden Time
+                </div>
+                
+                <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;">
+                    <strong>📋 System Configuration:</strong><br>
+                    • Daily alerts are scheduled for <strong>06:00 AM Aden time</strong> daily<br>
+                    • Email notifications: <strong>{"Enabled" if settings.get('daily_alerts_enabled', True) else "Disabled"}</strong><br>
+                    • Default recipient: <strong>{recipients[0]}</strong>
+                </div>
+                
+                <p><strong>Next Steps:</strong></p>
+                <ul>
+                    <li>If you received this email, the system is working correctly</li>
+                    <li>Daily alerts will be sent automatically at 06:00 AM Aden time</li>
+                    <li>Check the Settings panel for email configuration options</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
+                <p style="color: #666; font-size: 14px;">
+                    This is an automated test email from Geant Hypermarket Inventory Management System<br>
+                    Generated on {current_aden_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden timezone)
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Send test email
+        success = await send_email_alert(recipients, subject, body)
+        
+        if success:
+            # Update last test email timestamp
+            await db.email_settings.update_one(
+                {},
+                {
+                    "$set": {"last_test_email": current_aden_time},
+                    "$push": {"email_failures": {
+                        "$each": [],
+                        "$slice": -10  # Keep only last 10 entries
+                    }}
+                },
+                upsert=True
+            )
+            
+            return {
+                "message": "Test email sent successfully",
+                "sent_to": recipients,
+                "aden_time": current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
+                "timezone": "Asia/Aden (GMT+3)"
+            }
+        else:
+            # Log the failure
+            await db.email_settings.update_one(
+                {},
+                {"$push": {"email_failures": {
+                    "timestamp": current_aden_time,
+                    "error": "Email send function returned False",
+                    "type": "test_email"
+                }}},
+                upsert=True
+            )
+            raise HTTPException(status_code=500, detail="Failed to send test email")
+        
+    except Exception as e:
+        logger.error(f"Error sending test email: {str(e)}")
+        # Log the error
+        try:
+            aden_tz = pytz.timezone('Asia/Aden')
+            current_aden_time = datetime.now(aden_tz)
+            await db.email_settings.update_one(
+                {},
+                {"$push": {"email_failures": {
+                    "timestamp": current_aden_time,
+                    "error": str(e),
+                    "type": "test_email"
+                }}},
+                upsert=True
+            )
+        except:
+            pass
+        raise HTTPException(status_code=500, detail=f"Error sending test email: {str(e)}")
+
+@api_router.get("/alerts/email-status")
+async def get_email_status(current_user: User = Depends(get_admin_user)):
+    """Get email system status and recent failures for debugging"""
+    try:
+        settings = await db.email_settings.find_one() or {}
+        
+        # Get Aden timezone info
+        aden_tz = pytz.timezone('Asia/Aden')
+        current_aden_time = datetime.now(aden_tz)
+        
+        return {
+            "current_aden_time": current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
+            "timezone": "Asia/Aden (GMT+3)",
+            "daily_alert_time": settings.get('daily_alert_time', '06:00'),
+            "daily_alerts_enabled": settings.get('daily_alerts_enabled', True),
+            "default_recipient": settings.get('default_recipient', 'imad@geantyemen.com'),
+            "last_test_email": settings.get('last_test_email'),
+            "recent_failures": settings.get('email_failures', [])[-5:],  # Last 5 failures
+            "email_configured": bool(os.environ.get('EMAIL_PASSWORD'))
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting email status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting email status: {str(e)}")
 
 # Helper functions for exports
 async def generate_dashboard_data(current_user: User):
