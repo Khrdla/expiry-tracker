@@ -175,12 +175,22 @@ const SettingsPanel = ({ user }) => {
         const result = await response.json();
         setMessage(`✅ Test email sent successfully to ${result.sent_to[0]}! Check your inbox. Sent at: ${result.aden_time}`);
         await fetchEmailStatus(); // Refresh status
+        setTimeout(() => setMessage(''), 8000);
       } else {
-        const error = await response.json();
-        setMessage(`❌ Failed to send test email: ${error.detail}`);
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const errorMsg = errorData.detail || 'Unknown error';
+        
+        if (errorMsg.includes('EMAIL_PASSWORD') || errorMsg.includes('not configured')) {
+          setMessage(`❌ Email not configured: EMAIL_PASSWORD missing in server environment. Please contact system administrator to configure email credentials.`);
+        } else {
+          setMessage(`❌ Failed to send test email: ${errorMsg}`);
+        }
+        setTimeout(() => setMessage(''), 10000);
       }
     } catch (error) {
-      setMessage(`❌ Error sending test email: ${error.message}`);
+      console.error('Test email error:', error);
+      setMessage(`❌ Error sending test email: ${error.message}. Check network connection.`);
+      setTimeout(() => setMessage(''), 8000);
     } finally {
       setTestEmailLoading(false);
     }
