@@ -28,37 +28,67 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const SCAN_COOLDOWN = 150; // Reduced to 150ms for sub-second response
   const SCAN_TIMEOUT = 10000; // 10 seconds timeout for each scan attempt
 
-  // Initialize ZXing reader with optimized settings
+  // Initialize Html5QrcodeScanner with optimized settings
   useEffect(() => {
-    const hints = new Map();
-    // Enable all barcode formats for comprehensive support
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.EAN_13,
-      BarcodeFormat.EAN_8,
-      BarcodeFormat.UPC_A,
-      BarcodeFormat.UPC_E,
-      BarcodeFormat.CODE_128,
-      BarcodeFormat.CODE_39,
-      BarcodeFormat.CODE_93,
-      BarcodeFormat.CODABAR,
-      BarcodeFormat.ITF,
-      BarcodeFormat.QR_CODE,
-      BarcodeFormat.DATA_MATRIX,
-      BarcodeFormat.PDF_417
-    ]);
-    
-    // Optimize for accuracy and speed
-    hints.set(DecodeHintType.TRY_HARDER, true);
-    hints.set(DecodeHintType.ALSO_INVERTED, true);
-
-    codeReaderRef.current = new BrowserMultiFormatReader(hints);
+    if (isOpen && cameraPermission === true) {
+      // Initialize scanner when modal opens and camera permission is granted
+      initializeScanner();
+    }
     
     return () => {
-      if (codeReaderRef.current) {
-        codeReaderRef.current.reset();
+      cleanupScanner();
+    };
+  }, [isOpen, cameraPermission]);
+
+  const initializeScanner = () => {
+    if (scannerRef.current) {
+      cleanupScanner();
+    }
+
+    // Html5QrcodeScanner configuration for optimal performance
+    const config = {
+      fps: 30, // High FPS for fast detection
+      qrbox: { width: 300, height: 150 }, // Optimized for barcode scanning
+      aspectRatio: 2.0, // Wide aspect ratio for barcodes
+      disableFlip: false,
+      videoConstraints: {
+        facingMode: "environment", // Back camera
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
+        frameRate: { ideal: 60, min: 30 }
+      },
+      supportedScanTypes: [
+        Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+      ],
+      experimentalFeatures: {
+        useBarCodeLegacyMode: false
       }
     };
-  }, []);
+
+    try {
+      scannerRef.current = new Html5QrcodeScanner(
+        "qr-reader",
+        config,
+        false // verbose logging disabled
+      );
+    } catch (error) {
+      console.error('Scanner initialization error:', error);
+      setError('❌ Scanner initialization failed');
+    }
+  };
+
+  const cleanupScanner = () => {
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.clear().catch(err => {
+          console.warn('Scanner cleanup warning:', err);
+        });
+      } catch (error) {
+        console.warn('Scanner cleanup error:', error);
+      }
+      scannerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
