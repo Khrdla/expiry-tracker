@@ -37,7 +37,23 @@ const SettingsPanel = ({ user }) => {
 
   useEffect(() => {
     fetchSettings();
+    fetchEmailStatus();
   }, []);
+
+  const fetchEmailStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/alerts/email-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const statusData = await response.json();
+        setEmailStatus(statusData);
+      }
+    } catch (error) {
+      console.error('Error fetching email status:', error);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
