@@ -343,12 +343,12 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-              <Package size={16} className="text-white md:hidden" />
-              <Package size={20} className="text-white hidden md:block" />
+              <Zap size={16} className="text-white md:hidden" />
+              <Zap size={20} className="text-white hidden md:block" />
             </div>
             <div>
-              <h2 className="text-lg md:text-xl font-bold text-gray-800">Barcode Scanner</h2>
-              <p className="text-xs md:text-sm text-gray-600">Scan product barcode for details</p>
+              <h2 className="text-lg md:text-xl font-bold text-gray-800">⚡ Fast Barcode Scanner</h2>
+              <p className="text-xs md:text-sm text-gray-600">Lightning-fast multi-format scanning</p>
             </div>
           </div>
           <button
@@ -370,7 +370,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
               <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Camera Access Required</h3>
               <p className="text-sm md:text-base text-gray-600 mb-4">Please allow camera access to scan barcodes</p>
               <button
-                onClick={checkCameraPermission}
+                onClick={initializeCamera}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
               >
                 Grant Camera Access
@@ -382,16 +382,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {cameraPermission === true && (
             <div className="space-y-4">
               {/* Scanner Controls */}
-              <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-2">
                 {!isScanning ? (
                   <>
                     <button
                       onClick={startScanning}
-                      className="flex items-center justify-center space-x-2 bg-green-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base"
+                      className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all text-sm md:text-base shadow-lg"
                     >
                       <Camera size={16} className="md:hidden" />
                       <Camera size={20} className="hidden md:block" />
-                      <span>Start Camera Scan</span>
+                      <span>⚡ Start Fast Scan</span>
                     </button>
                     <button
                       onClick={() => setShowManualInput(!showManualInput)}
@@ -412,14 +412,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       <CameraOff size={20} className="hidden md:block" />
                       <span>Stop Scanning</span>
                     </button>
-                    {retryCount > 0 && (
+                    {availableCameras.length > 1 && (
                       <button
-                        onClick={startScanning}
-                        className="flex items-center space-x-2 bg-orange-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-orange-600 transition-colors text-sm md:text-base"
+                        onClick={switchCamera}
+                        className="flex items-center space-x-2 bg-purple-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base"
                       >
                         <RefreshCw size={16} className="md:hidden" />
                         <RefreshCw size={20} className="hidden md:block" />
-                        <span>Retry</span>
+                        <span>Switch Camera</span>
                       </button>
                     )}
                   </div>
@@ -435,7 +435,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       type="text"
                       value={manualBarcode}
                       onChange={(e) => setManualBarcode(e.target.value)}
-                      placeholder="Enter barcode manually"
+                      placeholder="Enter barcode manually (e.g., 3222471081716)"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-mono"
                       autoFocus
                     />
@@ -450,52 +450,53 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </div>
               )}
 
-              {/* Scanner Component */}
+              {/* Enhanced Video Scanner */}
               {isScanning && (
                 <div className="relative">
-                  <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-black">
-                    <BarcodeScannerComponent
-                      ref={scannerRef}
-                      width="100%"
-                      height={window.innerWidth > 768 ? 400 : 300}
-                      onUpdate={(err, result) => {
-                        if (result && result.text) {
-                          handleBarcodeScan(result.text);
-                        } else if (err && err.name !== 'NotFoundException') {
-                          // Only handle actual errors, not "no barcode found" messages
-                          handleError(err);
-                        }
+                  <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-black relative">
+                    <video
+                      ref={videoRef}
+                      className="w-full h-auto"
+                      style={{ 
+                        minHeight: window.innerWidth > 768 ? '400px' : '300px',
+                        maxHeight: window.innerWidth > 768 ? '400px' : '300px',
+                        objectFit: 'cover'
                       }}
-                      constraints={{
-                        video: {
-                          facingMode: "environment", // Use back camera
-                          width: { ideal: 1920, min: 720 },
-                          height: { ideal: 1080, min: 480 },
-                          frameRate: { ideal: 30, min: 15 },
-                          focusMode: "continuous",
-                          zoom: 1.0
-                        }
-                      }}
-                      torch={false}
-                      delay={100}
-                      legacyMode={false}
+                      playsInline
+                      muted
                     />
-                  </div>
-                  
-                  {/* Scanning Overlay */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="relative w-full h-full">
-                      {/* Scanning Frame */}
-                      <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${window.innerWidth > 768 ? 'w-64 h-64' : 'w-40 h-40'} border-2 border-green-500 rounded-lg`}>
-                        <div className="absolute top-0 left-0 w-6 h-6 md:w-8 md:h-8 border-t-4 border-l-4 border-green-500 rounded-tl-lg"></div>
-                        <div className="absolute top-0 right-0 w-6 h-6 md:w-8 md:h-8 border-t-4 border-r-4 border-green-500 rounded-tr-lg"></div>
-                        <div className="absolute bottom-0 left-0 w-6 h-6 md:w-8 md:h-8 border-b-4 border-l-4 border-green-500 rounded-bl-lg"></div>
-                        <div className="absolute bottom-0 right-0 w-6 h-6 md:w-8 md:h-8 border-b-4 border-r-4 border-green-500 rounded-br-lg"></div>
-                      </div>
-                      
-                      {/* Instructions */}
-                      <div className="absolute bottom-2 md:bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 md:px-4 py-1 md:py-2 rounded-lg">
-                        <p className="text-xs md:text-sm text-center">Position barcode within the frame</p>
+                    
+                    {/* Enhanced Scanning Overlay */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div className="relative w-full h-full">
+                        {/* Main Scanning Frame */}
+                        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${window.innerWidth > 768 ? 'w-80 h-40' : 'w-64 h-32'} border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-10`}>
+                          {/* Corner indicators */}
+                          <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+                          <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+                          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+                          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+                          
+                          {/* Animated scan line */}
+                          <div 
+                            id="scan-line" 
+                            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-80"
+                            style={{
+                              animation: isScanning ? 'scanAnimation 2s ease-in-out infinite' : 'none'
+                            }}
+                          ></div>
+                        </div>
+                        
+                        {/* Format indicators */}
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                          📱 All Formats: EAN, UPC, Code128, QR
+                        </div>
+                        
+                        {/* Instructions */}
+                        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 md:px-4 py-2 rounded-lg">
+                          <p className="text-xs md:text-sm text-center font-medium">Position barcode within the green frame</p>
+                          <p className="text-xs text-center text-gray-300">⚡ Lightning-fast detection enabled</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -506,7 +507,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
               {loading && (
                 <div className="flex items-center justify-center space-x-2 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-blue-500"></div>
-                  <span className="text-blue-700 text-sm md:text-base">Looking up product...</span>
+                  <span className="text-blue-700 text-sm md:text-base">⚡ Fast lookup in progress...</span>
                 </div>
               )}
 
@@ -526,20 +527,31 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </div>
               )}
 
-              {/* Scan Statistics */}
-              {scanAttempts > 0 && (
-                <div className="text-center text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                  Scan attempts: {scanAttempts} | Retries: {retryCount}/{MAX_RETRY_ATTEMPTS}
+              {/* Enhanced Scan Statistics */}
+              {(scanAttempts > 0 || scanStats.successful > 0) && (
+                <div className="text-center space-y-1 bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border">
+                  <div className="text-xs text-gray-600">
+                    Session Stats: ✅ {scanStats.successful} successful | ❌ {scanStats.failed} failed
+                  </div>
+                  {scanAttempts > 0 && (
+                    <div className="text-xs text-gray-500">
+                      Current attempts: {scanAttempts} | Retries: {retryCount}/{MAX_RETRY_ATTEMPTS}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Instructions */}
-              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2 bg-blue-50 p-3 rounded-lg">
-                <p>📱 <strong>Scanning Tips:</strong></p>
-                <p>• Use back camera for better results</p>
-                <p>• Ensure good lighting</p>
-                <p>• Hold steady and close to barcode</p>
-                <p>• Try manual entry if camera fails</p>
+              {/* Enhanced Instructions */}
+              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
+                <p>⚡ <strong>Lightning-Fast Scanning Tips:</strong></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-left">
+                  <p>📱 Use back camera for best results</p>
+                  <p>💡 Ensure good lighting</p>
+                  <p>🎯 Hold steady, close to barcode</p>
+                  <p>🔄 Auto-retry on scan failures</p>
+                  <p>📊 Supports: EAN, UPC, Code128, QR</p>
+                  <p>⚡ Sub-second response time</p>
+                </div>
                 {retryCount > 0 && (
                   <p className="text-orange-600 font-medium">• Having trouble? Try the "Manual Entry" option</p>
                 )}
@@ -551,11 +563,20 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {cameraPermission === null && (
             <div className="text-center py-6 md:py-8">
               <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-sm md:text-base text-gray-600">Checking camera access...</p>
+              <p className="text-sm md:text-base text-gray-600">⚡ Initializing fast scanner...</p>
             </div>
           )}
         </div>
       </div>
+      
+      {/* Add CSS for scan animation */}
+      <style jsx>{`
+        @keyframes scanAnimation {
+          0% { top: 0; opacity: 0; }
+          50% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };
