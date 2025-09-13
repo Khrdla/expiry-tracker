@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserMultiFormatReader, DecodeHintType, BarcodeFormat } from '@zxing/browser';
+import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { X, Camera, CameraOff, AlertCircle, Package, CheckCircle, RefreshCw, Keyboard, Zap } from 'lucide-react';
 
 const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
