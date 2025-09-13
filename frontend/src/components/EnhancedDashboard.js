@@ -487,8 +487,9 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               )}
             </button>
           </div>
-          <div className="space-y-3">
-            {dashboardData.recent_alerts.map((alert, index) => (
+          {showAlerts && (
+            <div className="space-y-3">
+              {dashboardData.recent_alerts.map((alert, index) => (
               <div 
                 key={index}
                 className={`p-4 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 ${
