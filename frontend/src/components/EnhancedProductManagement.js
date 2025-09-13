@@ -346,20 +346,37 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
               onClick={() => handleProductClick(product)}
             >
               {/* Product Image */}
-              <div className="h-32 md:h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center relative overflow-hidden">
+              <div className="h-48 md:h-56 relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
                 {product.image_url ? (
                   <img 
                     src={`${BACKEND_URL}/api${product.image_url}`}
                     alt={product.product_name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
                   />
                 ) : null}
-                <div className={`w-full h-full flex items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
-                  <Package size={window.innerWidth > 768 ? 48 : 32} className="text-green-600" />
+                <div className={`w-full h-full flex flex-col items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
+                  <div className="bg-white rounded-full p-3 mb-2 shadow-md">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-gray-400 text-xs font-medium">No image</span>
+                </div>
+                
+                {/* Product Status Badge */}
+                <div className="absolute top-2 right-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    product.quantity <= 0 ? 'bg-red-100 text-red-800' :
+                    product.quantity <= 10 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {product.quantity <= 0 ? 'Out' : product.quantity <= 10 ? 'Low' : 'In Stock'}
+                  </span>
                 </div>
               </div>
 
