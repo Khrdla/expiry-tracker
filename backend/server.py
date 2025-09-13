@@ -2076,9 +2076,18 @@ async def update_email_settings(
     settings: EmailSettings,
     current_user: User = Depends(get_admin_user)
 ):
-    settings.updated_at = datetime.utcnow()
+    # Ensure timezone is set to Asia/Aden and alert time is 06:00 as requested
+    settings.timezone = "Asia/Aden"
+    settings.daily_alert_time = "06:00"
+    settings.updated_at = datetime.now(pytz.timezone('Asia/Aden'))
+    
     await db.email_settings.replace_one({}, settings.dict(), upsert=True)
-    return {"message": "Email settings updated successfully"}
+    return {
+        "message": "Email settings updated successfully",
+        "timezone": settings.timezone,
+        "daily_alert_time": settings.daily_alert_time,
+        "aden_time_now": datetime.now(pytz.timezone('Asia/Aden')).strftime('%Y-%m-%d %H:%M:%S %Z')
+    }
 
 @api_router.get("/settings/company", response_model=CompanySettings)
 async def get_company_settings(current_user: User = Depends(get_admin_user)):
