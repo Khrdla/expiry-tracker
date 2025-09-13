@@ -1245,8 +1245,8 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
         </html>
         """
         
-        # Send email in background
-        background_tasks.add_task(send_email_alert, recipients, subject, body)
+        # Send email with attachments in background
+        background_tasks.add_task(send_email_alert, recipients, subject, body, attachments)
         
         return {
             "message": "Daily alert email queued for sending",
