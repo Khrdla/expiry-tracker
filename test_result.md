@@ -485,6 +485,7 @@ test_plan:
   currency_testing_completed: true
   image_functionality_testing_completed: true
   lightning_fast_scanner_testing_completed: true
+  email_alert_system_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
