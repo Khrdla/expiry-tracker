@@ -1591,6 +1591,17 @@ class ExpiryTrackerAPITester:
         else:
             print(f"📊 Excel Lookup API: NOT TESTED")
         
+        # NEW: Image functionality summary
+        image_tests = [test for test in self.test_results if 'Image' in test['name'] or 'Lemonade' in test['name']]
+        image_passed = sum(1 for test in image_tests if test['success'])
+        image_total = len(image_tests)
+        
+        if image_total > 0:
+            image_working = image_passed == image_total
+            print(f"🖼️ Image Functionality: {'WORKING' if image_working else 'FAILED'} ({image_passed}/{image_total} tests passed)")
+        else:
+            print(f"🖼️ Image Functionality: NOT TESTED")
+        
         return self.tests_passed == self.tests_run
 
 def main():
