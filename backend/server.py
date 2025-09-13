@@ -1146,7 +1146,25 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                     })
         
         # Create email content
-        subject = f"Expiry Tracker - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
+        subject = f"Geant Hypermarket - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
+        
+        # Generate PDF report
+        pdf_data = await generate_daily_alert_pdf(out_of_stock_items, near_expiry_items)
+        
+        # Generate Excel report 
+        excel_data = await generate_daily_alert_excel(out_of_stock_items, near_expiry_items)
+        
+        # Prepare attachments
+        attachments = [
+            {
+                "data": pdf_data,
+                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
+            },
+            {
+                "data": excel_data,
+                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
+            }
+        ]
         
         body = f"""
         <html>
