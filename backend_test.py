@@ -1522,6 +1522,15 @@ class ExpiryTrackerAPITester:
         self.test_excel_lookup_partial_matches()
         self.test_excel_lookup_error_scenarios()
         
+        # PRODUCT IMAGE FUNCTIONALITY TESTS (FROM REVIEW REQUEST)
+        print("\n🖼️ PRODUCT IMAGE FUNCTIONALITY TESTS (REVIEW REQUEST)")
+        print("-" * 55)
+        self.test_product_with_image_lemonade()
+        self.test_image_api_endpoint()
+        self.test_database_image_data()
+        self.test_image_file_existence()
+        self.test_image_authentication_requirements()
+        
         # Additional functionality tests
         print("\n📋 ADDITIONAL FUNCTIONALITY TESTS")
         print("-" * 40)
