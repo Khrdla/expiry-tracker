@@ -74,41 +74,57 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Product Name and Status */}
-          <div className="text-center border-b border-gray-200 pb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.product_name}</h1>
-            <div className="flex items-center justify-center space-x-4">
-              <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(product.status)}`}>
-                {getStatusText(product.status)}
-              </span>
-              <span className="text-gray-600">Qty: <strong>{product.quantity || 0}</strong></span>
+        <div className="p-6">
+          {/* Product Image - Prominent at Top */}
+          <div className="mb-8">
+            <div className="flex justify-center">
+              {product.image_url ? (
+                <div className="relative group">
+                  <img 
+                    src={`${BACKEND_URL}/api${product.image_url}`}
+                    alt={product.product_name}
+                    className="w-full max-w-sm h-64 sm:h-80 object-cover rounded-2xl shadow-xl border-4 border-white hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="hidden w-full max-w-sm h-64 sm:h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl shadow-xl border-4 border-white flex-col items-center justify-center">
+                    <div className="bg-white rounded-full p-4 mb-4 shadow-md">
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm font-medium">No image available</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full max-w-sm h-64 sm:h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl shadow-xl border-4 border-white flex flex-col items-center justify-center">
+                  <div className="bg-white rounded-full p-4 mb-4 shadow-md">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm font-medium">No image available</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Product Image */}
-          {product.image_url && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                Product Image
-              </h3>
-              <div className="flex justify-center">
-                <img 
-                  src={`${BACKEND_URL}/api${product.image_url}`}
-                  alt={product.product_name}
-                  className="max-w-full max-h-64 object-contain rounded-lg shadow-md border"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <div className="hidden text-center text-gray-500 p-8 bg-gray-50 rounded-lg">
-                  <Package size={48} className="mx-auto text-gray-400 mb-2" />
-                  <p>Image not available</p>
-                </div>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">{product.product_name}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(product.status)}`}>
+                {getStatusText(product.status)}
+              </span>
+              <div className="bg-blue-50 border border-blue-200 px-4 py-2 rounded-full">
+                <span className="text-blue-800 text-sm font-semibold">Qty: {product.quantity || 0}</span>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Product Information Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
