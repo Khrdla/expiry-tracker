@@ -391,12 +391,34 @@ const SettingsPanel = ({ user }) => {
                 </div>
               )}
 
+              {/* Demo Mode Notice */}
+              {emailStatus && emailStatus.demo_mode && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                    <CheckCircle size={16} className="mr-2" />
+                    Demo Mode Active
+                  </h4>
+                  <div className="text-sm text-blue-700 space-y-2">
+                    <p><strong>Email system is running in demo mode:</strong></p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Emails are simulated (not actually sent)</li>
+                      <li>Test email functionality is working</li>
+                      <li>Email logs and timestamps are recorded</li>
+                      <li>Perfect for testing and development</li>
+                    </ul>
+                    <p className="text-xs text-blue-600 mt-2">
+                      <strong>To enable real emails:</strong> Configure actual SMTP credentials in production environment.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Email System Status */}
               {emailStatus && (
                 <div className="bg-gray-50 p-4 rounded-lg border">
                   <h4 className="font-medium text-gray-800 mb-3 flex items-center">
                     <Settings size={16} className="mr-2" />
-                    Email System Status
+                    Email System Status {emailStatus.demo_mode && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">DEMO MODE</span>}
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -414,7 +436,7 @@ const SettingsPanel = ({ user }) => {
                       <span className="font-medium">Email Configuration:</span>
                       <br />
                       <span className={`${emailStatus.email_configured ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                        {emailStatus.email_configured ? '✅ Configured' : '❌ Not Configured'}
+                        {emailStatus.email_configured ? (emailStatus.demo_mode ? '🧪 Demo Mode' : '✅ Configured') : '❌ Not Configured'}
                       </span>
                     </div>
                     <div>
