@@ -994,7 +994,24 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
         sender_password = os.environ.get('EMAIL_PASSWORD', '')
         
         if not sender_password:
-            logger.warning("Email password not configured, skipping email send")
+            logger.warning("Email password not configured, email sending disabled")
+            # Log this as an email failure for debugging
+            try:
+                aden_tz = pytz.timezone('Asia/Aden')
+                current_aden_time = datetime.now(aden_tz)
+                await db.email_settings.update_one(
+                    {},
+                    {"$push": {"email_failures": {
+                        "timestamp": current_aden_time,
+                        "error": "EMAIL_PASSWORD not configured in environment variables",
+                        "type": "configuration_error",
+                        "recipients": recipients,
+                        "subject": subject[:50] + "..." if len(subject) > 50 else subject
+                    }}},
+                    upsert=True
+                )
+            except Exception as log_error:
+                logger.error(f"Failed to log email failure: {log_error}")
             return False
         
         # Create message
@@ -1027,10 +1044,42 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
         server.quit()
         
         logger.info(f"Email sent successfully to {recipients}")
+        
+        # Log successful email
+        try:
+            aden_tz = pytz.timezone('Asia/Aden')
+            current_aden_time = datetime.now(aden_tz)
+            await db.email_settings.update_one(
+                {},
+                {"$set": {"last_successful_email": current_aden_time}},
+                upsert=True
+            )
+        except Exception as log_error:
+            logger.error(f"Failed to log successful email: {log_error}")
+        
         return True
         
     except Exception as e:
         logger.error(f"Failed to send email: {str(e)}")
+        
+        # Log the email failure for debugging
+        try:
+            aden_tz = pytz.timezone('Asia/Aden')
+            current_aden_time = datetime.now(aden_tz)
+            await db.email_settings.update_one(
+                {},
+                {"$push": {"email_failures": {
+                    "timestamp": current_aden_time,
+                    "error": str(e),
+                    "type": "smtp_error",
+                    "recipients": recipients,
+                    "subject": subject[:50] + "..." if len(subject) > 50 else subject
+                }}},
+                upsert=True
+            )
+        except Exception as log_error:
+            logger.error(f"Failed to log email failure: {log_error}")
+        
         return False
 
 @api_router.post("/alerts/send-daily")
