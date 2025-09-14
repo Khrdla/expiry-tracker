@@ -539,15 +539,21 @@ const ReturnForm = ({ user }) => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Supervisor Name *</label>
+                    <select
                       name="prepared_by_supervisor"
                       value={returnData.prepared_by_supervisor}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="Supervisor name"
-                    />
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-blue-50"
+                    >
+                      <option value="">Select Supervisor</option>
+                      <option value="Mahmoud badr">Mahmoud badr</option>
+                      <option value="Abdelhamid mostapha">Abdelhamid mostapha</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      👥 Select from available supervisors
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Signature</label>
