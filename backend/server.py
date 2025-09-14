@@ -2508,8 +2508,10 @@ async def export_return_form_pdf(
         item_data = [
             ['Product Code:', return_form.get('product_code', '')],
             ['Product Name:', return_form.get('product_name', '')],
+            ['Product Barcode:', return_form.get('barcode', '') or 'N/A'],  # Added barcode field
             ['Quantity:', str(return_form.get('quantity', 0))],
             ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}"],
+            ['Total Value:', f"{return_form.get('total_value', '0.00')} {return_form.get('purchase_currency', 'YER')}"],  # Added total value
             ['Supplier:', return_form.get('supplier', '')],
             ['Reason for Return:', return_form.get('reason_for_return', '')]
         ]
