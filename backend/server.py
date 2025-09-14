@@ -2434,7 +2434,7 @@ async def export_return_form_pdf(
         from io import BytesIO
         
         # Get return form from database
-        return_form = await db.returns.find_one({"_id": return_id})
+        return_form = await db.return_forms.find_one({"id": return_id})
         if not return_form:
             raise HTTPException(status_code=404, detail="Return form not found")
         
