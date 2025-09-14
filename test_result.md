@@ -257,17 +257,35 @@ backend:
         agent: "testing"
         comment: "FIXED EMAIL ALERT SYSTEM VALIDATION COMPLETED - SUCCESS RATE: 100% (12/12 tests passed). ✅ ALL 6 CRITICAL REQUIREMENTS VERIFIED: 1) Email Status Endpoint returns email_configured=true and demo_mode=true with Asia/Aden timezone. 2) Test Email Functionality works perfectly in demo mode returning success with Aden time. 3) Email Settings Save successfully saves with 06:00 AM time and Asia/Aden timezone. 4) Demo Mode Logging confirmed - demo emails logged in database with proper timestamps. 5) Error Tracking verified - no configuration errors since EMAIL_PASSWORD set to demo mode. 6) Daily Alerts work in demo mode without SMTP connection (1,588 out-of-stock items detected). ✅ ADDITIONAL VERIFICATION: All timezone operations use Asia/Aden correctly, sender email configured as inventory@geantyemen.com, demo mode eliminates all EMAIL_PASSWORD configuration errors. The FIXED email alert system with demo mode implementation is fully functional and production-ready."
 
+  - task: "Return Form PDF export functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUES IDENTIFIED AND FIXED - Return Form PDF export was failing due to: 1) Database collection mismatch (PDF endpoint queried 'db.returns' but forms stored in 'db.return_forms'), 2) ID field mismatch (PDF endpoint used '_id' but forms use custom 'id' field), 3) FileResponse parameter error ('content' parameter not supported). All issues have been resolved."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED - SUCCESS RATE: 100% (5/5 tests passed). ✅ CRITICAL FIXES APPLIED: Fixed database collection from 'db.returns' to 'db.return_forms' in line 2437, Fixed ID field query from '_id' to 'id' in database lookup, Fixed FileResponse to use Response class for PDF content delivery. ✅ FUNCTIONALITY VERIFIED: PDF export endpoint GET /api/export/return-form/{return_id}/pdf working correctly, Authentication with admin credentials (imadqejji/066380531I) working, Return forms creation and retrieval working, PDF generation with reportlab working (2599-2724 bytes valid PDFs), All required fields populated in PDF (reference number, product details, signatures, notes). ✅ TESTING COVERAGE: Tested with existing return form (Mirinda citrus 1L), Created and tested new return form, Verified PDF file signature and content-type, Confirmed proper filename generation. The Return Form PDF export functionality is now fully operational and production-ready."
+
   - task: "Add return to supplier functionality"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Missing return to supplier form and API endpoints - TO BE IMPLEMENTED"
+      - working: true
+        agent: "testing"
+        comment: "RETURN TO SUPPLIER FUNCTIONALITY VERIFIED - SUCCESS RATE: 100%. ✅ COMPREHENSIVE API ENDPOINTS WORKING: POST /api/returns (create return forms), GET /api/returns (retrieve return forms), GET /api/export/return-form/{return_id}/pdf (PDF export). ✅ FULL WORKFLOW TESTED: Return form creation with all required fields (reference_number, product details, supplier info, approval signatures), Return form retrieval and listing, PDF export with professional formatting including company branding, product details, and signature sections. ✅ DATA INTEGRITY: Return forms properly stored in database with UUID identifiers, All required fields captured (product_code, product_name, quantity, purchase_price, purchase_currency, supplier, reason_for_return, approval signatures), Status tracking (pending/approved/rejected). The return to supplier functionality is fully implemented and operational."
 
   - task: "Add supplier service level and detailed supplier management"
     implemented: false
