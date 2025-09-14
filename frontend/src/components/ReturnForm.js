@@ -319,16 +319,16 @@ const ReturnForm = ({ user }) => {
       {/* Return Form */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="mb-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 flex items-center justify-center">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="w-16 h-16 flex items-center justify-center bg-white rounded-lg border-2 border-red-200 p-1">
               <img 
-                src="/geant_logo.jpeg" 
+                src="/geant-logo.jpeg" 
                 alt="Geant Logo" 
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Geant Hypermarket</h2>
+              <h2 className="text-2xl font-bold text-gray-800">🏢 Geant Hypermarket</h2>
               <p className="text-gray-600">Product Return Form</p>
             </div>
           </div>
