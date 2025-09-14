@@ -37,10 +37,188 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Enhanced FastAPI app with comprehensive inventory management
+import asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
+
+# Initialize scheduler
+scheduler = AsyncIOScheduler()
+
+async def send_automated_daily_alerts():
+    """Automated function to send daily alerts at 06:00 AM Aden time"""
+    try:
+        logger.info("Starting automated daily alert email...")
+        
+        # Get email settings
+        settings = await db.email_settings.find_one() or {}
+        if not settings.get('daily_alerts_enabled', True):
+            logger.info("Daily alerts are disabled, skipping automated send")
+            return
+        
+        recipients = [settings.get('default_recipient', 'imad@geantyemen.com')]
+        
+        # Get all departments
+        departments = [Department.FMG, Department.CGD, Department.OPSS]
+        
+        # Collect alert data
+        out_of_stock_items = []
+        near_expiry_items = []
+        
+        for dept in departments:
+            products = await db.products.find({"department": dept.value}).to_list(None)
+            
+            for product in products:
+                status = await calculate_product_status(product)
+                
+                if status == ProductStatus.OUT_OF_STOCK:
+                    out_of_stock_items.append({
+                        "department": dept.value,
+                        "product_name": product["product_name"],
+                        "item_number": product.get("item_number", "N/A"),
+                        "supplier": product.get("supplier", "N/A"),
+                        "section": product["section"]
+                    })
+                elif status == ProductStatus.NEAR_EXPIRY:
+                    near_expiry_items.append({
+                        "department": dept.value,
+                        "product_name": product["product_name"],
+                        "item_number": product.get("item_number", "N/A"),
+                        "expiry_date": product.get("expiry_date", datetime.utcnow()).strftime("%Y-%m-%d"),
+                        "supplier": product.get("supplier", "N/A"),
+                        "section": product["section"]
+                    })
+        
+        # Create email content
+        subject = f"Geant Hypermarket - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
+        
+        # Generate PDF report
+        pdf_data = await generate_daily_alert_pdf(out_of_stock_items, near_expiry_items)
+        
+        # Generate Excel report 
+        excel_data = await generate_daily_alert_excel(out_of_stock_items, near_expiry_items)
+        
+        # Prepare attachments
+        attachments = [
+            {
+                "data": pdf_data,
+                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
+            },
+            {
+                "data": excel_data,
+                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
+            }
+        ]
+        
+        # Create HTML email body
+        aden_tz = pytz.timezone('Asia/Aden')
+        current_aden_time = datetime.now(aden_tz)
+        
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 20px; color: white; text-align: center;">
+                <h1>🏢 Geant Hypermarket</h1>
+                <h2>📊 Daily Inventory Alert Report</h2>
+                <p>Automated Report - {current_aden_time.strftime('%Y-%m-%d %H:%M:%S')} (Aden Time)</p>
+            </div>
+            
+            <div style="padding: 30px;">
+                <h2>📈 Daily Summary</h2>
+                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 15px; font-weight: bold;">Out of Stock Items</td>
+                        <td style="padding: 15px; color: #dc2626; font-weight: bold; font-size: 18px;">{len(out_of_stock_items)}</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 15px; font-weight: bold;">Near Expiry Items</td>
+                        <td style="padding: 15px; color: #f59e0b; font-weight: bold; font-size: 18px;">{len(near_expiry_items)}</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 15px; font-weight: bold;">Report Generated</td>
+                        <td style="padding: 15px;">{current_aden_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden)</td>
+                    </tr>
+                </table>
+                
+                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+                    <h3>📎 Attachments Included:</h3>
+                    <ul>
+                        <li><strong>PDF Report:</strong> Professional formatted inventory report</li>
+                        <li><strong>Excel Report:</strong> Detailed data for analysis and filtering</li>
+                    </ul>
+                </div>
+                
+                <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;">
+                    <p><strong>🎯 Next Steps:</strong></p>
+                    <ul>
+                        <li>Review out-of-stock items for immediate restocking</li>
+                        <li>Check near-expiry items for promotional opportunities</li>
+                        <li>Contact suppliers for critical inventory items</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
+                <p style="color: #666; font-size: 14px;">
+                    This is an automated daily report from Geant Hypermarket Inventory Management System<br>
+                    Generated on {current_adan_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden timezone)<br>
+                    Scheduled daily at 06:00 AM Aden time
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Send email with attachments
+        success = await send_email_alert(recipients, subject, body, attachments)
+        
+        if success:
+            logger.info(f"Automated daily alert sent successfully to {recipients}")
+            # Update last automated email timestamp
+            await db.email_settings.update_one(
+                {},
+                {"$set": {"last_automated_email": current_aden_time}},
+                upsert=True
+            )
+        else:
+            logger.error("Failed to send automated daily alert")
+            
+    except Exception as e:
+        logger.error(f"Error in automated daily alert: {str(e)}")
+
+# Schedule daily alerts for 06:00 AM Aden time
+def setup_daily_email_scheduler():
+    """Setup automated daily email scheduler"""
+    aden_tz = pytz.timezone('Asia/Aden')
+    
+    # Schedule daily alerts at 06:00 AM Aden time
+    scheduler.add_job(
+        send_automated_daily_alerts,
+        CronTrigger(hour=6, minute=0, timezone=aden_tz),
+        id='daily_inventory_alerts',
+        name='Daily Inventory Alert Email',
+        replace_existing=True
+    )
+    
+    logger.info("Daily email scheduler configured for 06:00 AM Asia/Aden timezone")
+
+# Start scheduler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    scheduler.start()
+    setup_daily_email_scheduler()
+    logger.info("Email scheduler started successfully")
+    yield
+    # Shutdown
+    scheduler.shutdown()
+    logger.info("Email scheduler stopped")
+
 app = FastAPI(
-    title="Geant Hypermarket Inventory Management System",
-    description="Comprehensive inventory management with per-department dashboards, role-based access, and automated alerts",
-    version="2.0.0"
+    title="Geant Hypermarket Inventory Management API",
+    description="Advanced inventory management system with automated alerts",
+    version="2.1.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
