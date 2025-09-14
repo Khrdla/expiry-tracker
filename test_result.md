@@ -474,7 +474,7 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 9
+  test_sequence: 10
   run_ui: true
   frontend_testing_date: "2025-01-12"
   frontend_success_rate: "100%"
@@ -497,6 +497,9 @@ metadata:
   return_form_pdf_export_testing_date: "2025-01-14"
   return_form_pdf_export_success_rate: "100%"
   return_form_pdf_critical_fixes_applied: true
+  pdf_export_authentication_debug_date: "2025-01-14"
+  pdf_export_authentication_debug_success_rate: "100%"
+  pdf_export_authentication_issues_found: false
 
 test_plan:
   current_focus: []
