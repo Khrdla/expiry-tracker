@@ -167,6 +167,7 @@ const ReturnForm = ({ user }) => {
         setSubmittedReturnId(responseData.id || responseData.return_id); // Store the returned ID
         setMessage({ type: 'success', text: 'Return form submitted successfully! You can now export it as PDF.' });
         // Reset form
+        setSubmittedReturnId(null); // Reset the submitted ID
         setReturnData({
           ...returnData,
           product_code: '',
