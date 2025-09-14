@@ -458,6 +458,24 @@ const ReturnForm = ({ user }) => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Total Value (Auto-calculated)</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    name="total_value"
+                    value={returnData.total_value}
+                    readOnly
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-green-50 text-gray-700 font-semibold"
+                    placeholder="0.00"
+                  />
+                  <span className="text-sm text-gray-600 font-medium">{returnData.purchase_currency}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  🧮 Automatically calculated: Quantity × Purchase Price
+                </p>
+              </div>
+
               <div className="md:col-span-2 lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Return *</label>
                 <textarea
