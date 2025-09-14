@@ -97,14 +97,25 @@ const ReturnForm = ({ user }) => {
   // Auto-fill form with lookup results
   const autoFillForm = () => {
     if (lookupResults && lookupResults.found) {
-      setReturnData({
+      const updatedData = {
         ...returnData,
         product_code: lookupResults.item_number,
         product_name: lookupResults.product_name,
         purchase_price: lookupResults.purchase_price.toString(),
         purchase_currency: lookupResults.purchase_currency,
         supplier: lookupResults.supplier
-      });
+      };
+      
+      // Calculate total value if quantity is already entered
+      if (returnData.quantity) {
+        const quantity = parseFloat(returnData.quantity) || 0;
+        const price = parseFloat(lookupResults.purchase_price) || 0;
+        updatedData.total_value = (quantity * price).toFixed(2);
+      } else {
+        updatedData.total_value = '0.00';
+      }
+      
+      setReturnData(updatedData);
       
       setMessage({ 
         type: 'success', 
