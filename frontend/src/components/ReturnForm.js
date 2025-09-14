@@ -186,15 +186,50 @@ const ReturnForm = ({ user }) => {
   const exportToPDF = (returnId = null) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No authentication token found');
+      setMessage({ type: 'error', text: 'Authentication required. Please log in again.' });
       return;
     }
 
     if (returnId) {
-      // Export specific return form as PDF
-      window.open(`${BACKEND_URL}/api/export/return-form/${returnId}/pdf?token=${token}`, '_blank');
+      // Export specific return form as PDF with proper authentication
+      const link = document.createElement('a');
+      link.href = `${BACKEND_URL}/api/export/return-form/${returnId}/pdf`;
+      link.download = `return_form_${returnId}.pdf`;
+      
+      // Use fetch with proper authentication headers
+      fetch(`${BACKEND_URL}/api/export/return-form/${returnId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.blob();
+        } else if (response.status === 401) {
+          throw new Error('Authentication expired. Please log in again.');
+        } else if (response.status === 404) {
+          throw new Error('Return form not found.');
+        } else {
+          throw new Error(`Export failed: ${response.status}`);
+        }
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `return_form_${returnId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        setMessage({ type: 'success', text: 'PDF exported successfully!' });
+      })
+      .catch(error => {
+        setMessage({ type: 'error', text: `PDF export failed: ${error.message}` });
+      });
     } else {
-      console.warn('Please save the return form first before exporting to PDF');
+      setMessage({ type: 'error', text: 'Please save the return form first before exporting to PDF.' });
     }
   };
 
