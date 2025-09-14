@@ -11,6 +11,7 @@ const ReturnForm = ({ user }) => {
     quantity: '',
     purchase_price: '',
     purchase_currency: 'YER',
+    total_value: '0.00', // Auto-calculated field (QTY * PURCHASE PRICE)
     supplier: '',
     reason_for_return: '',
     
