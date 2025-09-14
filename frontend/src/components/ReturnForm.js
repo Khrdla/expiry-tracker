@@ -177,10 +177,19 @@ const ReturnForm = ({ user }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setReturnData({
-      ...returnData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+    const updatedData = { 
+      ...returnData, 
+      [name]: type === 'checkbox' ? checked : value 
+    };
+    
+    // Auto-calculate total value when quantity or purchase_price changes
+    if (name === 'quantity' || name === 'purchase_price') {
+      const quantity = parseFloat(name === 'quantity' ? value : returnData.quantity) || 0;
+      const price = parseFloat(name === 'purchase_price' ? value : returnData.purchase_price) || 0;
+      updatedData.total_value = (quantity * price).toFixed(2);
+    }
+    
+    setReturnData(updatedData);
   };
 
   const exportToPDF = (returnId = null) => {
