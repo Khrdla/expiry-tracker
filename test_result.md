@@ -513,6 +513,7 @@ test_plan:
   lightning_fast_scanner_testing_completed: true
   email_alert_system_testing_completed: true
   fixed_email_alert_validation_completed: true
+  return_form_pdf_export_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
