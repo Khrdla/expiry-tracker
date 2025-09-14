@@ -211,50 +211,71 @@ const ReturnForm = ({ user }) => {
 
   const exportToPDF = (returnId = null) => {
     const token = localStorage.getItem('token');
+    console.log('🔍 PDF Export Debug - Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+    console.log('🔍 PDF Export Debug - Return ID:', returnId);
+    
     if (!token) {
       setMessage({ type: 'error', text: 'Authentication required. Please log in again.' });
       return;
     }
 
     if (returnId) {
-      // Export specific return form as PDF with proper authentication
-      const link = document.createElement('a');
-      link.href = `${BACKEND_URL}/api/export/return-form/${returnId}/pdf`;
-      link.download = `return_form_${returnId}.pdf`;
+      const url = `${BACKEND_URL}/api/export/return-form/${returnId}/pdf`;
+      console.log('🔍 PDF Export Debug - URL:', url);
       
-      // Use fetch with proper authentication headers
-      fetch(`${BACKEND_URL}/api/export/return-form/${returnId}/pdf`, {
+      // Use fetch with proper authentication headers and detailed logging
+      fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
       .then(response => {
+        console.log('🔍 PDF Export Debug - Response Status:', response.status);
+        console.log('🔍 PDF Export Debug - Response Headers:', response.headers);
+        
         if (response.ok) {
+          console.log('✅ PDF Export Debug - Response OK, converting to blob');
           return response.blob();
         } else if (response.status === 401) {
-          throw new Error('Authentication expired. Please log in again.');
+          console.log('❌ PDF Export Debug - 401 Unauthorized');
+          return response.text().then(text => {
+            console.log('❌ PDF Export Debug - 401 Response Body:', text);
+            throw new Error('Authentication expired. Please log in again.');
+          });
         } else if (response.status === 404) {
+          console.log('❌ PDF Export Debug - 404 Not Found');
           throw new Error('Return form not found.');
         } else {
-          throw new Error(`Export failed: ${response.status}`);
+          console.log(`❌ PDF Export Debug - ${response.status} Error`);
+          return response.text().then(text => {
+            console.log(`❌ PDF Export Debug - ${response.status} Response Body:`, text);
+            throw new Error(`Export failed: ${response.status}`);
+          });
         }
       })
       .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `return_form_${returnId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        setMessage({ type: 'success', text: 'PDF exported successfully!' });
+        if (blob) {
+          console.log('✅ PDF Export Debug - Blob received, size:', blob.size);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `return_form_${returnId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          console.log('✅ PDF Export Debug - Download initiated');
+          setMessage({ type: 'success', text: 'PDF exported successfully!' });
+        }
       })
       .catch(error => {
+        console.error('❌ PDF Export Debug - Error:', error);
         setMessage({ type: 'error', text: `PDF export failed: ${error.message}` });
       });
     } else {
+      console.log('❌ PDF Export Debug - No return ID provided');
       setMessage({ type: 'error', text: 'Please save the return form first before exporting to PDF.' });
     }
   };
