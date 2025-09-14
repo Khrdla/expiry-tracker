@@ -2444,6 +2444,15 @@ async def export_return_form_pdf(
         
         story = []
         
+        # Define title style
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=colors.darkred,
+            alignment=1
+        )
+        
         # Header with logo
         try:
             from reportlab.platypus import Image
