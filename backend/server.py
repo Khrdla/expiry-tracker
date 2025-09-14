@@ -2528,13 +2528,14 @@ async def export_return_form_pdf(
         
         filename = f"return_form_{return_form.get('reference_number', return_id)}_{datetime.now().strftime('%Y%m%d')}.pdf"
         
-        return FileResponse(
-            path=None,
+        from fastapi.responses import Response
+        
+        return Response(
+            content=output.getvalue(),
+            media_type='application/pdf',
             headers={
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'application/pdf'
-            },
-            content=output.getvalue()
+                'Content-Disposition': f'attachment; filename="{filename}"'
+            }
         )
         
     except Exception as e:
