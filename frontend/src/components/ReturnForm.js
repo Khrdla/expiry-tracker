@@ -8,6 +8,7 @@ const ReturnForm = ({ user }) => {
     // Item Details
     product_code: '',
     product_name: '',
+    barcode: '', // Barcode field added after product name
     quantity: '',
     purchase_price: '',
     purchase_currency: 'YER',
