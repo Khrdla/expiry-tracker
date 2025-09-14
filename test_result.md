@@ -491,6 +491,9 @@ metadata:
   email_alert_system_success_rate: "100%"
   fixed_email_alert_validation_date: "2025-01-13"
   fixed_email_alert_validation_success_rate: "100%"
+  return_form_pdf_export_testing_date: "2025-01-14"
+  return_form_pdf_export_success_rate: "100%"
+  return_form_pdf_critical_fixes_applied: true
 
 test_plan:
   current_focus: []
