@@ -37,6 +37,7 @@ const ReturnForm = ({ user }) => {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupResults, setLookupResults] = useState(null);
   const [showLookupResults, setShowLookupResults] = useState(false);
+  const [submittedReturnId, setSubmittedReturnId] = useState(null); // Store the submitted form ID
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
