@@ -170,6 +170,7 @@ const ReturnForm = ({ user }) => {
           product_name: '',
           quantity: '',
           purchase_price: '',
+          total_value: '0.00',
           supplier: '',
           reason_for_return: '',
           notes: '',
