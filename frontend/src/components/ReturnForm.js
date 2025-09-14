@@ -281,8 +281,14 @@ const ReturnForm = ({ user }) => {
           
           <div className="flex space-x-3 mt-4 lg:mt-0">
             <button
-              onClick={exportToPDF}
-              className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors"
+              onClick={() => exportToPDF(submittedReturnId)}
+              disabled={!submittedReturnId}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                submittedReturnId 
+                  ? 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white' 
+                  : 'bg-gray-400 bg-opacity-50 text-gray-300 cursor-not-allowed'
+              }`}
+              title={submittedReturnId ? 'Export as PDF' : 'Please submit the form first'}
             >
               <FileText size={16} />
               <span>Export PDF</span>
