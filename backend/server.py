@@ -161,7 +161,7 @@ async def send_automated_daily_alerts():
             <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
                 <p style="color: #666; font-size: 14px;">
                     This is an automated daily report from Geant Hypermarket Inventory Management System<br>
-                    Generated on {current_adan_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden timezone)<br>
+                    Generated on {current_aden_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden timezone)<br>
                     Scheduled daily at 06:00 AM Aden time
                 </p>
             </div>
