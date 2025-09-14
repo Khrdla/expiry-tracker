@@ -71,8 +71,19 @@ const ReturnForm = ({ user }) => {
         } else {
           setMessage({ type: 'info', text: data.message });
         }
+      } else if (response.status === 401) {
+        setMessage({ type: 'error', text: 'Authentication expired. Please refresh the page and log in again.' });
+        // Optionally redirect to login
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+        }, 3000);
+      } else if (response.status === 403) {
+        setMessage({ type: 'error', text: 'Access denied. Please check your permissions.' });
+      } else if (response.status === 404) {
+        setMessage({ type: 'info', text: 'No products found matching your search.' });
       } else {
-        setMessage({ type: 'error', text: 'Lookup failed' });
+        setMessage({ type: 'error', text: `Lookup failed: Server error (${response.status})` });
       }
     } catch (error) {
       console.error('Lookup error:', error);
