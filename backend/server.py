@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from contextlib import asynccontextmanager
 from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 from jose import JWTError, jwt
