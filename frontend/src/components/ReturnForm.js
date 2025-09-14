@@ -163,7 +163,9 @@ const ReturnForm = ({ user }) => {
       });
 
       if (response.ok) {
-        setMessage({ type: 'success', text: 'Return form submitted successfully!' });
+        const responseData = await response.json();
+        setSubmittedReturnId(responseData.id || responseData.return_id); // Store the returned ID
+        setMessage({ type: 'success', text: 'Return form submitted successfully! You can now export it as PDF.' });
         // Reset form
         setReturnData({
           ...returnData,
