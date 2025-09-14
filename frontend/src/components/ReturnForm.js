@@ -444,6 +444,22 @@ const ReturnForm = ({ user }) => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={returnData.barcode}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                  placeholder="Use lookup above to auto-fill"
+                  readOnly={lookupResults?.found}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  📱 Product barcode for tracking and identification
+                </p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price (Auto-filled)</label>
                 <div className="flex space-x-2">
                   <input
