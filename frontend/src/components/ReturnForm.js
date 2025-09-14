@@ -166,20 +166,9 @@ const ReturnForm = ({ user }) => {
         const responseData = await response.json();
         setSubmittedReturnId(responseData.id || responseData.return_id); // Store the returned ID
         setMessage({ type: 'success', text: 'Return form submitted successfully! You can now export it as PDF.' });
-        // Reset form
-        setSubmittedReturnId(null); // Reset the submitted ID
-        setReturnData({
-          ...returnData,
-          product_code: '',
-          product_name: '',
-          quantity: '',
-          purchase_price: '',
-          total_value: '0.00',
-          supplier: '',
-          reason_for_return: '',
-          notes: '',
-          reference_number: `RTN-${Date.now()}`
-        });
+        
+        // Do NOT reset the form automatically - let user export PDF first
+        // The form will be reset when user clicks "Clear Form" button or starts a new return
       } else {
         const errorData = await response.json();
         setMessage({ type: 'error', text: errorData.detail || 'Failed to submit return form' });
