@@ -103,6 +103,7 @@ const ReturnForm = ({ user }) => {
         ...returnData,
         product_code: lookupResults.item_number,
         product_name: lookupResults.product_name,
+        barcode: lookupResults.barcode || '', // Add barcode from lookup results
         purchase_price: lookupResults.purchase_price.toString(),
         purchase_currency: lookupResults.purchase_currency,
         supplier: lookupResults.supplier
