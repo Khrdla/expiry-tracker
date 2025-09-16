@@ -398,14 +398,30 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             <div className="text-center py-6 md:py-8">
               <CameraOff size={40} className="text-gray-400 mx-auto mb-4 md:hidden" />
               <CameraOff size={48} className="text-gray-400 mx-auto mb-4 hidden md:block" />
-              <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Camera Access Required</h3>
-              <p className="text-sm md:text-base text-gray-600 mb-4">Please allow camera access to scan barcodes</p>
-              <button
-                onClick={initializeCamera}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
-              >
-                Grant Camera Access
-              </button>
+              <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">🔒 Camera Access Required</h3>
+              <div className="text-sm md:text-base text-gray-600 mb-4 space-y-2">
+                <p>To scan barcodes, please allow camera access in your browser.</p>
+                <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                  <p><strong>📱 Mobile:</strong> Tap the camera icon in address bar</p>
+                  <p><strong>💻 Desktop:</strong> Click the camera icon next to the URL</p>
+                  <p><strong>🔒 Secure:</strong> Camera access is required for barcode scanning only</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={initializeCamera}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base w-full sm:w-auto"
+                >
+                  🎥 Grant Camera Access
+                </button>
+                <br />
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm md:text-base w-full sm:w-auto"
+                >
+                  ⌨️ Enter Barcode Manually
+                </button>
+              </div>
             </div>
           )}
 
