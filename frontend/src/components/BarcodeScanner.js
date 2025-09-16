@@ -124,19 +124,24 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       resetScanner();
       setIsScanning(true);
 
-      // Initialize Html5QrcodeScanner with enhanced configuration
+      // Initialize Html5QrcodeScanner with flexible configuration
       const config = {
-        fps: 30, // High FPS for fast detection
-        qrbox: { width: 350, height: 150 }, // Optimized for barcode scanning
-        aspectRatio: 2.33, // Wide aspect ratio for barcodes
+        fps: 10, // Reduced FPS for better compatibility
+        qrbox: { width: 300, height: 200 }, // More balanced scan area
+        aspectRatio: 1.5, // Less demanding aspect ratio
         disableFlip: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        },
         videoConstraints: {
           facingMode: "environment", // Back camera preferred
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          frameRate: { ideal: 60, min: 30 }
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
+          frameRate: { ideal: 30, min: 15 }
         }
       };
+      
+      console.log('🔍 Starting scanner with config:', config);
 
       if (scannerInstanceRef.current) {
         await cleanup();
