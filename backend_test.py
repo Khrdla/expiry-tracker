@@ -1595,6 +1595,11 @@ class ExpiryTrackerAPITester:
             print("❌ Admin login failed - stopping tests")
             return False
         
+        # URGENT: Barcode Scanner Camera Issue Investigation
+        print("\n🚨 URGENT: BARCODE SCANNER CAMERA ISSUE INVESTIGATION")
+        print("-" * 60)
+        camera_issue_resolved = self.test_barcode_scanner_camera_issue_investigation()
+        
         # PRIORITY HIGH - Critical endpoints from review request
         print("\n🔥 PRIORITY HIGH TESTS (from review request)")
         print("-" * 50)
