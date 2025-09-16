@@ -15,7 +15,7 @@ import json
 from datetime import datetime
 
 class ProductLookupTester:
-    def __init__(self, base_url="https://stock-tracker-207.preview.emergentagent.com"):
+    def __init__(self, base_url="https://return-manager-2.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
