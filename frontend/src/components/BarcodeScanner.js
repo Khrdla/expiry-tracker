@@ -49,15 +49,71 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const initializeCamera = async () => {
     try {
-      // Request camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setCameraPermission(true);
-      // Stop the test stream
-      stream.getTracks().forEach(track => track.stop());
+      console.log('🔍 Initializing camera...');
+      
+      // Check if mediaDevices API is available first
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not available in this browser');
+      }
+      
+      // Try with basic constraints first
+      let constraints = { video: true };
+      
+      try {
+        // Try enhanced constraints for better quality
+        constraints = {
+          video: {
+            facingMode: 'environment', // Prefer back camera
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 }
+          }
+        };
+        
+        console.log('🔍 Requesting camera with enhanced constraints:', constraints);
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        setCameraPermission(true);
+        console.log('✅ Camera access granted with enhanced constraints');
+        
+        // Stop the test stream
+        stream.getTracks().forEach(track => track.stop());
+        
+      } catch (enhancedError) {
+        console.warn('⚠️ Enhanced camera constraints failed, trying basic constraints:', enhancedError);
+        
+        // Fallback to basic constraints
+        constraints = { video: true };
+        console.log('🔍 Requesting camera with basic constraints:', constraints);
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        setCameraPermission(true);
+        console.log('✅ Camera access granted with basic constraints');
+        
+        // Stop the test stream
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
     } catch (error) {
-      console.error('Camera initialization error:', error);
+      console.error('❌ Camera initialization error:', error);
       setCameraPermission(false);
-      setError('❌ Camera access denied. Please allow camera access and try again.');
+      
+      let errorMessage = '❌ Camera access denied. ';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage += 'Please allow camera access and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage += 'No camera found on this device.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage += 'Camera is being used by another app. Close other camera apps and try again.';
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage += 'Camera constraints not supported. Try refreshing the page.';
+      } else if (error.message.includes('not available')) {
+        errorMessage += 'Camera API not supported in this browser. Please use Chrome, Firefox, or Safari.';
+      } else {
+        errorMessage += `${error.message || 'Unknown camera error'}`;
+      }
+      
+      setError(errorMessage);
     }
   };
 
