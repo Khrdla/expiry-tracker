@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 1px solid #ccc;
+        }
+        #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 Barcode Scanner Camera Issue Investigation</h1>
+    <p>This test page will help diagnose the camera issue reported by the user.</p>
+
+    <!-- Test 1: Basic Camera Access -->
+    <div class="test-section" id="test1">
+        <h2>Test 1: Basic Camera Access</h2>
+        <p>Testing if browser can access camera using getUserMedia API</p>
+        <button onclick="testBasicCamera()">Test Camera Access</button>
+        <div id="camera-result"></div>
+        <video id="camera-video" style="display: none;" autoplay></video>
+    </div>
+
+    <!-- Test 2: HTML5-QRCode Library -->
+    <div class="test-section" id="test2">
+        <h2>Test 2: HTML5-QRCode Library</h2>
+        <p>Testing if html5-qrcode library can initialize scanner</p>
+        <button onclick="testHtml5QrCode()">Test HTML5-QRCode</button>
+        <div id="qrcode-result"></div>
+        <div id="qr-reader"></div>
+    </div>
+
+    <!-- Test 3: Backend API -->
+    <div class="test-section" id="test3">
+        <h2>Test 3: Backend API Connection</h2>
+        <p>Testing if backend barcode API is accessible</p>
+        <button onclick="testBackendAPI()">Test Backend API</button>
+        <div id="api-result"></div>
+    </div>
+
+    <!-- Test 4: Environment Variables -->
+    <div class="test-section" id="test4">
+        <h2>Test 4: Environment Configuration</h2>
+        <p>Checking environment variables and configuration</p>
+        <button onclick="testEnvironment()">Test Environment</button>
+        <div id="env-result"></div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        // Test 1: Basic Camera Access
+        async function testBasicCamera() {
+            const resultDiv = document.getElementById('camera-result');
+            const video = document.getElementById('camera-video');
+            
+            try {
+                resultDiv.innerHTML = '<p>🔍 Requesting camera access...</p>';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1920, min: 640 },
+                        height: { ideal: 1080, min: 480 }
+                    } 
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                resultDiv.innerHTML = '<p class="success">✅ Camera access successful! Camera is working.</p>';
+                resultDiv.className = 'success';
+                
+                // Stop stream after 5 seconds
+                setTimeout(() => {
+                    stream.getTracks().forEach(track => track.stop());
+                    video.style.display = 'none';
+                    resultDiv.innerHTML += '<p>Camera stream stopped.</p>';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Camera error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Camera access failed: ${error.name} - ${error.message}</p>`;
+                resultDiv.className = 'error';
+                
+                // Provide specific error guidance
+                if (error.name === 'NotAllowedError') {
+                    resultDiv.innerHTML += '<p><strong>Solution:</strong> Please allow camera access in your browser settings.</p>';
+                } else if (error.name === 'NotFoundError') {
+                    resultDiv.innerHTML += '<p><strong>Issue:</strong> No camera found on this device.</p>';
+                } else if (error.name === 'NotReadableError') {
+                    resultDiv.innerHTML += '<p><strong>Issue:</strong> Camera is being used by another application.</p>';
+                }
+            }
+        }
+
+        // Test 2: HTML5-QRCode Library
+        let html5QrcodeScanner = null;
+        
+        function testHtml5QrCode() {
+            const resultDiv = document.getElementById('qrcode-result');
+            
+            try {
+                resultDiv.innerHTML = '<p>🔍 Initializing HTML5-QRCode scanner...</p>';
+                
+                // Clear any existing scanner
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.clear();
+                }
+                
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    videoConstraints: {
+                        facingMode: "environment"
+                    }
+                };
+                
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "qr-reader",
+                    config,
+                    true // verbose logging enabled for debugging
+                );
+                
+                html5QrcodeScanner.render(
+                    (decodedText, decodedResult) => {
+                        resultDiv.innerHTML = `<p class="success">✅ Barcode scanned successfully: ${decodedText}</p>`;
+                        resultDiv.className = 'success';
+                        console.log('Scan result:', decodedText, decodedResult);
+                    },
+                    (errorMessage) => {
+                        // Only log actual errors, not "no barcode found" messages
+                        if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
+                            console.warn('HTML5-QRCode error:', errorMessage);
+                        }
+                    }
+                );
+                
+                resultDiv.innerHTML = '<p class="success">✅ HTML5-QRCode scanner initialized successfully!</p>';
+                resultDiv.className = 'success';
+                
+            } catch (error) {
+                console.error('HTML5-QRCode error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ HTML5-QRCode initialization failed: ${error.message}</p>`;
+                resultDiv.className = 'error';
+            }
+        }
+
+        // Test 3: Backend API
+        async function testBackendAPI() {
+            const resultDiv = document.getElementById('api-result');
+            
+            try {
+                resultDiv.innerHTML = '<p>🔍 Testing backend API connection...</p>';
+                
+                // Get backend URL from environment or use default
+                const backendUrl = 'https://return-manager-2.preview.emergentagent.com';
+                const testBarcode = '3222471081716'; // Apple Juice Box 1L
+                
+                // Test login first
+                const loginResponse = await fetch(`${backendUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'imadqejji',
+                        password: '066380531I'
+                    })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error(`Login failed: ${loginResponse.status}`);
+                }
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+                
+                // Test barcode API
+                const barcodeResponse = await fetch(`${backendUrl}/api/barcode/${testBarcode}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!barcodeResponse.ok) {
+                    throw new Error(`Barcode API failed: ${barcodeResponse.status}`);
+                }
+                
+                const barcodeData = await barcodeResponse.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Backend API working correctly!</p>
+                    <p><strong>Login:</strong> Successful</p>
+                    <p><strong>Barcode API:</strong> Found product "${barcodeData.product_name}"</p>
+                    <p><strong>Backend URL:</strong> ${backendUrl}</p>
+                `;
+                resultDiv.className = 'success';
+                
+            } catch (error) {
+                console.error('Backend API error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Backend API test failed: ${error.message}</p>`;
+                resultDiv.className = 'error';
+            }
+        }
+
+        // Test 4: Environment Configuration
+        function testEnvironment() {
+            const resultDiv = document.getElementById('env-result');
+            
+            try {
+                const info = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    cookieEnabled: navigator.cookieEnabled,
+                    onLine: navigator.onLine,
+                    mediaDevices: !!navigator.mediaDevices,
+                    getUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+                    location: window.location.href,
+                    protocol: window.location.protocol,
+                    isSecure: window.location.protocol === 'https:',
+                    permissions: !!navigator.permissions
+                };
+                
+                let html = '<div class="success"><h4>Environment Information:</h4>';
+                for (const [key, value] of Object.entries(info)) {
+                    html += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+                html += '</div>';
+                
+                // Check for potential issues
+                if (!info.isSecure && window.location.hostname !== 'localhost') {
+                    html += '<div class="error"><p>⚠️ <strong>Security Issue:</strong> Camera access requires HTTPS on non-localhost domains.</p></div>';
+                }
+                
+                if (!info.getUserMedia) {
+                    html += '<div class="error"><p>❌ <strong>Browser Issue:</strong> getUserMedia API not available.</p></div>';
+                }
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Environment test error:', error);
+                resultDiv.innerHTML = `<p class="error">❌ Environment test failed: ${error.message}</p>`;
+                resultDiv.className = 'error';
+            }
+        }
+
+        // Auto-run environment test on page load
+        window.addEventListener('load', () => {
+            testEnvironment();
+        });
+    </script>
+</body>
+</html>
