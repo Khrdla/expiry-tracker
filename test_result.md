@@ -242,6 +242,33 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE LIGHTNING-FAST BARCODE SCANNER TESTING COMPLETED - SUCCESS RATE: 100%. ✅ SCANNER MODAL ACCESS: Dashboard floating button (⚡ Scan Item) opens scanner modal instantly with sub-second performance (568ms). Products page 'Scan Barcode' button also opens scanner modal successfully. ✅ ENHANCED UI BRANDING: '⚡ Fast Barcode Scanner' title with 'Lightning-fast multi-format scanning' description confirmed on all access points. Professional gradient styling with lightning bolt icon. ✅ CAMERA PERMISSION FLOW: 'Camera Access Required' message with 'Grant Camera Access' button working correctly. Proper permission handling implemented. ✅ MANUAL ENTRY FUNCTIONALITY: Manual entry option available with sample barcode placeholder (3222471081716). Input field accessible for manual barcode entry when camera unavailable. ✅ MOBILE RESPONSIVENESS: Scanner modal fully responsive on mobile viewport (390x844). 12+ buttons are touch-friendly sized (≥44px height). Mobile-optimized interface with proper scaling. ✅ PERFORMANCE OPTIMIZATION: Sub-second modal opening (568ms), lightning-fast detection indicators present, enhanced camera constraints (60fps, 1920x1080), reduced scan cooldown to 150ms. ✅ ENHANCED FEATURES: Session statistics tracking, haptic feedback patterns, auto-retry logic, comprehensive format support (EAN, UPC, Code128, QR), enhanced error handling. All critical requirements from review request verified and working perfectly. The lightning-fast barcode scanner optimization is production-ready."
 
+  - task: "Fix barcode scanner camera not opening issue"
+    implemented: false
+    working: false
+    file: "BarcodeScanner.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'the barecode scanner in the app not working it not open the camera to scan'. This is a high priority issue that needs immediate investigation and fixing."
+      - working: false
+        agent: "main"
+        comment: "Investigating barcode scanner camera issue. Previous testing agent reported 100% success rate, but user experiencing camera not opening. Need to debug html5-qrcode implementation and camera permission handling."
+
+  - task: "Complete barcode integration in Return Form PDF export"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to add barcode field to the Item Details section of the PDF export for Return Form. This was the original task before the scanner issue was reported."
+
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
     working: true
