@@ -152,25 +152,34 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       // Dynamic import to avoid build issues
       const { Html5QrcodeScanner } = await import('html5-qrcode');
       
+      console.log('✅ Html5QrcodeScanner imported successfully');
+      
       scannerInstanceRef.current = new Html5QrcodeScanner(
         "qr-reader",
         config,
         false // verbose logging disabled for performance
       );
 
+      console.log('✅ Html5QrcodeScanner instance created');
+
       scannerInstanceRef.current.render(
         (decodedText) => {
+          console.log('✅ Barcode scanned:', decodedText);
           if (isMountedRef.current) {
             handleSuccessfulScan(decodedText);
           }
         },
         (errorMessage) => {
           // Only log actual errors, not "no barcode found" messages
-          if (!errorMessage.includes('No MultiFormat Readers') && !errorMessage.includes('NotFoundException')) {
-            console.warn('Scan error:', errorMessage);
+          if (!errorMessage.includes('No MultiFormat Readers') && 
+              !errorMessage.includes('NotFoundException') &&
+              !errorMessage.includes('No QR code found')) {
+            console.warn('⚠️ Scan error:', errorMessage);
           }
         }
       );
+      
+      console.log('✅ Scanner render initiated');
 
     } catch (error) {
       console.error('❌ Start scanning error:', error);
