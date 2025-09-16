@@ -591,6 +591,13 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             <div className="text-center py-6 md:py-8">
               <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
               <p className="text-sm md:text-base text-gray-600">⚡ Initializing fast scanner...</p>
+              <div className="text-xs text-gray-500 mt-4 bg-gray-50 p-3 rounded-lg">
+                <p><strong>🔍 Debug Info:</strong></p>
+                <p>📍 URL: {window.location.protocol}//{window.location.host}</p>
+                <p>🔒 Secure: {window.location.protocol === 'https:' ? '✅ HTTPS' : '❌ HTTP (camera may not work)'}</p>
+                <p>🌐 Browser: {navigator.userAgent.split(' ').slice(-2).join(' ')}</p>
+                <p>📹 Camera API: {(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '✅ Available' : '❌ Not available'}</p>
+              </div>
             </div>
           )}
         </div>
