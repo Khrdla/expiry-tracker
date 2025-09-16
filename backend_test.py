@@ -1460,10 +1460,130 @@ class ExpiryTrackerAPITester:
         
         return success
 
+    def test_barcode_scanner_camera_issue_investigation(self):
+        """URGENT: Investigate barcode scanner camera not opening issue reported by user"""
+        print("\n🚨 URGENT: BARCODE SCANNER CAMERA ISSUE INVESTIGATION")
+        print("User reported: 'the barecode scanner in the app not working it not open the camera to scan'")
+        print("-" * 80)
+        
+        # Test 1: Verify barcode API endpoints are working
+        print("\n🔍 Step 1: Testing Barcode API Backend Functionality")
+        sample_barcodes = self.get_sample_barcodes()
+        api_working = True
+        
+        for i, barcode_data in enumerate(sample_barcodes[:3], 1):  # Test first 3 barcodes
+            barcode = barcode_data["barcode"]
+            expected_product = barcode_data["product_name"]
+            
+            success, response = self.run_test(
+                f"Barcode API Test #{i} ({barcode})",
+                "GET",
+                f"barcode/{barcode}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                actual_product = response.get('product_name', '')
+                if actual_product == expected_product:
+                    print(f"   ✅ API working: {barcode} → {actual_product}")
+                else:
+                    print(f"   ❌ API mismatch: Expected '{expected_product}', got '{actual_product}'")
+                    api_working = False
+            else:
+                print(f"   ❌ API failed for barcode {barcode}")
+                api_working = False
+        
+        # Test 2: Verify admin login works
+        print("\n🔍 Step 2: Testing Admin Login (imadqejji/066380531I)")
+        login_success = self.test_login()
+        if login_success:
+            print("   ✅ Admin login working correctly")
+        else:
+            print("   ❌ Admin login failed - this could affect scanner functionality")
+        
+        # Test 3: Test dashboard accessibility
+        print("\n🔍 Step 3: Testing Dashboard Accessibility")
+        dashboard_success, dashboard_response = self.run_test(
+            "Dashboard Access Test",
+            "GET",
+            "dashboard",
+            200
+        )
+        
+        if dashboard_success:
+            print("   ✅ Dashboard accessible - scanner button should be visible")
+        else:
+            print("   ❌ Dashboard not accessible - scanner button may not work")
+        
+        # Test 4: Check for any JavaScript/frontend related issues by testing API endpoints
+        print("\n🔍 Step 4: Testing API Endpoints Used by Frontend Scanner")
+        
+        # Test the specific barcode mentioned in review (Apple Juice Box 1L)
+        apple_juice_barcode = "3222471081716"
+        success, response = self.run_test(
+            f"Apple Juice Barcode Test ({apple_juice_barcode})",
+            "GET",
+            f"barcode/{apple_juice_barcode}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            product_name = response.get('product_name', '')
+            if "Apple Juice Box 1L" in product_name:
+                print(f"   ✅ Apple Juice barcode working: {product_name}")
+            else:
+                print(f"   ⚠️ Apple Juice barcode returned: {product_name}")
+        else:
+            print(f"   ❌ Apple Juice barcode failed")
+        
+        # Test 5: Check authentication requirements
+        print("\n🔍 Step 5: Testing Authentication Requirements")
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Barcode API Without Auth",
+            "GET",
+            f"barcode/{apple_juice_barcode}",
+            403
+        )
+        
+        self.token = original_token
+        
+        if success:
+            print("   ✅ Authentication properly required - frontend must have valid token")
+        else:
+            print("   ❌ Authentication issue - this could cause scanner failures")
+        
+        # Summary and recommendations
+        print("\n📋 CAMERA ISSUE INVESTIGATION SUMMARY")
+        print("-" * 50)
+        
+        if api_working and login_success and dashboard_success:
+            print("✅ BACKEND STATUS: All backend APIs working correctly")
+            print("🔍 LIKELY ISSUE: Frontend camera permission or html5-qrcode library issue")
+            print("\n💡 RECOMMENDATIONS FOR MAIN AGENT:")
+            print("1. Check browser camera permissions in frontend")
+            print("2. Verify html5-qrcode library is properly loaded")
+            print("3. Check for JavaScript console errors in browser")
+            print("4. Test camera initialization in BarcodeScanner.js component")
+            print("5. Verify REACT_APP_BACKEND_URL is correctly configured")
+            print("6. Check if camera is being blocked by browser security policies")
+        else:
+            print("❌ BACKEND STATUS: Issues found in backend APIs")
+            print("🔍 LIKELY ISSUE: Backend authentication or API problems")
+            print("\n💡 RECOMMENDATIONS FOR MAIN AGENT:")
+            print("1. Fix backend API issues first")
+            print("2. Ensure admin credentials are working")
+            print("3. Check server logs for errors")
+            print("4. Verify database connectivity")
+        
+        return api_working and login_success and dashboard_success
+
     def run_all_tests(self):
         """Run all backend tests focused on review requirements"""
         print("🚀 Starting Comprehensive Backend API Testing")
-        print("Focus: Authentication, Products API, Dashboard, Filters, Currency")
+        print("Focus: URGENT - Barcode Scanner Camera Issue Investigation")
         print("=" * 70)
         
         # Core connectivity and authentication tests
