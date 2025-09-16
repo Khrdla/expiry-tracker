@@ -171,8 +171,22 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       );
 
     } catch (error) {
-      console.error('Start scanning error:', error);
-      handleScanError(error);
+      console.error('❌ Start scanning error:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      if (error.message.includes('Cannot access camera')) {
+        setError('❌ Cannot access camera. Please grant camera permission and try again.');
+        setCameraPermission(false);
+      } else if (error.message.includes('Permission denied')) {
+        setError('❌ Camera permission denied. Please allow camera access in your browser settings.');
+        setCameraPermission(false);
+      } else {
+        handleScanError(error);
+      }
     }
   };
 
