@@ -33,9 +33,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   useEffect(() => {
     if (isOpen) {
+      console.log('🚀 Scanner modal opened, initializing camera...');
       initializeCamera();
       resetScanner();
     } else {
+      console.log('🔒 Scanner modal closed, cleaning up...');
       cleanup();
     }
   }, [isOpen]);
