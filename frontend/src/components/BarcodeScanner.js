@@ -173,6 +173,12 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       const { Html5QrcodeScanner } = await import('html5-qrcode');
       
       console.log('✅ Html5QrcodeScanner imported successfully');
+      console.log('🔍 Browser info:', {
+        userAgent: navigator.userAgent,
+        hasGetUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+        hasBarcodeDetector: 'BarcodeDetector' in window,
+        protocol: window.location.protocol
+      });
       
       scannerInstanceRef.current = new Html5QrcodeScanner(
         "qr-reader",
