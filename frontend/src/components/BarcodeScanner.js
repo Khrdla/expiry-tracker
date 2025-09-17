@@ -182,38 +182,58 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
       console.log('✅ Html5QrcodeScanner instance created');
 
-      scannerInstanceRef.current.render(
-        (decodedText) => {
-          console.log('🎯 SUCCESS: Barcode detected:', decodedText);
-          if (isMountedRef.current) {
-            handleSuccessfulScan(decodedText);
-          }
-        },
-        (errorMessage) => {
-          // Filter out common scanning messages that aren't real errors
-          const ignoredMessages = [
-            'No MultiFormat Readers',
-            'NotFoundException', 
-            'No QR code found',
-            'QR code parse error', 
-            'Unable to detect a valid barcode',
-            'No barcode or QR code detected'
-          ];
-          
-          const isIgnoredMessage = ignoredMessages.some(msg => errorMessage.includes(msg));
-          
-          if (!isIgnoredMessage) {
-            console.warn('⚠️ Scan error:', errorMessage);
-          } else {
-            // Log scanning attempts for debugging (but less frequently)
-            if (Math.random() < 0.01) { // Log only 1% of attempts to avoid console spam
-              console.log('🔍 Scanning...', errorMessage);
-            }
-          }
-        }
-      );
+      // React 19 compatibility: Verify DOM element exists before rendering
+      const qrReaderElement = document.getElementById("qr-reader");
+      if (!qrReaderElement) {
+        throw new Error('QR reader DOM element not found');
+      }
       
-      console.log('✅ Scanner render initiated');
+      console.log('✅ DOM element verified:', qrReaderElement);
+
+      // Add a small delay to ensure DOM is fully ready (React 19 compatibility)
+      setTimeout(() => {
+        if (scannerInstanceRef.current && isMountedRef.current) {
+          scannerInstanceRef.current.render(
+            (decodedText) => {
+              console.log('🎯 SUCCESS: Barcode detected successfully!', decodedText);
+              console.log('🔍 Barcode details:', {
+                barcode: decodedText,
+                timestamp: new Date().toISOString(),
+                length: decodedText.length
+              });
+              
+              if (isMountedRef.current) {
+                handleSuccessfulScan(decodedText);
+              }
+            },
+            (errorMessage) => {
+              // Enhanced error logging for debugging
+              const ignoredMessages = [
+                'No MultiFormat Readers',
+                'NotFoundException', 
+                'No QR code found',
+                'QR code parse error', 
+                'Unable to detect a valid barcode',
+                'No barcode or QR code detected',
+                'No code found'
+              ];
+              
+              const isIgnoredMessage = ignoredMessages.some(msg => errorMessage.includes(msg));
+              
+              if (!isIgnoredMessage) {
+                console.warn('⚠️ Scanner error (not ignored):', errorMessage);
+              } else {
+                // Periodic logging for debugging barcode detection
+                if (Math.random() < 0.005) { // Very occasional logging
+                  console.log('🔍 Scanning active, looking for barcodes...', new Date().toLocaleTimeString());
+                }
+              }
+            }
+          );
+          
+          console.log('✅ Scanner render initiated with React 19 compatibility');
+        }
+      }, 100); // Small delay for React 19 compatibility
 
     } catch (error) {
       console.error('❌ Start scanning error:', error);
