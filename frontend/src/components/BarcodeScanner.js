@@ -184,17 +184,31 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
       scannerInstanceRef.current.render(
         (decodedText) => {
-          console.log('✅ Barcode scanned:', decodedText);
+          console.log('🎯 SUCCESS: Barcode detected:', decodedText);
           if (isMountedRef.current) {
             handleSuccessfulScan(decodedText);
           }
         },
         (errorMessage) => {
-          // Only log actual errors, not "no barcode found" messages
-          if (!errorMessage.includes('No MultiFormat Readers') && 
-              !errorMessage.includes('NotFoundException') &&
-              !errorMessage.includes('No QR code found')) {
+          // Filter out common scanning messages that aren't real errors
+          const ignoredMessages = [
+            'No MultiFormat Readers',
+            'NotFoundException', 
+            'No QR code found',
+            'QR code parse error', 
+            'Unable to detect a valid barcode',
+            'No barcode or QR code detected'
+          ];
+          
+          const isIgnoredMessage = ignoredMessages.some(msg => errorMessage.includes(msg));
+          
+          if (!isIgnoredMessage) {
             console.warn('⚠️ Scan error:', errorMessage);
+          } else {
+            // Log scanning attempts for debugging (but less frequently)
+            if (Math.random() < 0.01) { // Log only 1% of attempts to avoid console spam
+              console.log('🔍 Scanning...', errorMessage);
+            }
           }
         }
       );
