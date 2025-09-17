@@ -177,7 +177,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       scannerInstanceRef.current = new Html5QrcodeScanner(
         "qr-reader",
         config,
-        false // verbose logging disabled for performance
+        true // verbose logging enabled for debugging
       );
 
       console.log('✅ Html5QrcodeScanner instance created');
