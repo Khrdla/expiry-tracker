@@ -559,6 +559,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                         <span>Retry</span>
                       </button>
                     )}
+                    <button
+                      onClick={testBarcodeDetection}
+                      className="flex items-center space-x-2 bg-purple-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base"
+                    >
+                      <Package size={16} className="md:hidden" />
+                      <Package size={20} className="hidden md:block" />
+                      <span>🧪 Test Detection</span>
+                    </button>
                   </div>
                 )}
               </div>
