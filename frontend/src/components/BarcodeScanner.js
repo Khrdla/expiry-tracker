@@ -370,14 +370,25 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const stopScanning = async () => {
+    console.log('🛑 Stopping scanner...');
     setIsScanning(false);
     
     if (scannerInstanceRef.current) {
       try {
+        // React 19 compatibility: Ensure proper cleanup
+        console.log('🧹 Cleaning up scanner instance...');
         await scannerInstanceRef.current.clear();
-        scannerInstanceRef.current = null;
+        
+        // Additional cleanup for React 19
+        setTimeout(() => {
+          scannerInstanceRef.current = null;
+          console.log('✅ Scanner cleanup completed');
+        }, 50);
+        
       } catch (error) {
-        console.warn('Error stopping scanner:', error);
+        console.warn('⚠️ Error during scanner cleanup:', error);
+        // Force cleanup even if error occurs
+        scannerInstanceRef.current = null;
       }
     }
   };
