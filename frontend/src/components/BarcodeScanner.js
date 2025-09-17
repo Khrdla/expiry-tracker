@@ -447,6 +447,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
+  // Test function to simulate barcode detection
+  const testBarcodeDetection = () => {
+    const testBarcode = '3222471081716'; // Apple Juice Box 1L
+    console.log('🧪 Testing barcode detection with:', testBarcode);
+    setSuccess('🧪 Testing barcode detection...');
+    processBarcode(testBarcode);
+  };
+
   if (!isOpen) return null;
 
   return (
