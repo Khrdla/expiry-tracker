@@ -553,10 +553,25 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                           📱 All Formats: EAN, UPC, Code128, QR
                         </div>
                         
-                        {/* Instructions */}
-                        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 md:px-4 py-2 rounded-lg">
-                          <p className="text-xs md:text-sm text-center font-medium">⚡ Lightning-fast detection active</p>
-                          <p className="text-xs text-center text-gray-300">Position barcode clearly in view</p>
+                        {/* Enhanced Instructions */}
+                        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-3 md:px-4 py-2 rounded-lg text-center max-w-xs">
+                          <p className="text-xs md:text-sm font-medium text-green-400">🎯 Barcode Detection Active</p>
+                          <p className="text-xs text-gray-300 mt-1">Hold phone 6-12 inches from barcode</p>
+                          <p className="text-xs text-gray-300">Keep barcode horizontal & well-lit</p>
+                        </div>
+                        
+                        {/* Scan area guide */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="border-2 border-green-400 border-dashed rounded-lg bg-transparent" 
+                               style={{
+                                 width: '280px',
+                                 height: '120px',
+                                 opacity: 0.6
+                               }}>
+                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-green-400 text-xs font-medium">
+                              📊 Barcode Scan Area
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
