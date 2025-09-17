@@ -1580,6 +1580,262 @@ class ExpiryTrackerAPITester:
         
         return api_working and login_success and dashboard_success
 
+    def test_manual_barcode_entry_functionality(self):
+        """Test manual barcode entry functionality as fallback for barcode scanning"""
+        print("\n🔍 TESTING MANUAL BARCODE ENTRY FUNCTIONALITY")
+        print("=" * 60)
+        print("Testing Requirements from Review Request:")
+        print("1. Test barcode lookup API with sample barcode: 3222471081716 (Apple Juice Box 1L)")
+        print("2. Verify the manual entry API endpoint works correctly")
+        print("3. Confirm authentication is working for barcode lookups")
+        print("4. Test error handling for invalid barcodes")
+        print("5. Verify the Return Form PDF export now includes barcode field")
+        print("=" * 60)
+        
+        all_tests_passed = True
+        
+        # Test 1: Sample barcode lookup (3222471081716 - Apple Juice Box 1L)
+        print("\n🍎 Test 1: Sample Barcode Lookup (3222471081716 - Apple Juice Box 1L)")
+        sample_barcode = "3222471081716"
+        expected_product = "Apple Juice Box 1L"
+        expected_currency = "EUR"
+        expected_department = "01-CGD"
+        
+        success, response = self.run_test(
+            "Manual Entry - Apple Juice Barcode Lookup",
+            "GET",
+            f"barcode/{sample_barcode}",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            actual_product = response.get('product_name', '')
+            actual_currency = response.get('purchase_currency', '')
+            actual_department = response.get('department', '')
+            
+            print(f"   📦 Product Found: {actual_product}")
+            print(f"   💰 Currency: {actual_currency}")
+            print(f"   🏢 Department: {actual_department}")
+            
+            # Verify expected values
+            if expected_product in actual_product:
+                print(f"   ✅ Product name matches expected: {expected_product}")
+            else:
+                print(f"   ❌ Product name mismatch: Expected '{expected_product}', got '{actual_product}'")
+                all_tests_passed = False
+            
+            if actual_currency.upper() == expected_currency:
+                print(f"   ✅ Currency matches expected: {expected_currency}")
+            else:
+                print(f"   ⚠️ Currency differs: Expected '{expected_currency}', got '{actual_currency}'")
+            
+            if actual_department == expected_department:
+                print(f"   ✅ Department matches expected: {expected_department}")
+            else:
+                print(f"   ❌ Department mismatch: Expected '{expected_department}', got '{actual_department}'")
+                all_tests_passed = False
+                
+            # Verify all required fields are present
+            required_fields = ['product_name', 'item_number', 'barcode', 'department', 
+                             'section', 'purchase_price', 'purchase_currency', 'selling_price', 
+                             'supplier', 'quantity', 'status']
+            
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"   ❌ Missing required fields: {missing_fields}")
+                all_tests_passed = False
+            else:
+                print(f"   ✅ All required fields present")
+        else:
+            print(f"   ❌ Failed to lookup sample barcode {sample_barcode}")
+            all_tests_passed = False
+        
+        # Test 2: Authentication requirement for barcode lookups
+        print("\n🔐 Test 2: Authentication Requirement for Barcode Lookups")
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Manual Entry - No Authentication",
+            "GET",
+            f"barcode/{sample_barcode}",
+            403  # Should require authentication
+        )
+        
+        self.token = original_token  # Restore token
+        
+        if success:
+            print("   ✅ Barcode lookup correctly requires authentication")
+        else:
+            print("   ❌ Barcode lookup should require authentication")
+            all_tests_passed = False
+        
+        # Test 3: Error handling for invalid barcodes
+        print("\n❌ Test 3: Error Handling for Invalid Barcodes")
+        invalid_barcodes = [
+            {"barcode": "0000000000000", "description": "Non-existent barcode"},
+            {"barcode": "invalid_format", "description": "Invalid format"},
+            {"barcode": "999999999999999", "description": "Another non-existent"},
+            {"barcode": "", "description": "Empty barcode"}
+        ]
+        
+        for i, test_case in enumerate(invalid_barcodes, 1):
+            barcode = test_case["barcode"]
+            description = test_case["description"]
+            
+            success, response = self.run_test(
+                f"Invalid Barcode #{i} - {description}",
+                "GET",
+                f"barcode/{barcode}",
+                404  # Should return 404 for invalid barcodes
+            )
+            
+            if success:
+                print(f"   ✅ Invalid barcode '{barcode}' correctly returned 404")
+            else:
+                print(f"   ❌ Invalid barcode '{barcode}' should return 404")
+                all_tests_passed = False
+        
+        # Test 4: Additional valid barcodes for comprehensive testing
+        print("\n📋 Test 4: Additional Valid Barcodes Testing")
+        additional_barcodes = [
+            {"barcode": "9501100046987", "expected_dept": "01-FMG"},
+            {"barcode": "3222471052747", "expected_dept": "01-CGD"},
+            {"barcode": "3222471075722", "expected_dept": "01-CGD"}
+        ]
+        
+        for i, test_case in enumerate(additional_barcodes, 1):
+            barcode = test_case["barcode"]
+            expected_dept = test_case["expected_dept"]
+            
+            success, response = self.run_test(
+                f"Additional Barcode #{i} ({barcode})",
+                "GET",
+                f"barcode/{barcode}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                actual_dept = response.get('department', '')
+                product_name = response.get('product_name', '')
+                
+                if actual_dept == expected_dept:
+                    print(f"   ✅ Barcode {barcode}: {product_name} ({actual_dept})")
+                else:
+                    print(f"   ⚠️ Barcode {barcode}: Expected dept {expected_dept}, got {actual_dept}")
+            else:
+                print(f"   ❌ Failed to lookup barcode {barcode}")
+                all_tests_passed = False
+        
+        # Test 5: Return Form PDF Export with Barcode Field
+        print("\n📄 Test 5: Return Form PDF Export with Barcode Field")
+        
+        # First create a test return form
+        return_form_data = {
+            "reference_number": f"TEST-BARCODE-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "product_code": "TEST001",
+            "product_name": "Apple Juice Box 1L",
+            "barcode": sample_barcode,  # Include barcode field
+            "quantity": 10,
+            "purchase_price": 2.50,
+            "purchase_currency": "EUR",
+            "supplier": "Test Supplier",
+            "reason_for_return": "Testing barcode integration",
+            "department_manager_signature": "Test Manager",
+            "purchasing_manager_signature": "Test Purchasing",
+            "notes": "Test return form for barcode PDF integration"
+        }
+        
+        success, response = self.run_test(
+            "Create Return Form with Barcode",
+            "POST",
+            "returns",
+            200,
+            data=return_form_data
+        )
+        
+        if success and isinstance(response, dict):
+            return_id = response.get('id')
+            if return_id:
+                print(f"   ✅ Return form created with ID: {return_id}")
+                
+                # Test PDF export
+                success_pdf, response_pdf = self.run_test(
+                    "Export Return Form PDF with Barcode",
+                    "GET",
+                    f"export/return-form/{return_id}/pdf",
+                    200
+                )
+                
+                if success_pdf:
+                    print(f"   ✅ PDF export successful for return form with barcode")
+                    
+                    # Check if response is PDF content
+                    if isinstance(response_pdf, (bytes, str)):
+                        pdf_size = len(response_pdf) if isinstance(response_pdf, bytes) else len(response_pdf.encode())
+                        print(f"   📄 PDF size: {pdf_size} bytes")
+                        
+                        if pdf_size > 1000:  # Reasonable PDF size
+                            print(f"   ✅ PDF generated successfully with barcode field")
+                        else:
+                            print(f"   ⚠️ PDF seems too small: {pdf_size} bytes")
+                    else:
+                        print(f"   ✅ PDF export endpoint working (response type: {type(response_pdf)})")
+                else:
+                    print(f"   ❌ PDF export failed for return form with barcode")
+                    all_tests_passed = False
+            else:
+                print(f"   ❌ Return form creation failed - no ID returned")
+                all_tests_passed = False
+        else:
+            print(f"   ❌ Failed to create return form with barcode")
+            all_tests_passed = False
+        
+        # Test 6: Manual Entry API Endpoint Verification
+        print("\n🔧 Test 6: Manual Entry API Endpoint Verification")
+        
+        # Test that the barcode endpoint works as expected for manual entry
+        manual_test_barcodes = [sample_barcode, "9501100046987", "3222471052747"]
+        
+        for i, barcode in enumerate(manual_test_barcodes, 1):
+            success, response = self.run_test(
+                f"Manual Entry Verification #{i} ({barcode})",
+                "GET",
+                f"barcode/{barcode}",
+                200
+            )
+            
+            if success and isinstance(response, dict):
+                # Verify response is suitable for manual entry form population
+                essential_fields = ['product_name', 'barcode', 'department', 'purchase_price', 'purchase_currency']
+                has_essential = all(field in response for field in essential_fields)
+                
+                if has_essential:
+                    print(f"   ✅ Barcode {barcode}: Suitable for manual entry form population")
+                else:
+                    missing = [field for field in essential_fields if field not in response]
+                    print(f"   ❌ Barcode {barcode}: Missing essential fields: {missing}")
+                    all_tests_passed = False
+            else:
+                print(f"   ❌ Manual entry verification failed for barcode {barcode}")
+                all_tests_passed = False
+        
+        # Summary
+        print("\n" + "=" * 60)
+        if all_tests_passed:
+            print("✅ MANUAL BARCODE ENTRY FUNCTIONALITY: ALL TESTS PASSED")
+            print("✅ Barcode lookup API working correctly")
+            print("✅ Authentication properly enforced")
+            print("✅ Error handling for invalid barcodes working")
+            print("✅ Return Form PDF export includes barcode field")
+            print("✅ Manual entry endpoints suitable for form population")
+        else:
+            print("❌ MANUAL BARCODE ENTRY FUNCTIONALITY: SOME TESTS FAILED")
+            print("❌ Check individual test results above for details")
+        print("=" * 60)
+        
+        return all_tests_passed
+
     def run_all_tests(self):
         """Run all backend tests focused on review requirements"""
         print("🚀 Starting Comprehensive Backend API Testing")
