@@ -298,6 +298,9 @@ backend:
       - working: true
         agent: "main"
         comment: "COMPLETED: Barcode field added to Return Form PDF export. Line 2511 in server.py now includes 'Product Barcode:' field in item_data array with fallback to 'N/A' if no barcode provided. PDF exports will now show the product barcode in the Item Details section."
+      - working: true
+        agent: "testing"
+        comment: "VERIFIED: Return Form PDF export with barcode field is working correctly. Successfully created test return form with barcode field (3222471081716) and exported PDF. PDF generation endpoint (GET /api/export/return-form/{return_id}/pdf) returns 200 OK status. Barcode field is properly included in return form data structure and processed by PDF export functionality. Manual barcode entry workflow fully supports PDF export integration."
 
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
