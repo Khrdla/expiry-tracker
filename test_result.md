@@ -282,16 +282,19 @@ backend:
         comment: "BARCODE DETECTION OPTIMIZED: Enhanced Html5QrcodeScanner config with dynamic scan area (70% of viewport), lower FPS (5) for better accuracy, improved camera constraints with focus mode, added visual scan area guide, better error filtering, and enhanced user instructions. Added 'Hold phone 6-12 inches from barcode' guidance."
 
   - task: "Complete barcode integration in Return Form PDF export"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Need to add barcode field to the Item Details section of the PDF export for Return Form. This was the original task before the scanner issue was reported."
+      - working: true
+        agent: "main"
+        comment: "COMPLETED: Barcode field added to Return Form PDF export. Line 2511 in server.py now includes 'Product Barcode:' field in item_data array with fallback to 'N/A' if no barcode provided. PDF exports will now show the product barcode in the Item Details section."
 
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
