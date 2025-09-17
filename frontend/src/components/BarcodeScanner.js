@@ -126,20 +126,40 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       resetScanner();
       setIsScanning(true);
 
-      // Initialize Html5QrcodeScanner with flexible configuration
+      // Initialize Html5QrcodeScanner with optimized detection configuration
       const config = {
-        fps: 10, // Reduced FPS for better compatibility
-        qrbox: { width: 300, height: 200 }, // More balanced scan area
-        aspectRatio: 1.5, // Less demanding aspect ratio
+        fps: 5, // Lower FPS for better detection accuracy
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+          // Dynamic scan area - make it larger and more flexible
+          const minEdgePercentage = 0.7; // 70% of the smaller dimension
+          const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+          const calculatedSize = Math.floor(minEdgeSize * minEdgePercentage);
+          return {
+            width: Math.min(calculatedSize, 400),
+            height: Math.min(calculatedSize * 0.6, 240) // Rectangular for barcodes
+          };
+        },
+        aspectRatio: 1.777778, // 16:9 aspect ratio
         disableFlip: false,
         experimentalFeatures: {
           useBarCodeDetectorIfSupported: true
         },
+        supportedScanTypes: [
+          Html5QrcodeScanType.SCAN_TYPE_CAMERA
+        ],
+        showTorchButtonIfSupported: true,
+        showZoomSliderIfSupported: true,
+        defaultZoomValueIfSupported: 2,
         videoConstraints: {
           facingMode: "environment", // Back camera preferred
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
-          frameRate: { ideal: 30, min: 15 }
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
+          frameRate: { ideal: 30, min: 10 },
+          focusMode: "continuous",
+          advanced: [
+            { focusMode: "continuous" },
+            { zoom: 1.5 }
+          ]
         }
       };
       
