@@ -560,6 +560,10 @@ metadata:
   pdf_export_authentication_debug_date: "2025-01-14"
   pdf_export_authentication_debug_success_rate: "100%"
   pdf_export_authentication_issues_found: false
+  manual_barcode_entry_testing_date: "2025-01-14"
+  manual_barcode_entry_testing_success_rate: "100%"
+  manual_barcode_entry_tests_passed: "18/18"
+  manual_barcode_entry_all_requirements_met: true
 
 test_plan:
   current_focus: []
