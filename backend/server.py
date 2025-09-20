@@ -3524,6 +3524,8 @@ async def download_import_template(current_user: User = Depends(get_current_user
             template_df.to_excel(writer, sheet_name='Products', index=False)
             
             # Apply company branding to Products sheet
+            from openpyxl.styles import Font, PatternFill, Alignment
+            
             workbook = writer.book
             products_sheet = writer.sheets['Products']
             
@@ -3534,14 +3536,14 @@ async def download_import_template(current_user: User = Depends(get_current_user
             # Add company header
             products_sheet.merge_cells('B1:F1')
             products_sheet['B1'] = f"{branding['company_name']} - PRODUCT IMPORT TEMPLATE"
-            products_sheet['B1'].font = openpyxl.styles.Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
-            products_sheet['B1'].alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+            products_sheet['B1'].font = Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
+            products_sheet['B1'].alignment = Alignment(horizontal='center', vertical='center')
             
             # Style the header row
             for col in range(1, len(template_df.columns) + 1):
                 cell = products_sheet.cell(row=5, column=col)  # Row 5 because logo takes 3 rows
-                cell.fill = openpyxl.styles.PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
-                cell.font = openpyxl.styles.Font(color='FFFFFF', bold=True)
+                cell.fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+                cell.font = Font(color='FFFFFF', bold=True)
             
             # Add instructions sheet
             instructions_data = {
