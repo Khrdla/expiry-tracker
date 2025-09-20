@@ -37,6 +37,12 @@ const SettingsPanel = ({ user }) => {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState('');
   const [systemStatus, setSystemStatus] = useState(null);
+  
+  // Excel Import States
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [showImportResult, setShowImportResult] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
