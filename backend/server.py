@@ -3580,14 +3580,14 @@ async def download_import_template(current_user: User = Depends(get_current_user
             # Add company header to instructions
             instructions_sheet.merge_cells('B1:D1')
             instructions_sheet['B1'] = f"{branding['company_name']} - IMPORT INSTRUCTIONS"
-            instructions_sheet['B1'].font = openpyxl.styles.Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
-            instructions_sheet['B1'].alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+            instructions_sheet['B1'].font = Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
+            instructions_sheet['B1'].alignment = Alignment(horizontal='center', vertical='center')
             
             # Style the instructions header row
             for col in range(1, len(instructions_df.columns) + 1):
                 cell = instructions_sheet.cell(row=5, column=col)  # Row 5 because logo takes 3 rows
-                cell.fill = openpyxl.styles.PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
-                cell.font = openpyxl.styles.Font(color='FFFFFF', bold=True)
+                cell.fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+                cell.font = Font(color='FFFFFF', bold=True)
         
         output.seek(0)
         filename = f"product_import_template_{datetime.now().strftime('%Y%m%d')}.xlsx"
