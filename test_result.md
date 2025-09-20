@@ -570,6 +570,10 @@ metadata:
   manual_barcode_entry_testing_success_rate: "100%"
   manual_barcode_entry_tests_passed: "18/18"
   manual_barcode_entry_all_requirements_met: true
+  waste_management_testing_date: "2025-01-20"
+  waste_management_testing_success_rate: "100%"
+  waste_management_tests_passed: "26/26"
+  waste_management_all_requirements_met: true
 
 test_plan:
   current_focus: []
@@ -592,6 +596,7 @@ test_plan:
   return_form_pdf_export_testing_completed: true
   pdf_export_authentication_debug_completed: true
   manual_barcode_entry_testing_completed: true
+  waste_management_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
