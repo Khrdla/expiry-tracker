@@ -223,3 +223,56 @@ class FilterOptions(BaseModel):
     suppliers: List[Dict[str, str]]
     families: List[Dict[str, str]]
     currencies: List[Dict[str, str]]
+
+# Waste Management Models
+class WasteReason(str, Enum):
+    DAMAGED = "damaged"
+    EXPIRED = "expired"
+    UNSELLABLE = "unsellable"
+    CONTAMINATED = "contaminated"
+    BROKEN_PACKAGING = "broken_packaging"
+    QUALITY_ISSUE = "quality_issue"
+
+class WasteEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    product_name: str
+    item_number: Optional[str] = None
+    barcode: Optional[str] = None
+    department: Department
+    section: Section
+    supplier: str
+    quantity_wasted: int
+    purchase_price: float
+    purchase_currency: Currency
+    total_waste_value: float  # quantity_wasted * purchase_price
+    waste_reason: WasteReason
+    notes: Optional[str] = None
+    reported_by: str  # Username who reported the waste
+    approved_by: Optional[str] = None  # Manager who approved the waste entry
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    approved_at: Optional[datetime] = None
+
+class WasteEntryCreate(BaseModel):
+    product_id: str
+    quantity_wasted: int
+    waste_reason: WasteReason
+    notes: Optional[str] = None
+
+class WasteReport(BaseModel):
+    report_period: str  # "daily", "weekly", "yearly"
+    start_date: datetime
+    end_date: datetime
+    department: Optional[Department] = None
+    section: Optional[str] = None
+    currency_totals: Dict[str, float]  # {"YER": 0.0, "SAR": 0.0, "EUR": 0.0}
+    total_entries: int
+    total_quantity_wasted: int
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class WasteReportRequest(BaseModel):
+    period: str  # "daily", "weekly", "yearly"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    department: Optional[Department] = None
+    section: Optional[str] = None
