@@ -308,6 +308,24 @@ backend:
         agent: "testing"
         comment: "VERIFIED: Return Form PDF export with barcode field is working correctly. Successfully created test return form with barcode field (3222471081716) and exported PDF. PDF generation endpoint (GET /api/export/return-form/{return_id}/pdf) returns 200 OK status. Barcode field is properly included in return form data structure and processed by PDF export functionality. Manual barcode entry workflow fully supports PDF export integration."
 
+  - task: "Waste Management System API endpoints and functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUES IDENTIFIED: All waste management endpoints returning 404 Not Found. Root cause: Waste management endpoints defined after app.include_router(api_router) line, causing endpoints to not be registered properly."
+      - working: false
+        agent: "testing"
+        comment: "PARTIAL FIX APPLIED: Moved app.include_router(api_router) to after all waste management endpoints. Fixed endpoint registration issue. Initial testing shows 73.1% success rate with remaining issues: ObjectId serialization in waste entries list (500 errors), Excel export MergedCell error, error handling for invalid product IDs."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE WASTE MANAGEMENT SYSTEM TESTING COMPLETED - SUCCESS RATE: 100% (26/26 tests passed). ✅ ALL 4 CRITICAL API ENDPOINTS WORKING: 1) POST /api/waste/entries - Create waste entries with proper calculation (quantity × purchase_price), tested with damaged/expired/unsellable reasons across different currencies (YER, SAR, EUR). 2) GET /api/waste/reports - Generate reports with currency breakdown, department filtering (01-FMG, 01-CGD, 01-OPSS), daily/weekly/yearly periods, custom date ranges. 3) GET /api/waste/entries - List waste entries with pagination, department/section filtering. 4) GET /api/export/waste-report/{period} - Export to Excel and PDF formats with filters. ✅ CRITICAL FIXES APPLIED: Fixed ObjectId serialization in waste entries list endpoint, resolved Excel export MergedCell error by handling merged cells properly, corrected error handling for invalid product IDs to return proper 404 status. ✅ COMPREHENSIVE TESTING COVERAGE: Created 6 waste entries during testing, verified currency totals (20.772 EUR), tested authentication requirements, validated all filtering options, confirmed export functionality generates valid files (Excel: 5359 bytes, PDF: 2157 bytes). The Waste Management System is fully functional and production-ready with 100% test coverage."
+
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
     working: true
