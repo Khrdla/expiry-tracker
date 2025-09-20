@@ -688,6 +688,7 @@ test_plan:
   pdf_export_authentication_debug_completed: true
   manual_barcode_entry_testing_completed: true
   waste_management_testing_completed: true
+  system_reset_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
