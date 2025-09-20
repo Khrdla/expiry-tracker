@@ -2649,6 +2649,438 @@ async def get_filter_options(current_user: User = Depends(get_current_user)):
 # Include router
 app.include_router(api_router)
 
+# =============================================================================
+# WASTE MANAGEMENT API ENDPOINTS
+# =============================================================================
+
+@api_router.post("/waste/entries")
+async def create_waste_entry(waste_data: WasteEntryCreate, current_user: User = Depends(get_current_user)):
+    """Create a new waste entry for damaged/unsellable products"""
+    try:
+        # Get product details from database
+        product = await db.products.find_one({"id": waste_data.product_id})
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Calculate total waste value
+        total_waste_value = float(waste_data.quantity_wasted) * float(product.get('purchase_price', 0))
+        
+        # Create waste entry
+        waste_entry = {
+            "id": str(uuid.uuid4()),
+            "product_id": waste_data.product_id,
+            "product_name": product.get('product_name', ''),
+            "item_number": product.get('item_number'),
+            "barcode": product.get('barcode'),
+            "department": product.get('department'),
+            "section": product.get('section'),
+            "supplier": product.get('supplier', ''),
+            "quantity_wasted": waste_data.quantity_wasted,
+            "purchase_price": float(product.get('purchase_price', 0)),
+            "purchase_currency": product.get('purchase_currency', 'YER'),
+            "total_waste_value": total_waste_value,
+            "waste_reason": waste_data.waste_reason,
+            "notes": waste_data.notes,
+            "reported_by": current_user.username,
+            "approved_by": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "approved_at": None
+        }
+        
+        # Insert into database
+        result = await db.waste_entries.insert_one(waste_entry)
+        
+        return {"message": "Waste entry created successfully", "id": waste_entry["id"]}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create waste entry: {str(e)}")
+
+@api_router.get("/waste/reports")
+async def get_waste_reports(
+    period: str = "daily",  # daily, weekly, yearly
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    department: Optional[str] = None,
+    section: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get waste reports with currency breakdown (YER, SAR, EUR)"""
+    try:
+        # Calculate date range based on period
+        now = datetime.now(timezone.utc)
+        
+        if start_date and end_date:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        elif period == "daily":
+            start_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_dt = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        elif period == "weekly":
+            # Get start of current week (Monday)
+            days_since_monday = now.weekday()
+            start_dt = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+            end_dt = (start_dt + timedelta(days=6)).replace(hour=23, minute=59, second=59, microsecond=999999)
+        elif period == "yearly":
+            start_dt = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_dt = now.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid period. Use 'daily', 'weekly', or 'yearly'")
+        
+        # Build query filter
+        query = {
+            "created_at": {
+                "$gte": start_dt.isoformat(),
+                "$lte": end_dt.isoformat()
+            }
+        }
+        
+        if department:
+            query["department"] = department
+        if section:
+            query["section"] = section
+        
+        # Get waste entries from database
+        waste_entries = await db.waste_entries.find(query).to_list(length=None)
+        
+        # Calculate currency totals
+        currency_totals = {"YER": 0.0, "SAR": 0.0, "EUR": 0.0}
+        total_entries = len(waste_entries)
+        total_quantity_wasted = 0
+        
+        for entry in waste_entries:
+            currency = entry.get('purchase_currency', 'YER')
+            waste_value = float(entry.get('total_waste_value', 0))
+            
+            if currency in currency_totals:
+                currency_totals[currency] += waste_value
+            
+            total_quantity_wasted += int(entry.get('quantity_wasted', 0))
+        
+        # Prepare report data
+        report_data = {
+            "report_period": period,
+            "start_date": start_dt.isoformat(),
+            "end_date": end_dt.isoformat(),
+            "department": department,
+            "section": section,
+            "currency_totals": currency_totals,
+            "total_entries": total_entries,
+            "total_quantity_wasted": total_quantity_wasted,
+            "generated_at": now.isoformat()
+        }
+        
+        return report_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate waste report: {str(e)}")
+
+@api_router.get("/waste/entries")
+async def get_waste_entries(
+    skip: int = 0,
+    limit: int = 50,
+    department: Optional[str] = None,
+    section: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get waste entries with pagination and filtering"""
+    try:
+        query = {}
+        
+        if department:
+            query["department"] = department
+        if section:
+            query["section"] = section
+        
+        # Get total count
+        total_count = await db.waste_entries.count_documents(query)
+        
+        # Get waste entries with pagination
+        waste_entries = await db.waste_entries.find(query).skip(skip).limit(limit).sort([("created_at", -1)]).to_list(length=None)
+        
+        return {
+            "waste_entries": waste_entries,
+            "total_count": total_count,
+            "skip": skip,
+            "limit": limit
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get waste entries: {str(e)}")
+
+@api_router.get("/export/waste-report/{period}")
+async def export_waste_report(
+    period: str,
+    format: str = "excel",  # excel or pdf
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    department: Optional[str] = None,
+    section: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Export waste report to Excel or PDF"""
+    try:
+        # Get report data
+        report_data = await get_waste_reports(
+            period=period,
+            start_date=start_date,
+            end_date=end_date,
+            department=department,
+            section=section,
+            current_user=current_user
+        )
+        
+        if format.lower() == "excel":
+            return await generate_waste_report_excel(report_data, period)
+        elif format.lower() == "pdf":
+            return await generate_waste_report_pdf(report_data, period)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid format. Use 'excel' or 'pdf'")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export waste report: {str(e)}")
+
+async def generate_waste_report_excel(report_data: dict, period: str):
+    """Generate Excel waste report"""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Waste Report - {period.title()}"
+    
+    # Define styles
+    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+    subheader_font = Font(name='Arial', size=12, bold=True)
+    currency_font = Font(name='Arial', size=12, bold=True, color='D32F2F')
+    border = Border(
+        left=Side(border_style='thin'),
+        right=Side(border_style='thin'),
+        top=Side(border_style='thin'),
+        bottom=Side(border_style='thin')
+    )
+    
+    # Header
+    ws.merge_cells('A1:D1')
+    ws['A1'] = f"GEANT HYPERMARKET - WASTE REPORT ({period.upper()})"
+    ws['A1'].font = header_font
+    ws['A1'].fill = header_fill
+    ws['A1'].alignment = Alignment(horizontal='center')
+    
+    # Report details
+    row = 3
+    ws[f'A{row}'] = "Report Period:"
+    ws[f'B{row}'] = period.title()
+    ws[f'A{row}'].font = subheader_font
+    
+    row += 1
+    ws[f'A{row}'] = "Generated At:"
+    ws[f'B{row}'] = datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')
+    
+    if report_data.get('department'):
+        row += 1
+        ws[f'A{row}'] = "Department:"
+        ws[f'B{row}'] = report_data['department']
+    
+    if report_data.get('section'):
+        row += 1
+        ws[f'A{row}'] = "Section:"
+        ws[f'B{row}'] = report_data['section']
+    
+    # Currency totals
+    row += 3
+    ws[f'A{row}'] = "WASTE VALUE BY CURRENCY"
+    ws[f'A{row}'].font = subheader_font
+    
+    row += 1
+    ws[f'A{row}'] = "Currency"
+    ws[f'B{row}'] = "Total Waste Value"
+    ws[f'A{row}'].font = header_font
+    ws[f'B{row}'].font = header_font
+    ws[f'A{row}'].fill = header_fill
+    ws[f'B{row}'].fill = header_fill
+    
+    for currency, total in report_data['currency_totals'].items():
+        if total > 0:  # Only show currencies with waste
+            row += 1
+            ws[f'A{row}'] = currency
+            ws[f'B{row}'] = f"{total:,.2f} {currency}"
+            ws[f'B{row}'].font = currency_font
+    
+    # Summary
+    row += 3
+    ws[f'A{row}'] = "SUMMARY"
+    ws[f'A{row}'].font = subheader_font
+    
+    row += 1
+    ws[f'A{row}'] = "Total Waste Entries:"
+    ws[f'B{row}'] = report_data['total_entries']
+    
+    row += 1
+    ws[f'A{row}'] = "Total Quantity Wasted:"
+    ws[f'B{row}'] = report_data['total_quantity_wasted']
+    
+    # Apply borders
+    for row_num in range(1, row + 1):
+        for col in ['A', 'B', 'C', 'D']:
+            cell = ws[f'{col}{row_num}']
+            if cell.value:
+                cell.border = border
+    
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    # Save to bytes
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return Response(
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+async def generate_waste_report_pdf(report_data: dict, period: str):
+    """Generate PDF waste report"""
+    import io
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    
+    buffer = io.BytesIO()
+    
+    # Create PDF document
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        textColor=colors.darkblue
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=12,
+        textColor=colors.darkblue
+    )
+    
+    story = []
+    
+    # Title
+    story.append(Paragraph(f"GEANT HYPERMARKET<br/>WASTE REPORT ({period.upper()})", title_style))
+    story.append(Spacer(1, 20))
+    
+    # Report details
+    details_data = [
+        ['Report Period:', period.title()],
+        ['Generated At:', datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')]
+    ]
+    
+    if report_data.get('department'):
+        details_data.append(['Department:', report_data['department']])
+    if report_data.get('section'):
+        details_data.append(['Section:', report_data['section']])
+    
+    details_table = Table(details_data, colWidths=[2*inch, 4*inch])
+    details_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    
+    story.append(details_table)
+    story.append(Spacer(1, 30))
+    
+    # Currency totals
+    story.append(Paragraph("WASTE VALUE BY CURRENCY", heading_style))
+    
+    currency_data = [['Currency', 'Total Waste Value']]
+    for currency, total in report_data['currency_totals'].items():
+        if total > 0:  # Only show currencies with waste
+            currency_data.append([currency, f"{total:,.2f} {currency}"])
+    
+    if len(currency_data) > 1:
+        currency_table = Table(currency_data, colWidths=[2*inch, 3*inch])
+        currency_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 11),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        story.append(currency_table)
+    else:
+        story.append(Paragraph("No waste entries found for this period.", styles['Normal']))
+    
+    story.append(Spacer(1, 30))
+    
+    # Summary
+    story.append(Paragraph("SUMMARY", heading_style))
+    summary_data = [
+        ['Total Waste Entries:', str(report_data['total_entries'])],
+        ['Total Quantity Wasted:', str(report_data['total_quantity_wasted'])]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
+    summary_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    
+    story.append(summary_table)
+    
+    # Build PDF
+    doc.build(story)
+    
+    buffer.seek(0)
+    filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # Health check
 @app.get("/")
 async def root():
