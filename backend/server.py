@@ -2646,9 +2646,6 @@ async def get_filter_options(current_user: User = Depends(get_current_user)):
         currencies=currencies
     )
 
-# Include router
-app.include_router(api_router)
-
 # =============================================================================
 # WASTE MANAGEMENT API ENDPOINTS
 # =============================================================================
