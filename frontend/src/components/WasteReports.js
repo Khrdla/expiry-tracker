@@ -302,7 +302,7 @@ const WasteReports = () => {
     return `${parseFloat(value).toLocaleString()} ${currency}`;
   };
 
-  const getTotalWasteValue = () => {
+  const getReportTotalWasteValue = () => {
     if (!reportData) return 0;
     return Object.values(reportData.currency_totals).reduce((sum, value) => sum + value, 0);
   };
