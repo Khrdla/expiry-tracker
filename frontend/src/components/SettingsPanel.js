@@ -43,6 +43,7 @@ const SettingsPanel = ({ user }) => {
   useEffect(() => {
     fetchSettings();
     fetchEmailStatus();
+    fetchSystemStatus();
   }, []);
 
   const fetchSystemStatus = async () => {
