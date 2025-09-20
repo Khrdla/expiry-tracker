@@ -3518,10 +3518,30 @@ async def download_import_template(current_user: User = Depends(get_current_user
         # Create DataFrame
         template_df = pd.DataFrame(template_data)
         
-        # Create Excel file in memory
+        # Create Excel file in memory with company branding
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             template_df.to_excel(writer, sheet_name='Products', index=False)
+            
+            # Apply company branding to Products sheet
+            workbook = writer.book
+            products_sheet = writer.sheets['Products']
+            
+            # Add logo and branding to products sheet
+            branding = get_company_branding()
+            add_logo_to_excel(products_sheet, row=1, col=1)
+            
+            # Add company header
+            products_sheet.merge_cells('B1:F1')
+            products_sheet['B1'] = f"{branding['company_name']} - PRODUCT IMPORT TEMPLATE"
+            products_sheet['B1'].font = openpyxl.styles.Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
+            products_sheet['B1'].alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+            
+            # Style the header row
+            for col in range(1, len(template_df.columns) + 1):
+                cell = products_sheet.cell(row=5, column=col)  # Row 5 because logo takes 3 rows
+                cell.fill = openpyxl.styles.PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+                cell.font = openpyxl.styles.Font(color='FFFFFF', bold=True)
             
             # Add instructions sheet
             instructions_data = {
