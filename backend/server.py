@@ -2689,6 +2689,8 @@ async def create_waste_entry(waste_data: WasteEntryCreate, current_user: User = 
         
         return {"message": "Waste entry created successfully", "id": waste_entry["id"]}
         
+    except HTTPException:
+        raise  # Re-raise HTTPExceptions as-is
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create waste entry: {str(e)}")
 
