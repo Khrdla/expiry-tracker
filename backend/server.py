@@ -1460,24 +1460,17 @@ async def generate_daily_alert_excel(out_of_stock_items, near_expiry_items):
             # Out of Stock sheet
             if out_of_stock_items:
                 out_df = pd.DataFrame(out_of_stock_items)
-                out_df.to_excel(writer, sheet_name='Out of Stock', index=False)
+                out_df.to_excel(writer, sheet_name='Out of Stock', index=False, startrow=2)
                 
-                # Format the worksheet
-                workbook = writer.book
+                # Format the worksheet with company branding
                 worksheet = writer.sheets['Out of Stock']
                 
-                # Add formatting
-                header_format = workbook.add_format({
-                    'bold': True,
-                    'text_wrap': True,
-                    'valign': 'top',
-                    'fg_color': '#FF6B6B',
-                    'font_color': 'white',
-                    'border': 1
-                })
+                # Add company header
+                worksheet.merge_range('A1:F1', f'{branding["company_name"]} - OUT OF STOCK ITEMS', company_header_format)
                 
+                # Style headers
                 for col_num, value in enumerate(out_df.columns.values):
-                    worksheet.write(0, col_num, value, header_format)
+                    worksheet.write(2, col_num, value, header_format)
                     worksheet.set_column(col_num, col_num, 20)
             
             # Near Expiry sheet
