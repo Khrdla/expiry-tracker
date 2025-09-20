@@ -659,6 +659,11 @@ metadata:
   dashboard_expired_items_debug_success_rate: "100%"
   dashboard_expired_items_issue_resolved: true
   dashboard_api_working_correctly: true
+  system_reset_testing_date: "2025-01-20"
+  system_reset_testing_success_rate: "95.8%"
+  system_reset_tests_passed: "23/24"
+  system_reset_all_requirements_met: true
+  system_reset_functionality_working: true
 
 test_plan:
   current_focus: 
