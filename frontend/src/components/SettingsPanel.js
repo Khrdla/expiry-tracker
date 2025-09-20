@@ -114,6 +114,132 @@ const SettingsPanel = ({ user }) => {
     }
   };
 
+  const downloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/system/import-template`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `product_import_template_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert('❌ Failed to download template');
+      }
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      alert('❌ Failed to download template: Network error');
+    }
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        alert('❌ Please select an Excel file (.xlsx or .xls)');
+        event.target.value = '';
+        return;
+      }
+      
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('❌ File too large. Maximum size is 10MB');
+        event.target.value = '';
+        return;
+      }
+      
+      setImportFile(file);
+      setImportResult(null);
+      setShowImportResult(false);
+    }
+  };
+
+  const importExcelData = async () => {
+    if (!importFile) {
+      alert('Please select an Excel file first');
+      return;
+    }
+
+    setImportLoading(true);
+    setImportResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/system/import-excel`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setImportResult(result);
+        setShowImportResult(true);
+        
+        // Refresh system status
+        fetchSystemStatus();
+        
+        // Show success message
+        const stats = result.import_summary;
+        alert(`✅ EXCEL IMPORT COMPLETED!\n\nResults:\n- Total Rows: ${stats.total_rows}\n- Successful: ${stats.successful_imports}\n- Failed: ${stats.failed_imports}\n- Success Rate: ${((stats.successful_imports / stats.total_rows) * 100).toFixed(1)}%\n\nCheck the detailed results below.`);
+        
+      } else {
+        setImportResult({
+          message: result.detail || 'Import failed',
+          import_summary: { 
+            total_rows: 0, 
+            successful_imports: 0, 
+            failed_imports: 0, 
+            errors: [result.detail || 'Unknown error'] 
+          },
+          status: 'error'
+        });
+        setShowImportResult(true);
+        alert(`❌ Import failed: ${result.detail}`);
+      }
+    } catch (error) {
+      console.error('Error importing Excel:', error);
+      setImportResult({
+        message: 'Network error during import',
+        import_summary: { 
+          total_rows: 0, 
+          successful_imports: 0, 
+          failed_imports: 0, 
+          errors: ['Network error: ' + error.message] 
+        },
+        status: 'error'
+      });
+      setShowImportResult(true);
+      alert('❌ Import failed: Network error');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const clearImportData = () => {
+    setImportFile(null);
+    setImportResult(null);
+    setShowImportResult(false);
+    // Clear file input
+    const fileInput = document.getElementById('excel-file-input');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   const fetchEmailStatus = async () => {
     try {
       const token = localStorage.getItem('token');
