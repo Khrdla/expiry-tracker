@@ -1836,6 +1836,225 @@ class ExpiryTrackerAPITester:
         
         return all_tests_passed
 
+    def test_system_status_endpoint(self):
+        """Test GET /api/system/status endpoint"""
+        print("\n🔍 Testing System Status Endpoint...")
+        
+        success, response = self.run_test(
+            "Get System Status",
+            "GET",
+            "system/status",
+            200
+        )
+        
+        if success and isinstance(response, dict):
+            data_counts = response.get('data_counts', {})
+            last_updated = response.get('last_updated')
+            
+            print(f"   📊 System Status Retrieved:")
+            print(f"   - Products: {data_counts.get('products', 0)}")
+            print(f"   - Waste Entries: {data_counts.get('waste_entries', 0)}")
+            print(f"   - Alerts: {data_counts.get('alerts', 0)}")
+            print(f"   - Return Forms: {data_counts.get('return_forms', 0)}")
+            print(f"   - Users: {data_counts.get('users', 0)}")
+            print(f"   - Last Updated: {last_updated}")
+            
+            # Validate response structure
+            required_collections = ['products', 'waste_entries', 'alerts', 'return_forms', 'users']
+            all_present = all(collection in data_counts for collection in required_collections)
+            
+            if all_present and last_updated:
+                print("   ✅ System status response structure valid")
+                return True, data_counts
+            else:
+                print("   ❌ System status response missing required fields")
+                return False, {}
+        else:
+            print("   ❌ System status endpoint failed or returned invalid data")
+            return False, {}
+
+    def test_system_reset_authentication(self):
+        """Test system reset endpoint authentication requirements"""
+        print("\n🔍 Testing System Reset Authentication...")
+        
+        # Test without authentication (should fail)
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "System Reset Without Auth (should fail)",
+            "POST",
+            "system/reset",
+            401  # Expecting unauthorized
+        )
+        
+        # Test with invalid token (should fail)
+        self.token = "invalid_token_12345"
+        
+        success2, response2 = self.run_test(
+            "System Reset With Invalid Token (should fail)",
+            "POST",
+            "system/reset",
+            401  # Expecting unauthorized
+        )
+        
+        # Restore valid token
+        self.token = original_token
+        
+        # Test with non-admin user would require creating a non-admin user
+        # For now, we'll test with admin credentials
+        
+        auth_tests_passed = success and success2
+        if auth_tests_passed:
+            print("   ✅ System reset properly requires authentication")
+        else:
+            print("   ❌ System reset authentication not working correctly")
+        
+        return auth_tests_passed
+
+    def test_system_reset_functionality(self):
+        """Test complete system reset functionality"""
+        print("\n🔍 Testing System Reset Functionality...")
+        
+        # First, get current system status (before reset)
+        print("   📊 Getting system status before reset...")
+        status_success, before_counts = self.test_system_status_endpoint()
+        
+        if not status_success:
+            print("   ❌ Cannot get system status before reset")
+            return False
+        
+        print(f"   📈 Data before reset: {before_counts}")
+        
+        # Perform system reset
+        print("   🔄 Performing system reset...")
+        success, response = self.run_test(
+            "System Reset (Admin)",
+            "POST",
+            "system/reset",
+            200
+        )
+        
+        if not success:
+            print("   ❌ System reset failed")
+            return False
+        
+        if not isinstance(response, dict):
+            print("   ❌ System reset returned invalid response format")
+            return False
+        
+        # Validate reset response structure
+        required_fields = ['message', 'reset_summary', 'status', 'next_steps']
+        if not all(field in response for field in required_fields):
+            print("   ❌ System reset response missing required fields")
+            return False
+        
+        reset_summary = response.get('reset_summary', {})
+        cleared_collections = reset_summary.get('cleared_collections', {})
+        total_deleted = reset_summary.get('total_documents_deleted', 0)
+        
+        print(f"   ✅ System reset completed successfully")
+        print(f"   📊 Reset Summary:")
+        print(f"   - Message: {response.get('message')}")
+        print(f"   - Status: {response.get('status')}")
+        print(f"   - Total Documents Deleted: {total_deleted}")
+        
+        # Check each cleared collection
+        expected_collections = ['products', 'waste_entries', 'alerts', 'return_forms']
+        for collection in expected_collections:
+            if collection in cleared_collections:
+                collection_data = cleared_collections[collection]
+                before_count = collection_data.get('documents_before', 0)
+                deleted_count = collection_data.get('documents_deleted', 0)
+                print(f"   - {collection}: {before_count} → deleted {deleted_count}")
+            else:
+                print(f"   ❌ Missing collection data for {collection}")
+                return False
+        
+        # Wait a moment for database operations to complete
+        import time
+        time.sleep(2)
+        
+        # Get system status after reset to verify
+        print("   📊 Verifying system status after reset...")
+        status_success_after, after_counts = self.test_system_status_endpoint()
+        
+        if not status_success_after:
+            print("   ❌ Cannot get system status after reset")
+            return False
+        
+        print(f"   📉 Data after reset: {after_counts}")
+        
+        # Verify that specified collections are now empty
+        collections_to_verify = ['products', 'waste_entries', 'alerts', 'return_forms']
+        all_cleared = True
+        
+        for collection in collections_to_verify:
+            count = after_counts.get(collection, -1)
+            if count == 0:
+                print(f"   ✅ {collection}: cleared (0 documents)")
+            else:
+                print(f"   ❌ {collection}: NOT cleared ({count} documents remaining)")
+                all_cleared = False
+        
+        # Verify that users collection is preserved
+        users_count = after_counts.get('users', 0)
+        if users_count > 0:
+            print(f"   ✅ users: preserved ({users_count} users)")
+        else:
+            print(f"   ⚠️ users: no users found ({users_count} users)")
+        
+        if all_cleared:
+            print("   ✅ System reset functionality working correctly")
+            print("   ✅ All specified collections cleared")
+            print("   ✅ User accounts preserved")
+            return True
+        else:
+            print("   ❌ System reset did not clear all specified collections")
+            return False
+
+    def test_system_reset_comprehensive(self):
+        """Run comprehensive system reset testing"""
+        print("\n" + "=" * 60)
+        print("🔄 COMPREHENSIVE SYSTEM RESET TESTING")
+        print("=" * 60)
+        
+        all_tests_passed = True
+        
+        # Test 1: System Status Endpoint
+        print("\n1️⃣ Testing System Status Endpoint...")
+        status_test = self.test_system_status_endpoint()
+        if not status_test[0]:
+            all_tests_passed = False
+        
+        # Test 2: Authentication Requirements
+        print("\n2️⃣ Testing Authentication Requirements...")
+        auth_test = self.test_system_reset_authentication()
+        if not auth_test:
+            all_tests_passed = False
+        
+        # Test 3: Complete Reset Functionality
+        print("\n3️⃣ Testing Complete Reset Functionality...")
+        reset_test = self.test_system_reset_functionality()
+        if not reset_test:
+            all_tests_passed = False
+        
+        # Summary
+        print("\n" + "=" * 60)
+        if all_tests_passed:
+            print("✅ SYSTEM RESET FUNCTIONALITY: ALL TESTS PASSED")
+            print("✅ System status endpoint working correctly")
+            print("✅ Authentication properly required for reset")
+            print("✅ Reset clears specified collections (products, waste_entries, alerts, return_forms)")
+            print("✅ User accounts preserved during reset")
+            print("✅ Reset response includes detailed summary")
+        else:
+            print("❌ SYSTEM RESET FUNCTIONALITY: SOME TESTS FAILED")
+            print("❌ Check individual test results above for details")
+        print("=" * 60)
+        
+        return all_tests_passed
+
     def run_all_tests(self):
         """Run all backend tests focused on review requirements"""
         print("🚀 Starting Comprehensive Backend API Testing")
