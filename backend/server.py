@@ -3028,7 +3028,7 @@ async def generate_waste_report_excel(report_data: dict, period: str):
         start_row += 1
     
     # Report details
-    row = 3
+    row = start_row + 2
     ws[f'A{row}'] = "Report Period:"
     ws[f'B{row}'] = period.title()
     ws[f'A{row}'].font = subheader_font
