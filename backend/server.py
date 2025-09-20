@@ -1476,24 +1476,26 @@ async def generate_daily_alert_excel(out_of_stock_items, near_expiry_items):
             # Near Expiry sheet
             if near_expiry_items:
                 near_df = pd.DataFrame(near_expiry_items)
-                near_df.to_excel(writer, sheet_name='Near Expiry', index=False)
+                near_df.to_excel(writer, sheet_name='Near Expiry', index=False, startrow=2)
                 
                 if 'Near Expiry' in writer.sheets:
-                    workbook = writer.book
                     worksheet = writer.sheets['Near Expiry']
                     
-                    # Add formatting
-                    header_format = workbook.add_format({
+                    # Add company header
+                    worksheet.merge_range('A1:F1', f'{branding["company_name"]} - NEAR EXPIRY ITEMS', company_header_format)
+                    
+                    # Define warning header format
+                    warning_header_format = workbook.add_format({
                         'bold': True,
                         'text_wrap': True,
                         'valign': 'top',
-                        'fg_color': '#FFB84D',
+                        'fg_color': '#FF8C00',  # Orange for warnings
                         'font_color': 'white',
                         'border': 1
                     })
                     
                     for col_num, value in enumerate(near_df.columns.values):
-                        worksheet.write(0, col_num, value, header_format)
+                        worksheet.write(2, col_num, value, warning_header_format)
                         worksheet.set_column(col_num, col_num, 20)
         
         excel_data = output.getvalue()
