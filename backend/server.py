@@ -3186,6 +3186,249 @@ async def get_system_status(current_user: User = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get system status: {str(e)}")
 
+@api_router.post("/system/import-excel")
+async def import_excel_data(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_admin_user)
+):
+    """Import product data from Excel file - ADMIN ONLY"""
+    try:
+        # Validate file type
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are supported")
+        
+        # Read Excel file
+        content = await file.read()
+        
+        # Parse Excel with pandas
+        try:
+            # Try reading as xlsx first, then xls
+            if file.filename.endswith('.xlsx'):
+                df = pd.read_excel(io.BytesIO(content), engine='openpyxl')
+            else:
+                df = pd.read_excel(io.BytesIO(content), engine='xlrd')
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to read Excel file: {str(e)}")
+        
+        # Validate required columns
+        required_columns = [
+            'product_name', 'department', 'section', 'family', 'sub_family', 
+            'supplier', 'purchase_price', 'purchase_currency'
+        ]
+        
+        # Check for required columns (case-insensitive)
+        df_columns_lower = [col.lower().strip() for col in df.columns]
+        missing_columns = []
+        
+        for req_col in required_columns:
+            if req_col.lower() not in df_columns_lower:
+                missing_columns.append(req_col)
+        
+        if missing_columns:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Missing required columns: {', '.join(missing_columns)}. Required columns: {', '.join(required_columns)}"
+            )
+        
+        # Normalize column names (lowercase and strip)
+        df.columns = [col.lower().strip() for col in df.columns]
+        
+        # Import statistics
+        import_stats = {
+            'total_rows': len(df),
+            'successful_imports': 0,
+            'failed_imports': 0,
+            'errors': [],
+            'imported_products': [],
+            'skipped_rows': []
+        }
+        
+        # Process each row
+        for index, row in df.iterrows():
+            try:
+                # Skip empty rows
+                if pd.isna(row.get('product_name')) or str(row.get('product_name')).strip() == '':
+                    import_stats['skipped_rows'].append(f"Row {index + 2}: Empty product name")
+                    continue
+                
+                # Prepare product data
+                product_data = {
+                    'id': str(uuid.uuid4()),
+                    'product_name': str(row.get('product_name', '')).strip(),
+                    'item_number': str(row.get('item_number', '')).strip() if pd.notna(row.get('item_number')) else None,
+                    'department': str(row.get('department', '')).strip(),
+                    'section': str(row.get('section', '')).strip(),
+                    'family': str(row.get('family', '')).strip(),
+                    'sub_family': str(row.get('sub_family', '')).strip(),
+                    'supplier_code': str(row.get('supplier_code', '')).strip() if pd.notna(row.get('supplier_code')) else None,
+                    'supplier': str(row.get('supplier', '')).strip(),
+                    'barcode': str(row.get('barcode', '')).strip() if pd.notna(row.get('barcode')) else None,
+                    'purchase_price': float(row.get('purchase_price', 0)) if pd.notna(row.get('purchase_price')) else 0.0,
+                    'purchase_currency': str(row.get('purchase_currency', 'YER')).strip().upper(),
+                    'selling_price': float(row.get('selling_price', 0)) if pd.notna(row.get('selling_price')) else 0.0,
+                    'quantity': int(row.get('quantity', 0)) if pd.notna(row.get('quantity')) else 0,
+                    'low_stock_threshold': int(row.get('low_stock_threshold', 10)) if pd.notna(row.get('low_stock_threshold')) else 10,
+                    'arabic_description': str(row.get('arabic_description', '')).strip() if pd.notna(row.get('arabic_description')) else None,
+                    'description': str(row.get('description', '')).strip() if pd.notna(row.get('description')) else None,
+                    'location': str(row.get('location', '')).strip() if pd.notna(row.get('location')) else None,
+                    'brand': str(row.get('brand', '')).strip() if pd.notna(row.get('brand')) else None,
+                    'status': 'in_stock',
+                    'created_at': datetime.now(timezone.utc).isoformat(),
+                    'updated_at': datetime.now(timezone.utc).isoformat()
+                }
+                
+                # Handle expiry date if present
+                if 'expiry_date' in df.columns and pd.notna(row.get('expiry_date')):
+                    try:
+                        expiry_date = pd.to_datetime(row.get('expiry_date'))
+                        product_data['expiry_date'] = expiry_date.isoformat()
+                    except:
+                        product_data['expiry_date'] = None
+                else:
+                    product_data['expiry_date'] = None
+                
+                # Validate department
+                valid_departments = ['01-FMG', '01-CGD', '01-OPSS']
+                if product_data['department'] not in valid_departments:
+                    raise ValueError(f"Invalid department '{product_data['department']}'. Must be one of: {', '.join(valid_departments)}")
+                
+                # Validate currency
+                valid_currencies = ['YER', 'SAR', 'EUR', 'USD']
+                if product_data['purchase_currency'] not in valid_currencies:
+                    raise ValueError(f"Invalid currency '{product_data['purchase_currency']}'. Must be one of: {', '.join(valid_currencies)}")
+                
+                # Check for duplicate barcode if provided
+                if product_data['barcode']:
+                    existing_barcode = await db.products.find_one({"barcode": product_data['barcode']})
+                    if existing_barcode:
+                        raise ValueError(f"Product with barcode '{product_data['barcode']}' already exists")
+                
+                # Check for duplicate item_number if provided
+                if product_data['item_number']:
+                    existing_item = await db.products.find_one({"item_number": product_data['item_number']})
+                    if existing_item:
+                        raise ValueError(f"Product with item number '{product_data['item_number']}' already exists")
+                
+                # Calculate product status
+                if product_data['quantity'] <= 0:
+                    product_data['status'] = 'out_of_stock'
+                elif product_data['quantity'] <= product_data['low_stock_threshold']:
+                    product_data['status'] = 'low_stock'
+                else:
+                    product_data['status'] = 'in_stock'
+                
+                # Insert product into database
+                await db.products.insert_one(product_data)
+                
+                import_stats['successful_imports'] += 1
+                import_stats['imported_products'].append({
+                    'row': index + 2,
+                    'product_name': product_data['product_name'],
+                    'department': product_data['department'],
+                    'barcode': product_data['barcode']
+                })
+                
+            except Exception as row_error:
+                import_stats['failed_imports'] += 1
+                error_msg = f"Row {index + 2} ({row.get('product_name', 'Unknown')}): {str(row_error)}"
+                import_stats['errors'].append(error_msg)
+                continue
+        
+        # Generate summary message
+        success_rate = (import_stats['successful_imports'] / import_stats['total_rows']) * 100 if import_stats['total_rows'] > 0 else 0
+        
+        return {
+            "message": f"✅ Excel import completed! {import_stats['successful_imports']}/{import_stats['total_rows']} products imported successfully ({success_rate:.1f}% success rate)",
+            "import_summary": import_stats,
+            "status": "success" if import_stats['successful_imports'] > 0 else "warning",
+            "recommendations": [
+                "Check the dashboard to see imported products",
+                "Review any failed imports in the error list",
+                "Verify product data accuracy",
+                "Set up alerts for out-of-stock items if needed"
+            ]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"❌ Excel import failed: {str(e)}")
+
+@api_router.get("/system/import-template")
+async def download_import_template(current_user: User = Depends(get_current_user)):
+    """Download Excel template for product import"""
+    try:
+        # Create sample Excel template
+        template_data = {
+            'product_name': ['Apple Juice Box 1L', 'Bread Loaf White', 'Milk UHT 1L'],
+            'item_number': ['ITEM001', 'ITEM002', 'ITEM003'],
+            'department': ['01-CGD', '01-FMG', '01-FMG'],
+            'section': ['S010 - Beverage', 'S016 - Delicateen', 'S015 - Dairy Products'],
+            'family': ['Beverages', 'Bakery', 'Dairy'],
+            'sub_family': ['Fruit Juices', 'Bread', 'Milk'],
+            'supplier_code': ['SUP001', 'SUP002', 'SUP003'],
+            'supplier': ['Supplier A', 'Supplier B', 'Supplier C'],
+            'barcode': ['3222471081716', '1234567890123', '9876543210987'],
+            'purchase_price': [2.50, 1.25, 3.00],
+            'purchase_currency': ['EUR', 'YER', 'SAR'],
+            'selling_price': [350, 175, 12],
+            'quantity': [50, 100, 75],
+            'low_stock_threshold': [10, 20, 15],
+            'expiry_date': ['2024-12-31', '2024-11-15', '2024-10-30'],
+            'arabic_description': ['عصير تفاح', 'خبز أبيض', 'حليب طويل الأمد'],
+            'description': ['Fresh apple juice', 'White bread loaf', 'UHT milk'],
+            'location': ['A1-B2', 'C3-D4', 'E5-F6'],
+            'brand': ['Brand A', 'Brand B', 'Brand C']
+        }
+        
+        # Create DataFrame
+        template_df = pd.DataFrame(template_data)
+        
+        # Create Excel file in memory
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            template_df.to_excel(writer, sheet_name='Products', index=False)
+            
+            # Add instructions sheet
+            instructions_data = {
+                'Column Name': [
+                    'product_name', 'item_number', 'department', 'section', 'family', 'sub_family',
+                    'supplier_code', 'supplier', 'barcode', 'purchase_price', 'purchase_currency',
+                    'selling_price', 'quantity', 'low_stock_threshold', 'expiry_date',
+                    'arabic_description', 'description', 'location', 'brand'
+                ],
+                'Required': [
+                    'YES', 'Optional', 'YES', 'YES', 'YES', 'YES',
+                    'Optional', 'YES', 'Optional', 'YES', 'YES',
+                    'Optional', 'Optional', 'Optional', 'Optional',
+                    'Optional', 'Optional', 'Optional', 'Optional'
+                ],
+                'Description': [
+                    'Product name (required)', 'Internal item number', 'Department: 01-FMG, 01-CGD, 01-OPSS',
+                    'Section name', 'Product family', 'Product sub-family',
+                    'Supplier code', 'Supplier name', 'Product barcode (must be unique)',
+                    'Purchase price (number)', 'Currency: YER, SAR, EUR, USD',
+                    'Selling price (number)', 'Current quantity in stock', 'Low stock alert threshold',
+                    'Expiry date (YYYY-MM-DD format)', 'Arabic product description', 'English description',
+                    'Storage location', 'Product brand'
+                ]
+            }
+            
+            instructions_df = pd.DataFrame(instructions_data)
+            instructions_df.to_excel(writer, sheet_name='Instructions', index=False)
+        
+        output.seek(0)
+        filename = f"product_import_template_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate template: {str(e)}")
+
 # Include router after all endpoints are defined
 app.include_router(api_router)
 
