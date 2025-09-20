@@ -1652,16 +1652,18 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                     </tbody>
                 </table>
                 
-                <h3 style="color: #f59e0b;">⚠️ Near Expiry Items ({len(near_expiry_items)})</h3>
-                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
-                    <thead style="background-color: #fef3c7;">
+                <h3 style="color: #f59e0b; display: flex; align-items: center; gap: 10px;">
+                    ⚠️ Near Expiry Items ({len(near_expiry_items)})
+                </h3>
+                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
+                    <thead class="near-expiry-table">
                         <tr>
-                            <th style="padding: 10px;">Department</th>
-                            <th style="padding: 10px;">Product Name</th>
-                            <th style="padding: 10px;">Item Number</th>
-                            <th style="padding: 10px;">Expiry Date</th>
-                            <th style="padding: 10px;">Section</th>
-                            <th style="padding: 10px;">Supplier</th>
+                            <th style="padding: 12px; font-weight: bold;">Department</th>
+                            <th style="padding: 12px; font-weight: bold;">Product Name</th>
+                            <th style="padding: 12px; font-weight: bold;">Item Number</th>
+                            <th style="padding: 12px; font-weight: bold;">Expiry Date</th>
+                            <th style="padding: 12px; font-weight: bold;">Section</th>
+                            <th style="padding: 12px; font-weight: bold;">Supplier</th>
                         </tr>
                     </thead>
                     <tbody>
