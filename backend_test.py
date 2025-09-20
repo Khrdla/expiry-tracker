@@ -2746,6 +2746,18 @@ class ExpiryTrackerAPITester:
         self.test_image_file_existence()
         self.test_image_authentication_requirements()
         
+        # COMPANY BRANDING TESTS (NEW - HIGH PRIORITY FROM REVIEW REQUEST)
+        print("\n🏢 COMPANY BRANDING IN REPORT GENERATION TESTS (REVIEW REQUEST - HIGH PRIORITY)")
+        print("-" * 80)
+        self.test_company_branding_waste_reports()
+        self.test_company_branding_return_form_pdf()
+        self.test_company_branding_daily_alerts()
+        self.test_company_branding_excel_template()
+        self.test_company_branding_dashboard_exports()
+        self.test_company_logo_file_exists()
+        self.test_company_branding_colors()
+        self.test_email_html_template_branding()
+        
         # Additional functionality tests
         print("\n📋 ADDITIONAL FUNCTIONALITY TESTS")
         print("-" * 40)
