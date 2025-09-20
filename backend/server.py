@@ -2794,7 +2794,20 @@ async def get_waste_entries(
         total_count = await db.waste_entries.count_documents(query)
         
         # Get waste entries with pagination
-        waste_entries = await db.waste_entries.find(query).skip(skip).limit(limit).sort([("created_at", -1)]).to_list(length=None)
+        waste_entries_cursor = db.waste_entries.find(query).skip(skip).limit(limit).sort([("created_at", -1)])
+        waste_entries = []
+        
+        async for entry in waste_entries_cursor:
+            # Clean ObjectId fields for JSON serialization
+            if '_id' in entry:
+                del entry['_id']
+            
+            # Handle datetime objects
+            for key, value in list(entry.items()):
+                if isinstance(value, datetime):
+                    entry[key] = value.isoformat()
+            
+            waste_entries.append(entry)
         
         return {
             "waste_entries": waste_entries,
