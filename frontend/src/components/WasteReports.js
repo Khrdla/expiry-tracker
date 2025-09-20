@@ -63,6 +63,153 @@ const WasteReports = () => {
     fetchWasteReport();
   }, [period, department, section]);
 
+  // Search product by barcode or name
+  const searchProduct = async (searchTerm) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      // Try barcode lookup first
+      let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${searchTerm}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const product = await response.json();
+        setSearchResults([product]);
+      } else {
+        // If barcode fails, search by product name
+        response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(searchTerm)}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.products || []);
+        } else {
+          setSearchResults([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error searching products:', error);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Handle product selection
+  const selectProduct = (product) => {
+    setCurrentEntry(prev => ({
+      ...prev,
+      product: product,
+      barcode: product.barcode || '',
+      productName: product.product_name || ''
+    }));
+    setSearchResults([]);
+  };
+
+  // Add waste entry to the list
+  const addWasteEntry = () => {
+    if (!currentEntry.product || !currentEntry.quantity) return;
+
+    const wasteValue = parseFloat(currentEntry.quantity) * parseFloat(currentEntry.product.purchase_price || 0);
+    const newEntry = {
+      id: Date.now(),
+      product: currentEntry.product,
+      quantity: parseInt(currentEntry.quantity),
+      wasteValue: wasteValue,
+      wasteReason: currentEntry.wasteReason,
+      notes: currentEntry.notes,
+      addedAt: new Date().toISOString()
+    };
+
+    setWasteEntries(prev => [...prev, newEntry]);
+    
+    // Reset form
+    setCurrentEntry({
+      barcode: '',
+      productName: '',
+      product: null,
+      quantity: '',
+      wasteReason: 'damaged',
+      notes: ''
+    });
+  };
+
+  // Remove waste entry from list
+  const removeWasteEntry = (entryId) => {
+    setWasteEntries(prev => prev.filter(entry => entry.id !== entryId));
+  };
+
+  // Submit all waste entries to backend
+  const submitWasteEntries = async () => {
+    if (wasteEntries.length === 0) return;
+
+    setAddingWaste(true);
+    try {
+      let successCount = 0;
+      for (const entry of wasteEntries) {
+        const wasteData = {
+          product_id: entry.product.id,
+          quantity_wasted: entry.quantity,
+          waste_reason: entry.wasteReason,
+          notes: entry.notes
+        };
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/waste/entries`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(wasteData)
+        });
+
+        if (response.ok) {
+          successCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        alert(`Successfully added ${successCount} waste entries!`);
+        setWasteEntries([]);
+        setShowAddForm(false);
+        // Refresh the report
+        fetchWasteReport();
+      }
+    } catch (error) {
+      console.error('Error submitting waste entries:', error);
+      alert('Failed to submit waste entries. Please try again.');
+    } finally {
+      setAddingWaste(false);
+    }
+  };
+
+  // Calculate total waste value
+  const getTotalWasteValue = () => {
+    return wasteEntries.reduce((total, entry) => total + entry.wasteValue, 0);
+  };
+
+  // Group waste entries by currency
+  const getWasteValueByCurrency = () => {
+    const totals = { YER: 0, SAR: 0, EUR: 0 };
+    wasteEntries.forEach(entry => {
+      const currency = entry.product.purchase_currency || 'YER';
+      if (currency in totals) {
+        totals[currency] += entry.wasteValue;
+      }
+    });
+    return totals;
+  };
+
   const fetchWasteReport = async () => {
     setLoading(true);
     try {
