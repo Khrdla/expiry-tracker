@@ -2058,7 +2058,7 @@ class ExpiryTrackerAPITester:
     def run_all_tests(self):
         """Run all backend tests focused on review requirements"""
         print("🚀 Starting Comprehensive Backend API Testing")
-        print("Focus: MANUAL BARCODE ENTRY FUNCTIONALITY TESTING")
+        print("Focus: SYSTEM RESET FUNCTIONALITY TESTING")
         print("=" * 70)
         
         # Core connectivity and authentication tests
