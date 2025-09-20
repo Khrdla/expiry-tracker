@@ -1556,8 +1556,11 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                         "section": product["section"]
                     })
         
-        # Create email content
-        subject = f"Geant Hypermarket - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Create email content with company branding
+        subject = f"{branding['company_name']} - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
         
         # Generate PDF report
         pdf_data = await generate_daily_alert_pdf(out_of_stock_items, near_expiry_items)
@@ -1569,21 +1572,52 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
         attachments = [
             {
                 "data": pdf_data,
-                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
+                "filename": f"{branding['company_name']}_Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
             },
             {
                 "data": excel_data,
-                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
+                "filename": f"{branding['company_name']}_Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
             }
         ]
         
         body = f"""
         <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 20px; color: white; text-align: center;">
-                <h1>Expiry Tracker</h1>
-                <h2>Daily Inventory Alert Report</h2>
-                <p>Date: {datetime.now().strftime('%B %d, %Y')}</p>
+        <head>
+            <style>
+                .company-header {{
+                    background: linear-gradient(135deg, {branding['primary_color']}, {branding['secondary_color']});
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                    border-radius: 8px 8px 0 0;
+                }}
+                .content-area {{
+                    padding: 20px;
+                    background-color: {branding['background_color']};
+                }}
+                .out-of-stock-table {{
+                    background-color: #fee2e2;
+                    color: #dc2626;
+                }}
+                .near-expiry-table {{
+                    background-color: #fef3c7;
+                    color: #f59e0b;
+                }}
+                .footer {{
+                    text-align: center;
+                    margin-top: 30px;
+                    padding: 20px;
+                    background-color: #f3f4f6;
+                    border-radius: 8px;
+                    color: #6b7280;
+                }}
+            </style>
+        </head>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+            <div class="company-header">
+                <h1 style="margin: 0; font-size: 28px;">{branding['company_name']}</h1>
+                <h2 style="margin: 10px 0; font-size: 20px;">Daily Inventory Alert Report</h2>
+                <p style="margin: 0; font-size: 16px;">Date: {datetime.now().strftime('%B %d, %Y')}</p>
             </div>
             
             <div style="padding: 20px;">
