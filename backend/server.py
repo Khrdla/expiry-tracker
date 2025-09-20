@@ -3143,14 +3143,18 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
     doc = SimpleDocTemplate(buffer, pagesize=A4)
     styles = getSampleStyleSheet()
     
-    # Custom styles
+    # Get company branding
+    branding = get_company_branding()
+    
+    # Custom styles with company colors
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=18,
-        spaceAfter=30,
+        fontSize=16,
+        spaceAfter=20,
         alignment=TA_CENTER,
-        textColor=colors.darkblue
+        textColor=colors.Color(*branding['pdf_primary_color']),
+        fontName='Helvetica-Bold'
     )
     
     heading_style = ParagraphStyle(
@@ -3158,13 +3162,17 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
         parent=styles['Heading2'],
         fontSize=14,
         spaceAfter=12,
-        textColor=colors.darkblue
+        textColor=colors.Color(*branding['pdf_primary_color']),
+        fontName='Helvetica-Bold'
     )
     
     story = []
     
-    # Title
-    story.append(Paragraph(f"GEANT HYPERMARKET<br/>WASTE REPORT ({period.upper()})", title_style))
+    # Add company logo and header
+    add_logo_to_pdf_story(story)
+    
+    # Report title
+    story.append(Paragraph(f"WASTE REPORT - {period.upper()}", title_style))
     story.append(Spacer(1, 20))
     
     # Report details
