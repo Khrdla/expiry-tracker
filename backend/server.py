@@ -1620,16 +1620,18 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                 <p style="margin: 0; font-size: 16px;">Date: {datetime.now().strftime('%B %d, %Y')}</p>
             </div>
             
-            <div style="padding: 20px;">
-                <h3 style="color: #dc2626;">🚨 Out of Stock Items ({len(out_of_stock_items)})</h3>
-                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
-                    <thead style="background-color: #fee2e2;">
+            <div class="content-area">
+                <h3 style="color: #dc2626; display: flex; align-items: center; gap: 10px;">
+                    🚨 Out of Stock Items ({len(out_of_stock_items)})
+                </h3>
+                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
+                    <thead class="out-of-stock-table">
                         <tr>
-                            <th style="padding: 10px;">Department</th>
-                            <th style="padding: 10px;">Product Name</th>
-                            <th style="padding: 10px;">Item Number</th>
-                            <th style="padding: 10px;">Section</th>
-                            <th style="padding: 10px;">Supplier</th>
+                            <th style="padding: 12px; font-weight: bold;">Department</th>
+                            <th style="padding: 12px; font-weight: bold;">Product Name</th>
+                            <th style="padding: 12px; font-weight: bold;">Item Number</th>
+                            <th style="padding: 12px; font-weight: bold;">Section</th>
+                            <th style="padding: 12px; font-weight: bold;">Supplier</th>
                         </tr>
                     </thead>
                     <tbody>
