@@ -1283,7 +1283,7 @@ async def send_email_alert(recipients: List[str], subject: str, body: str, attac
         return False
 
 async def generate_daily_alert_pdf(out_of_stock_items, near_expiry_items):
-    """Generate PDF report for daily alerts"""
+    """Generate PDF report for daily alerts with company branding"""
     try:
         from reportlab.lib.pagesizes import letter, A4
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -1292,23 +1292,30 @@ async def generate_daily_alert_pdf(out_of_stock_items, near_expiry_items):
         from reportlab.lib.units import inch
         from io import BytesIO
         
+        # Get company branding
+        branding = get_company_branding()
+        
         output = BytesIO()
         doc = SimpleDocTemplate(output, pagesize=A4)
         styles = getSampleStyleSheet()
         
         story = []
         
-        # Header
+        # Add company logo and header using helper function
+        add_logo_to_pdf_story(story)
+        
+        # Document title with company colors
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=18,
-            textColor=colors.darkblue,
-            alignment=1
+            fontSize=16,
+            textColor=colors.Color(*branding['pdf_primary_color']),
+            alignment=1,
+            fontName='Helvetica-Bold'
         )
         
-        story.append(Paragraph("Geant Hypermarket", title_style))
-        story.append(Paragraph(f"Daily Inventory Alert Report - {datetime.now().strftime('%Y-%m-%d')}", styles['Heading2']))
+        story.append(Paragraph(f"DAILY INVENTORY ALERT REPORT", title_style))
+        story.append(Paragraph(f"{datetime.now().strftime('%Y-%m-%d')}", styles['Heading3']))
         story.append(Spacer(1, 20))
         
         # Summary
