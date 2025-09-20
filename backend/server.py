@@ -2986,11 +2986,15 @@ async def generate_waste_report_excel(report_data: dict, period: str):
     ws = wb.active
     ws.title = f"Waste Report - {period.title()}"
     
-    # Define styles
+    # Get company branding
+    branding = get_company_branding()
+    
+    # Define styles with company colors
     header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
-    header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
-    subheader_font = Font(name='Arial', size=12, bold=True)
+    header_fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+    subheader_font = Font(name='Arial', size=12, bold=True, color=branding['excel_header_color'])
     currency_font = Font(name='Arial', size=12, bold=True, color='D32F2F')
+    company_font = Font(name='Arial', size=16, bold=True, color=branding['excel_header_color'])
     border = Border(
         left=Side(border_style='thin'),
         right=Side(border_style='thin'),
@@ -2998,12 +3002,30 @@ async def generate_waste_report_excel(report_data: dict, period: str):
         bottom=Side(border_style='thin')
     )
     
-    # Header
-    ws.merge_cells('A1:D1')
-    ws['A1'] = f"GEANT HYPERMARKET - WASTE REPORT ({period.upper()})"
-    ws['A1'].font = header_font
-    ws['A1'].fill = header_fill
-    ws['A1'].alignment = Alignment(horizontal='center')
+    # Add company logo (will add extra rows if successful)
+    logo_added = add_logo_to_excel(ws, row=1, col=1)
+    start_row = 4 if logo_added else 1
+    
+    # Company header
+    if logo_added:
+        ws.merge_cells(f'B1:F1')
+        ws['B1'] = branding['company_name']
+        ws['B1'].font = company_font
+        ws['B1'].alignment = Alignment(horizontal='center', vertical='center')
+        
+        ws.merge_cells(f'B2:F2')
+        ws['B2'] = f"WASTE REPORT - {period.upper()}"
+        ws['B2'].font = header_font
+        ws['B2'].fill = header_fill
+        ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
+    else:
+        # Fallback without logo
+        ws.merge_cells(f'A{start_row}:F{start_row}')
+        ws[f'A{start_row}'] = f"{branding['company_name']} - WASTE REPORT ({period.upper()})"
+        ws[f'A{start_row}'].font = header_font
+        ws[f'A{start_row}'].fill = header_fill
+        ws[f'A{start_row}'].alignment = Alignment(horizontal='center')
+        start_row += 1
     
     # Report details
     row = 3
