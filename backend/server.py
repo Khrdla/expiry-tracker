@@ -1685,9 +1685,10 @@ async def send_daily_alerts(background_tasks: BackgroundTasks):
                     </tbody>
                 </table>
                 
-                <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
-                    <p style="color: #6b7280;">This is an automated alert from Expiry Tracker Inventory Management System</p>
-                    <p style="color: #6b7280;">Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (Aden Time)</p>
+                <div class="footer">
+                    <p style="margin: 0 0 10px 0; font-weight: bold;">📧 {branding['company_name']} Inventory Management System</p>
+                    <p style="margin: 0 0 5px 0;">This is an automated daily inventory alert</p>
+                    <p style="margin: 0;">Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (Aden Time)</p>
                 </div>
             </div>
         </body>
