@@ -926,6 +926,264 @@ const SettingsPanel = ({ user }) => {
             </div>
           )}
 
+          {/* Excel Import Tab */}
+          {activeTab === 'import' && (
+            <div className="space-y-6">
+              <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Upload size={20} className="text-green-600" />
+                  <h3 className="text-lg font-semibold text-green-800">📊 Excel Data Import</h3>
+                </div>
+                <p className="text-green-700 text-sm">
+                  Import your product data from Excel files. Download the template first to ensure proper formatting.
+                </p>
+              </div>
+
+              {/* Step 1: Download Template */}
+              <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                <div className="flex items-center space-x-3 mb-4">
+                  <FileSpreadsheet size={24} className="text-blue-600" />
+                  <h4 className="text-lg font-semibold text-gray-800">Step 1: Download Excel Template</h4>
+                </div>
+                
+                <p className="text-gray-600 mb-4">
+                  Download the Excel template with proper column headers and sample data to ensure successful import.
+                </p>
+
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
+                  <h5 className="font-medium text-blue-800 mb-2">Template includes:</h5>
+                  <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
+                    <div>✓ Required columns (product_name, department, etc.)</div>
+                    <div>✓ Optional columns (barcode, expiry_date, etc.)</div>
+                    <div>✓ Sample data for reference</div>
+                    <div>✓ Instructions sheet with field descriptions</div>
+                    <div>✓ Valid department codes (01-FMG, 01-CGD, 01-OPSS)</div>
+                    <div>✓ Supported currencies (YER, SAR, EUR, USD)</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={downloadTemplate}
+                  className="flex items-center space-x-2 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                >
+                  <Download size={16} />
+                  <span>Download Excel Template</span>
+                </button>
+              </div>
+
+              {/* Step 2: Upload Excel File */}
+              <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Upload size={24} className="text-green-600" />
+                  <h4 className="text-lg font-semibold text-gray-800">Step 2: Upload Your Excel File</h4>
+                </div>
+
+                <p className="text-gray-600 mb-4">
+                  Select your completed Excel file with product data. Supported formats: .xlsx, .xls (max 10MB)
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      id="excel-file-input"
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleFileSelect}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+
+                  {importFile && (
+                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <FileSpreadsheet size={20} className="text-green-600" />
+                          <div>
+                            <p className="font-medium text-gray-900">{importFile.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {(importFile.size / 1024 / 1024).toFixed(2)} MB • {new Date(importFile.lastModified).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={clearImportData}
+                          className="text-red-500 hover:text-red-700 p-1"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={importExcelData}
+                    disabled={!importFile || importLoading}
+                    className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {importLoading ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        <span>Importing Data...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} />
+                        <span>Import Excel Data</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Import Results */}
+              {showImportResult && importResult && (
+                <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle size={24} className={importResult.status === 'success' ? 'text-green-600' : 'text-red-600'} />
+                      <h4 className="text-lg font-semibold text-gray-800">Import Results</h4>
+                    </div>
+                    <button
+                      onClick={() => setShowImportResult(false)}
+                      className="text-gray-500 hover:text-gray-700 p-1"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className={`p-4 rounded-lg mb-4 ${
+                    importResult.status === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                  }`}>
+                    <p className={`font-medium ${importResult.status === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+                      {importResult.message}
+                    </p>
+                  </div>
+
+                  {importResult.import_summary && (
+                    <div className="space-y-4">
+                      {/* Statistics */}
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl font-bold text-gray-900">{importResult.import_summary.total_rows}</div>
+                          <div className="text-sm text-gray-600">Total Rows</div>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <div className="text-2xl font-bold text-green-600">{importResult.import_summary.successful_imports}</div>
+                          <div className="text-sm text-gray-600">Successful</div>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-lg">
+                          <div className="text-2xl font-bold text-red-600">{importResult.import_summary.failed_imports}</div>
+                          <div className="text-sm text-gray-600">Failed</div>
+                        </div>
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {((importResult.import_summary.successful_imports / importResult.import_summary.total_rows) * 100).toFixed(1)}%
+                          </div>
+                          <div className="text-sm text-gray-600">Success Rate</div>
+                        </div>
+                      </div>
+
+                      {/* Successful Imports */}
+                      {importResult.import_summary.imported_products && importResult.import_summary.imported_products.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-green-800 mb-2">✅ Successfully Imported Products:</h5>
+                          <div className="bg-green-50 border border-green-200 p-3 rounded-lg max-h-40 overflow-y-auto">
+                            {importResult.import_summary.imported_products.slice(0, 10).map((product, index) => (
+                              <div key={index} className="text-sm text-green-700 py-1">
+                                Row {product.row}: {product.product_name} ({product.department})
+                                {product.barcode && ` - ${product.barcode}`}
+                              </div>
+                            ))}
+                            {importResult.import_summary.imported_products.length > 10 && (
+                              <div className="text-sm text-green-600 pt-2 border-t border-green-200">
+                                ... and {importResult.import_summary.imported_products.length - 10} more products
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Errors */}
+                      {importResult.import_summary.errors && importResult.import_summary.errors.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-red-800 mb-2">❌ Import Errors:</h5>
+                          <div className="bg-red-50 border border-red-200 p-3 rounded-lg max-h-40 overflow-y-auto">
+                            {importResult.import_summary.errors.map((error, index) => (
+                              <div key={index} className="text-sm text-red-700 py-1">
+                                {error}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Skipped Rows */}
+                      {importResult.import_summary.skipped_rows && importResult.import_summary.skipped_rows.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-yellow-800 mb-2">⚠️ Skipped Rows:</h5>
+                          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg max-h-40 overflow-y-auto">
+                            {importResult.import_summary.skipped_rows.map((skip, index) => (
+                              <div key={index} className="text-sm text-yellow-700 py-1">
+                                {skip}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {importResult.recommendations && (
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                          <h5 className="font-medium text-blue-800 mb-2">💡 Next Steps:</h5>
+                          <ul className="text-sm text-blue-700 space-y-1">
+                            {importResult.recommendations.map((rec, index) => (
+                              <li key={index}>• {rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Current System Status After Import */}
+              {systemStatus && (
+                <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Database size={20} className="text-gray-600" />
+                    <h5 className="font-medium text-gray-800">Current System Data</h5>
+                    <button
+                      onClick={fetchSystemStatus}
+                      className="ml-auto text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      <RefreshCw size={14} className="inline mr-1" />
+                      Refresh
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{systemStatus.data_counts.products || 0}</div>
+                      <div className="text-xs text-gray-600">Products</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{systemStatus.data_counts.waste_entries || 0}</div>
+                      <div className="text-xs text-gray-600">Waste Entries</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{systemStatus.data_counts.alerts || 0}</div>
+                      <div className="text-xs text-gray-600">Alerts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{systemStatus.data_counts.return_forms || 0}</div>
+                      <div className="text-xs text-gray-600">Return Forms</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* System Reset Tab */}
           {activeTab === 'reset' && (
             <div className="space-y-6">
