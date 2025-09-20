@@ -267,7 +267,8 @@ const SettingsPanel = ({ user }) => {
   const tabs = [
     { id: 'email', label: 'Email & Alerts', icon: Mail },
     { id: 'company', label: 'Company Settings', icon: Palette },
-    { id: 'reports', label: 'Reports', icon: Download }
+    { id: 'reports', label: 'Reports', icon: Download },
+    { id: 'reset', label: 'System Reset', icon: Database }
   ];
 
   if (user?.role !== 'admin' && user?.role !== 'manager') {
