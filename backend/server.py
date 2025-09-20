@@ -3107,6 +3107,85 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+# =============================================================================
+# SYSTEM RESET API ENDPOINT
+# =============================================================================
+
+@api_router.post("/system/reset")
+async def reset_system_data(current_user: User = Depends(get_admin_user)):
+    """Reset all system data to zero - ADMIN ONLY"""
+    try:
+        # Collections to clear
+        collections_to_clear = [
+            'products',
+            'waste_entries', 
+            'alerts',
+            'return_forms'
+        ]
+        
+        reset_summary = {
+            'cleared_collections': {},
+            'total_documents_deleted': 0,
+            'reset_timestamp': datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Clear each collection and count deleted documents
+        for collection_name in collections_to_clear:
+            collection = getattr(db, collection_name)
+            
+            # Count documents before deletion
+            count_before = await collection.count_documents({})
+            
+            # Delete all documents
+            result = await collection.delete_many({})
+            
+            reset_summary['cleared_collections'][collection_name] = {
+                'documents_before': count_before,
+                'documents_deleted': result.deleted_count
+            }
+            
+            reset_summary['total_documents_deleted'] += result.deleted_count
+        
+        # Reset any settings that might have cached data
+        # Keep user accounts and email settings intact
+        
+        return {
+            "message": "✅ SYSTEM RESET COMPLETED - All data cleared successfully",
+            "reset_summary": reset_summary,
+            "status": "success",
+            "next_steps": [
+                "Dashboard will show zero entries for all metrics",
+                "All product, waste, alert, and return form data cleared",
+                "User accounts and system settings preserved",
+                "Ready for fresh data entry"
+            ]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"❌ System reset failed: {str(e)}")
+
+@api_router.get("/system/status")
+async def get_system_status(current_user: User = Depends(get_current_user)):
+    """Get current system data counts"""
+    try:
+        status = {
+            'data_counts': {},
+            'last_updated': datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Count documents in each collection
+        collections_to_check = ['products', 'waste_entries', 'alerts', 'return_forms', 'users']
+        
+        for collection_name in collections_to_check:
+            collection = getattr(db, collection_name)
+            count = await collection.count_documents({})
+            status['data_counts'][collection_name] = count
+        
+        return status
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get system status: {str(e)}")
+
 # Include router after all endpoints are defined
 app.include_router(api_router)
 
