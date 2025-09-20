@@ -32,6 +32,11 @@ const SettingsPanel = ({ user }) => {
   const [activeTab, setActiveTab] = useState('email');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // System Reset States
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState('');
+  const [systemStatus, setSystemStatus] = useState(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
