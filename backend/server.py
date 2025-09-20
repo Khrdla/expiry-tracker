@@ -2855,8 +2855,128 @@ async def export_waste_report(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to export waste report: {str(e)}")
 
+# =============================================================================
+# REPORT BRANDING HELPER FUNCTIONS
+# =============================================================================
+
+def get_company_branding():
+    """Get consistent company branding for all reports"""
+    return {
+        'company_name': 'GEANT HYPERMARKET',
+        'logo_path': '/app/backend/geant-logo.jpeg',
+        'primary_color': '#1B4332',  # Dark green
+        'secondary_color': '#2D6A4F',  # Medium green  
+        'accent_color': '#40916C',  # Light green
+        'text_color': '#081C15',  # Dark text
+        'background_color': '#F8F9FA',  # Light background
+        'excel_header_color': '1B4332',  # Excel hex without #
+        'pdf_primary_color': (0.106, 0.263, 0.196),  # RGB for ReportLab (27,67,50)
+        'pdf_secondary_color': (0.176, 0.416, 0.310),  # RGB for ReportLab (45,106,79)
+        'pdf_accent_color': (0.251, 0.569, 0.424)  # RGB for ReportLab (64,145,108)
+    }
+
+def add_logo_to_excel(worksheet, row=1, col=1):
+    """Add company logo to Excel worksheet"""
+    try:
+        from openpyxl.drawing import image
+        import os
+        
+        branding = get_company_branding()
+        if os.path.exists(branding['logo_path']):
+            # Add logo
+            logo = image.Image(branding['logo_path'])
+            logo.width = 60  # Resize logo
+            logo.height = 60
+            
+            # Position logo
+            cell = worksheet.cell(row=row, column=col)
+            worksheet.add_image(logo, cell.coordinate)
+            
+            # Add extra rows for logo space
+            for i in range(3):
+                worksheet.row_dimensions[row + i].height = 25
+                
+            return True
+    except Exception as e:
+        print(f"Could not add logo to Excel: {str(e)}")
+        return False
+    
+    return False
+
+def add_logo_to_pdf_story(story):
+    """Add company logo to PDF story array"""
+    try:
+        from reportlab.platypus import Image, Table, TableStyle, Paragraph
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        import os
+        
+        branding = get_company_branding()
+        styles = getSampleStyleSheet()
+        
+        if os.path.exists(branding['logo_path']):
+            # Create logo image
+            logo_img = Image(branding['logo_path'], width=1.2*inch, height=1.2*inch)
+            
+            # Create company header with logo
+            from reportlab.lib.styles import ParagraphStyle
+            company_style = ParagraphStyle(
+                'CompanyHeader',
+                parent=styles['Heading1'],
+                fontSize=24,
+                textColor=colors.Color(*branding['pdf_primary_color']),
+                alignment=1,  # Center
+                fontName='Helvetica-Bold'
+            )
+            
+            # Header table with logo and company name
+            header_data = [
+                [logo_img, Paragraph(branding['company_name'], company_style)]
+            ]
+            
+            header_table = Table(header_data, colWidths=[1.5*inch, 5*inch])
+            header_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+                ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+            ]))
+            
+            story.append(header_table)
+            return True
+            
+    except Exception as e:
+        print(f"Could not add logo to PDF: {str(e)}")
+        # Fallback to text header
+        try:
+            from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+            from reportlab.lib import colors
+            
+            branding = get_company_branding()
+            styles = getSampleStyleSheet()
+            
+            fallback_style = ParagraphStyle(
+                'CompanyFallback',
+                parent=styles['Heading1'],
+                fontSize=20,
+                textColor=colors.Color(*branding['pdf_primary_color']),
+                alignment=1,
+                fontName='Helvetica-Bold'
+            )
+            
+            story.append(Paragraph(branding['company_name'], fallback_style))
+            return True
+        except:
+            return False
+    
+    return False
+
 async def generate_waste_report_excel(report_data: dict, period: str):
-    """Generate Excel waste report"""
+    """Generate Excel waste report with company branding"""
     import io
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
