@@ -702,7 +702,7 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "System Reset functionality testing"
+    - "Excel Import functionality testing completed"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
