@@ -9,6 +9,7 @@ import EnhancedProductManagement from "./components/EnhancedProductManagement";
 import SettingsPanel from "./components/SettingsPanel";
 import ExpiryTracker from "./components/ExpiryTracker";
 import ReturnForm from "./components/ReturnForm";
+import WasteReports from "./components/WasteReports";
 
 // Icons
 import { 
