@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Download, Filter, TrendingUp, TrendingDown, Package, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Calendar, Download, Filter, TrendingUp, TrendingDown, Package, Trash2, AlertTriangle, CheckCircle2, Plus, Search, X, Calculator } from 'lucide-react';
 
 const WasteReports = () => {
   const [reportData, setReportData] = useState(null);
