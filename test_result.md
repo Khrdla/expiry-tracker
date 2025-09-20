@@ -649,7 +649,8 @@ metadata:
   dashboard_api_working_correctly: true
 
 test_plan:
-  current_focus: []
+  current_focus: 
+    - "System Reset functionality testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
