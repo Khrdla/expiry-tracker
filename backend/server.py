@@ -3570,6 +3570,22 @@ async def download_import_template(current_user: User = Depends(get_current_user
             
             instructions_df = pd.DataFrame(instructions_data)
             instructions_df.to_excel(writer, sheet_name='Instructions', index=False)
+            
+            # Apply branding to Instructions sheet
+            instructions_sheet = writer.sheets['Instructions']
+            add_logo_to_excel(instructions_sheet, row=1, col=1)
+            
+            # Add company header to instructions
+            instructions_sheet.merge_cells('B1:D1')
+            instructions_sheet['B1'] = f"{branding['company_name']} - IMPORT INSTRUCTIONS"
+            instructions_sheet['B1'].font = openpyxl.styles.Font(name='Arial', size=14, bold=True, color=branding['excel_header_color'])
+            instructions_sheet['B1'].alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
+            
+            # Style the instructions header row
+            for col in range(1, len(instructions_df.columns) + 1):
+                cell = instructions_sheet.cell(row=5, column=col)  # Row 5 because logo takes 3 rows
+                cell.fill = openpyxl.styles.PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+                cell.font = openpyxl.styles.Font(color='FFFFFF', bold=True)
         
         output.seek(0)
         filename = f"product_import_template_{datetime.now().strftime('%Y%m%d')}.xlsx"
