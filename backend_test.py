@@ -2448,7 +2448,7 @@ class ExpiryTrackerAPITester:
             if isinstance(response, dict):
                 message = response.get('message', '')
                 print(f"   📧 Response: {message}")
-                if 'queued' in message.lower() or 'sent' in message.lower():
+                if isinstance(message, str) and ('queued' in message.lower() or 'sent' in message.lower()):
                     self.log_test("Daily Alert Branding", True, "Daily alerts with branding generated")
                     return True
         
