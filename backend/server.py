@@ -1408,22 +1408,54 @@ async def generate_daily_alert_pdf(out_of_stock_items, near_expiry_items):
         return b""
 
 async def generate_daily_alert_excel(out_of_stock_items, near_expiry_items):
-    """Generate Excel report for daily alerts"""
+    """Generate Excel report for daily alerts with company branding"""
     try:
         import pandas as pd
         from io import BytesIO
         
+        # Get company branding
+        branding = get_company_branding()
+        
         output = BytesIO()
         
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            
+            # Define company-branded formats
+            company_header_format = workbook.add_format({
+                'bold': True,
+                'font_size': 16,
+                'font_color': branding['excel_header_color'],
+                'align': 'center',
+                'valign': 'vcenter'
+            })
+            
+            header_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'fg_color': branding['excel_header_color'],
+                'font_color': 'white',
+                'border': 1
+            })
+            
             # Summary sheet
             summary_data = {
-                'Metric': ['Out of Stock Items', 'Near Expiry Items', 'Report Date', 'Timezone'],
-                'Value': [len(out_of_stock_items), len(near_expiry_items), 
+                'Metric': ['Company', 'Report Type', 'Out of Stock Items', 'Near Expiry Items', 'Report Date', 'Timezone'],
+                'Value': [branding['company_name'], 'Daily Stock Alert', len(out_of_stock_items), len(near_expiry_items), 
                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'Asia/Aden (GMT+3)']
             }
             summary_df = pd.DataFrame(summary_data)
-            summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            summary_df.to_excel(writer, sheet_name='Summary', index=False, startrow=2)
+            
+            # Add company header to summary sheet
+            summary_worksheet = writer.sheets['Summary']
+            summary_worksheet.merge_range('A1:B1', f'{branding["company_name"]} - DAILY STOCK ALERT', company_header_format)
+            
+            # Style summary headers
+            for col_num, value in enumerate(summary_df.columns.values):
+                summary_worksheet.write(2, col_num, value, header_format)
+                summary_worksheet.set_column(col_num, col_num, 25)
             
             # Out of Stock sheet
             if out_of_stock_items:
