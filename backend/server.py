@@ -2476,6 +2476,8 @@ async def export_return_form_pdf(
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
         ]))
         
         story.append(ref_table)
