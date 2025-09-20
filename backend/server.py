@@ -2167,13 +2167,12 @@ async def export_dashboard_excel(
         
         filename = f"dashboard_kpi_export_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
         
-        return FileResponse(
-            path=None,
+        return Response(
+            content=output.getvalue(),
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             headers={
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            },
-            content=output.getvalue()
+                'Content-Disposition': f'attachment; filename="{filename}"'
+            }
         )
         
     except Exception as e:
