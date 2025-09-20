@@ -45,6 +45,68 @@ const SettingsPanel = ({ user }) => {
     fetchEmailStatus();
   }, []);
 
+  const fetchSystemStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/system/status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching system status:', error);
+    }
+  };
+
+  const resetSystemData = async () => {
+    if (resetConfirmation !== 'RESET') {
+      alert('Please type "RESET" to confirm data deletion');
+      return;
+    }
+
+    if (!window.confirm('⚠️ WARNING: This will permanently delete ALL data (products, waste entries, alerts, return forms). This action cannot be undone. Are you absolutely sure?')) {
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/system/reset`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ SYSTEM RESET COMPLETED!\n\nDeleted:\n- Products: ${result.reset_summary.cleared_collections.products?.documents_deleted || 0}\n- Waste Entries: ${result.reset_summary.cleared_collections.waste_entries?.documents_deleted || 0}\n- Alerts: ${result.reset_summary.cleared_collections.alerts?.documents_deleted || 0}\n- Return Forms: ${result.reset_summary.cleared_collections.return_forms?.documents_deleted || 0}\n\nTotal: ${result.reset_summary.total_documents_deleted} documents deleted`);
+        
+        // Reset confirmation field
+        setResetConfirmation('');
+        
+        // Refresh system status
+        fetchSystemStatus();
+        
+        // Suggest page refresh
+        if (window.confirm('System reset complete! Would you like to refresh the page to see the updated dashboard?')) {
+          window.location.reload();
+        }
+      } else {
+        const errorData = await response.json();
+        alert(`❌ Reset failed: ${errorData.detail}`);
+      }
+    } catch (error) {
+      console.error('Error resetting system:', error);
+      alert('❌ Reset failed: Network error');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const fetchEmailStatus = async () => {
     try {
       const token = localStorage.getItem('token');
