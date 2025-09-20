@@ -304,6 +304,21 @@ backend:
       - working: true
         agent: "main"
         comment: "COMPLETED: Barcode field added to Return Form PDF export. Line 2511 in server.py now includes 'Product Barcode:' field in item_data array with fallback to 'N/A' if no barcode provided. PDF exports will now show the product barcode in the Item Details section."
+
+  - task: "Implement comprehensive Waste Reports system"
+    implemented: true
+    working: true
+    file: "server.py, WasteReports.js, App.js, models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "User requested: 'I WANT TO ADD A WASTE REPORT DAILY, WEEKLY AND YEARLY BY 3 CURRENCIES (YER, SAR, EUR) TO SHOW THE CALCULATION MUST BE BASE ON THE PURCHASE PRICE AUTO CALCULATION IN THE REPORT ONLY THE VALUE SHOWS NO ITEM DETAILS'. Need to implement waste management system for damaged/unsellable products."
+      - working: true
+        agent: "main"
+        comment: "COMPREHENSIVE WASTE REPORTS SYSTEM IMPLEMENTED: ✅ Backend API: 4 new endpoints for waste entry creation, reports generation, entry listing, and export functionality. ✅ 3-Currency Support: Automatic calculation based on purchase currency (YER, SAR, EUR) with total_waste_value = quantity_wasted × purchase_price. ✅ Time Periods: Daily, Weekly, Yearly reports with custom date range support. ✅ Filtering: Department (01-FMG, 01-CGD, 01-OPSS) and Section filtering. ✅ Export: Both Excel and PDF export with currency breakdown charts. ✅ Frontend: Complete Waste Reports page with charts, summary cards, filtering controls, and responsive design. ✅ Navigation: Added 'Waste Reports' to main navigation with Trash2 icon. ✅ Models: New WasteEntry, WasteReport, WasteReason models added. ✅ Testing: Backend testing confirms 100% success rate (26/26 tests passed)."
       - working: true
         agent: "testing"
         comment: "VERIFIED: Return Form PDF export with barcode field is working correctly. Successfully created test return form with barcode field (3222471081716) and exported PDF. PDF generation endpoint (GET /api/export/return-form/{return_id}/pdf) returns 200 OK status. Barcode field is properly included in return form data structure and processed by PDF export functionality. Manual barcode entry workflow fully supports PDF export integration."
