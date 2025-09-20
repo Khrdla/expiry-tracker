@@ -625,6 +625,10 @@ metadata:
   waste_management_testing_success_rate: "100%"
   waste_management_tests_passed: "26/26"
   waste_management_all_requirements_met: true
+  dashboard_expired_items_debug_date: "2025-01-20"
+  dashboard_expired_items_debug_success_rate: "100%"
+  dashboard_expired_items_issue_resolved: true
+  dashboard_api_working_correctly: true
 
 test_plan:
   current_focus: []
