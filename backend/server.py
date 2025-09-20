@@ -3078,6 +3078,9 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+# Include router after all endpoints are defined
+app.include_router(api_router)
+
 # Health check
 @app.get("/")
 async def root():
