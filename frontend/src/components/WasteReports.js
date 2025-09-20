@@ -13,6 +13,21 @@ const WasteReports = () => {
     endDate: ''
   });
   const [showCustomRange, setShowCustomRange] = useState(false);
+  
+  // Waste Entry Form States
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [wasteEntries, setWasteEntries] = useState([]);
+  const [currentEntry, setCurrentEntry] = useState({
+    barcode: '',
+    productName: '',
+    product: null,
+    quantity: '',
+    wasteReason: 'damaged',
+    notes: ''
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [addingWaste, setAddingWaste] = useState(false);
 
   // Department and section options
   const departments = [
