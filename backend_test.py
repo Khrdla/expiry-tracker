@@ -2070,15 +2070,10 @@ class ExpiryTrackerAPITester:
             print("❌ Admin login failed - stopping tests")
             return False
         
-        # PRIORITY 1: Manual Barcode Entry Functionality (Review Request)
-        print("\n🎯 PRIORITY 1: MANUAL BARCODE ENTRY FUNCTIONALITY (REVIEW REQUEST)")
+        # PRIORITY 1: System Reset Functionality (Review Request)
+        print("\n🎯 PRIORITY 1: SYSTEM RESET FUNCTIONALITY (REVIEW REQUEST)")
         print("-" * 70)
-        manual_barcode_success = self.test_manual_barcode_entry_functionality()
-        
-        # URGENT: Barcode Scanner Camera Issue Investigation
-        print("\n🚨 URGENT: BARCODE SCANNER CAMERA ISSUE INVESTIGATION")
-        print("-" * 60)
-        camera_issue_resolved = self.test_barcode_scanner_camera_issue_investigation()
+        system_reset_success = self.test_system_reset_comprehensive()
         
         # PRIORITY HIGH - Critical endpoints from review request
         print("\n🔥 PRIORITY HIGH TESTS (from review request)")
