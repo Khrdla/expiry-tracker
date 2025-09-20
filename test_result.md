@@ -707,6 +707,7 @@ test_plan:
   manual_barcode_entry_testing_completed: true
   waste_management_testing_completed: true
   system_reset_testing_completed: true
+  excel_import_testing_completed: true
   all_requirements_completed: true
 
 agent_communication:
