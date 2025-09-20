@@ -2444,46 +2444,24 @@ async def export_return_form_pdf(
         
         story = []
         
-        # Define title style
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Define title style with company colors
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=18,
-            textColor=colors.darkred,
-            alignment=1
+            fontSize=16,
+            textColor=colors.Color(*branding['pdf_primary_color']),
+            alignment=1,
+            fontName='Helvetica-Bold'
         )
         
-        # Header with logo
-        try:
-            from reportlab.platypus import Image
-            from reportlab.lib.utils import ImageReader
-            import os
-            
-            # Try to add logo if it exists
-            logo_path = "/app/frontend/public/geant-logo.jpeg"
-            if os.path.exists(logo_path):
-                # Create header table with logo and title
-                logo_img = Image(logo_path, width=0.8*inch, height=0.8*inch)
-                
-                header_data = [[logo_img, Paragraph("🏢 Geant Hypermarket", title_style)]]
-                header_table = Table(header_data, colWidths=[1*inch, 5*inch])
-                header_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (0, 0), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('ALIGN', (1, 0), (1, 0), 'LEFT'),
-                ]))
-                
-                story.append(header_table)
-            else:
-                # Fallback to text header if logo not found
-                story.append(Paragraph("🏢 Geant Hypermarket", title_style))
-                
-        except Exception as e:
-            # Fallback to text header if image processing fails
-            logger.warning(f"Could not add logo to PDF: {str(e)}")
-            story.append(Paragraph("🏢 Geant Hypermarket", title_style))
+        # Add company logo and header using helper function
+        add_logo_to_pdf_story(story)
         
-        story.append(Paragraph("Product Return Form", styles['Heading2']))
+        # Document title
+        story.append(Paragraph("PRODUCT RETURN FORM", title_style))
         story.append(Spacer(1, 20))
         
         # Reference info
