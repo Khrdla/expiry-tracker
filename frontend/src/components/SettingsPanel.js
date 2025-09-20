@@ -274,6 +274,7 @@ const SettingsPanel = ({ user }) => {
     { id: 'email', label: 'Email & Alerts', icon: Mail },
     { id: 'company', label: 'Company Settings', icon: Palette },
     { id: 'reports', label: 'Reports', icon: Download },
+    { id: 'import', label: 'Excel Import', icon: Upload },
     { id: 'reset', label: 'System Reset', icon: Database }
   ];
 
