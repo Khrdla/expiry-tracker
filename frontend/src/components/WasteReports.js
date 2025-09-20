@@ -318,12 +318,291 @@ const WasteReports = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-4">
-          <Trash2 size={32} className="text-red-500" />
-          <h1 className="text-3xl font-bold text-gray-900">Waste Reports</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <Trash2 size={32} className="text-red-500" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Waste Reports</h1>
+              <p className="text-gray-600">Track damaged and unsellable product waste by currency and time period</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              showAddForm 
+                ? 'bg-gray-500 text-white hover:bg-gray-600' 
+                : 'bg-green-500 text-white hover:bg-green-600'
+            }`}
+          >
+            {showAddForm ? <X size={20} /> : <Plus size={20} />}
+            <span>{showAddForm ? 'Close Form' : 'Add Waste Entry'}</span>
+          </button>
         </div>
-        <p className="text-gray-600">Track damaged and unsellable product waste by currency and time period</p>
       </div>
+
+      {/* Add Waste Entry Form */}
+      {showAddForm && (
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="bg-red-100 p-2 rounded-full">
+              <Plus size={20} className="text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Add Waste Entry</h2>
+              <p className="text-sm text-gray-600">Enter barcode or product name, quantity, and reason</p>
+            </div>
+          </div>
+
+          {/* Search Product */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔍 Search by Barcode or Product Name
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={currentEntry.barcode || currentEntry.productName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCurrentEntry(prev => ({
+                      ...prev,
+                      barcode: /^\d+$/.test(value) ? value : '',
+                      productName: !/^\d+$/.test(value) ? value : ''
+                    }));
+                    searchProduct(value);
+                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent pr-10"
+                  placeholder="Enter barcode number or product name..."
+                />
+                <Search size={20} className="absolute right-3 top-3 text-gray-400" />
+                
+                {/* Search Results Dropdown */}
+                {searchResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {searchResults.map((product, index) => (
+                      <div
+                        key={index}
+                        onClick={() => selectProduct(product)}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">{product.product_name}</div>
+                        <div className="text-sm text-gray-600">
+                          {product.barcode && `Barcode: ${product.barcode} • `}
+                          {product.purchase_price} {product.purchase_currency} • {product.department}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {searching && (
+                <p className="text-sm text-gray-500 mt-1">🔍 Searching products...</p>
+              )}
+            </div>
+
+            {/* Selected Product Display */}
+            {currentEntry.product && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Package size={16} className="text-green-600" />
+                  <span className="font-medium text-green-800">Selected Product</span>
+                </div>
+                <p className="font-semibold text-gray-900">{currentEntry.product.product_name}</p>
+                <p className="text-sm text-gray-600">
+                  {currentEntry.product.department} • {currentEntry.product.section}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Purchase Price: <span className="font-medium">{currentEntry.product.purchase_price} {currentEntry.product.purchase_currency}</span>
+                </p>
+                {currentEntry.product.barcode && (
+                  <p className="text-sm text-gray-600">Barcode: {currentEntry.product.barcode}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Quantity and Details */}
+          {currentEntry.product && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📦 Quantity Wasted *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={currentEntry.quantity}
+                  onChange={(e) => setCurrentEntry(prev => ({ ...prev, quantity: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Enter quantity"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ⚠️ Waste Reason
+                </label>
+                <select
+                  value={currentEntry.wasteReason}
+                  onChange={(e) => setCurrentEntry(prev => ({ ...prev, wasteReason: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  <option value="damaged">💥 Damaged</option>
+                  <option value="expired">⏰ Expired</option>
+                  <option value="unsellable">❌ Unsellable</option>
+                  <option value="contaminated">🦠 Contaminated</option>
+                  <option value="broken_packaging">📦 Broken Packaging</option>
+                  <option value="quality_issue">⚠️ Quality Issue</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  💰 Waste Value
+                </label>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-lg font-bold text-red-900">
+                    {currentEntry.quantity ? 
+                      `${(parseFloat(currentEntry.quantity) * parseFloat(currentEntry.product.purchase_price || 0)).toLocaleString()} ${currentEntry.product.purchase_currency}` 
+                      : '0.00'
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {currentEntry.product && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📝 Notes (Optional)
+              </label>
+              <input
+                type="text"
+                value={currentEntry.notes}
+                onChange={(e) => setCurrentEntry(prev => ({ ...prev, notes: e.target.value }))}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Additional details about the waste..."
+              />
+            </div>
+          )}
+
+          {/* Add Button */}
+          {currentEntry.product && currentEntry.quantity && (
+            <div className="flex justify-end">
+              <button
+                onClick={addWasteEntry}
+                className="flex items-center space-x-2 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                <Plus size={16} />
+                <span>Add to List</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Current Waste Entries List */}
+      {wasteEntries.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="bg-orange-100 p-2 rounded-full">
+                <Calculator size={20} className="text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Added Waste Entries ({wasteEntries.length})</h3>
+                <p className="text-sm text-gray-600">Review and submit waste entries</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600">Total Waste Value</p>
+              <p className="text-xl font-bold text-red-600">
+                {getTotalWasteValue().toLocaleString()} (Multi-Currency)
+              </p>
+            </div>
+          </div>
+
+          {/* Currency Breakdown */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {Object.entries(getWasteValueByCurrency()).map(([currency, value]) => (
+              <div key={currency} className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-sm font-medium text-gray-600">{currency}</p>
+                <p className="text-lg font-bold text-gray-900">{value.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Entries Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 font-medium text-gray-700">Product</th>
+                  <th className="text-center py-2 font-medium text-gray-700">Qty</th>
+                  <th className="text-center py-2 font-medium text-gray-700">Price</th>
+                  <th className="text-center py-2 font-medium text-gray-700">Waste Value</th>
+                  <th className="text-center py-2 font-medium text-gray-700">Reason</th>
+                  <th className="text-center py-2 font-medium text-gray-700">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {wasteEntries.map((entry) => (
+                  <tr key={entry.id} className="border-b border-gray-100">
+                    <td className="py-3">
+                      <div className="font-medium text-gray-900">{entry.product.product_name}</div>
+                      <div className="text-xs text-gray-500">{entry.product.department}</div>
+                    </td>
+                    <td className="text-center py-3 font-medium">{entry.quantity}</td>
+                    <td className="text-center py-3">
+                      {entry.product.purchase_price} {entry.product.purchase_currency}
+                    </td>
+                    <td className="text-center py-3 font-bold text-red-600">
+                      {entry.wasteValue.toLocaleString()} {entry.product.purchase_currency}
+                    </td>
+                    <td className="text-center py-3">
+                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                        {entry.wasteReason}
+                      </span>
+                    </td>
+                    <td className="text-center py-3">
+                      <button
+                        onClick={() => removeWasteEntry(entry.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <X size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={submitWasteEntries}
+              disabled={addingWaste}
+              className="flex items-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors font-medium"
+            >
+              {addingWaste ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={16} />
+                  <span>Submit All Entries ({wasteEntries.length})</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
