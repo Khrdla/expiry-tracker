@@ -2501,7 +2501,9 @@ async def export_return_form_pdf(
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color']))
         ]))
         
         story.append(item_table)
