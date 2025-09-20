@@ -248,6 +248,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
     { path: "/", icon: Home, label: "Dashboard", color: "text-green-600" },
     { path: "/products", icon: Package, label: "Products", color: "text-blue-600" },
     { path: "/reports", icon: BarChart3, label: "Reports", color: "text-purple-600" },
+    { path: "/waste-reports", icon: Trash2, label: "Waste Reports", color: "text-red-500" },
     { path: "/expiry-tracker", icon: Clock, label: "Expiry Tracker", color: "text-orange-600" },
     { path: "/return-form", icon: RotateCcw, label: "Return Form", color: "text-red-600" },
     { path: "/settings", icon: Settings, label: "Settings", color: "text-gray-600" }
