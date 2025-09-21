@@ -456,9 +456,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 
                 if (isVideoAbortError && retryAttempts < maxRetries) {
                   retryAttempts++;
-                  console.warn(`🔄 AGGRESSIVE VIDEO ABORT RECOVERY ${retryAttempts}/${maxRetries}:`, errorMessage);
+                  console.warn(`🔄 VIDEO ABORT DETECTED ${retryAttempts}/${maxRetries}:`, errorMessage);
                   
-                  // Immediate aggressive recovery without delay
+                  // If this is the first retry, try native fallback immediately
+                  if (retryAttempts === 1) {
+                    console.log('🚨 SWITCHING TO NATIVE FALLBACK due to video abort');
+                    startNativeFallback();
+                    return;
+                  }
+                  
+                  // Fallback to aggressive recovery for subsequent attempts
                   (async () => {
                     try {
                       console.log('🚨 Starting aggressive camera recovery...');
