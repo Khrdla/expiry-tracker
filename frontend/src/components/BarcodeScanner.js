@@ -1258,7 +1258,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                         {/* Enhanced Instructions */}
                         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-3 md:px-4 py-2 rounded-lg text-center max-w-xs">
                           <p className="text-xs md:text-sm font-medium text-green-400">🎯 Barcode Detection Active</p>
-                          <p className="text-xs text-gray-300 mt-1">Hold phone 6-12 inches from barcode</p>
+                          <p className="text-xs text-gray-300 mt-1">Hold phone 2-4 inches from barcode (CLOSE)</p>
                           <p className="text-xs text-gray-300">Keep barcode horizontal & well-lit</p>
                         </div>
                         
