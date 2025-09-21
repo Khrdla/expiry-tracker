@@ -94,12 +94,61 @@ const ExpiryTracker = ({ user }) => {
           
           <div className="mt-4 lg:mt-0">
             <button
-              onClick={() => {
+              onClick={async () => {
                 const token = localStorage.getItem('token');
-                if (token) {
-                  window.open(`${BACKEND_URL}/api/export/expiry-tracker?token=${token}`, '_blank');
-                } else {
-                  console.error('No authentication token found');
+                if (!token) {
+                  console.error('❌ No authentication token found');
+                  alert('Please log in again to export data.');
+                  return;
+                }
+
+                try {
+                  console.log('🔍 Exporting expiry tracker data...');
+                  
+                  const response = await fetch(`${BACKEND_URL}/api/export/expiry-tracker`, {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  });
+                  
+                  console.log('📊 Expiry tracker export response status:', response.status);
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    console.log('📥 Received expiry tracker blob:', blob.size, 'bytes');
+                    
+                    // Create download link
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `expiry_tracker_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    window.URL.revokeObjectURL(downloadUrl);
+                    
+                    console.log('✅ Expiry tracker export completed successfully');
+                  } else {
+                    const errorText = await response.text();
+                    console.error('❌ Expiry tracker export failed:', response.status, errorText);
+                    
+                    if (response.status === 401) {
+                      alert('❌ Not authenticated. Please log in again.');
+                    } else if (response.status === 403) {
+                      alert('❌ Access denied. Admin privileges required.');
+                    } else {
+                      alert(`❌ Export failed: ${response.status} ${errorText}`);
+                    }
+                  }
+                } catch (error) {
+                  console.error('❌ Expiry tracker export error:', error);
+                  alert(`❌ Export failed: ${error.message}`);
                 }
               }}
               className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors"
