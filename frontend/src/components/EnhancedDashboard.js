@@ -200,29 +200,73 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
           }
         }
       } else {
-        // For POST requests, use fetch with proper headers and form data
-        const formData = new FormData();
+        // For POST requests, use fetch with proper headers and JSON data
+        const exportData = {};
         
         // Add filters if any
         if (selectedDepartment !== 'all') {
-          formData.append('department', selectedDepartment);
-        deptInput.type = 'hidden';
-        deptInput.name = 'department';
-        deptInput.value = selectedDepartment;
-        form.appendChild(deptInput);
+          exportData.department = selectedDepartment;
+        }
+        
+        if (selectedSection !== 'all') {
+          exportData.section = selectedSection;
+        }
+        
+        console.log('📤 POST export data:', exportData);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(exportData),
+        });
+        
+        console.log('📊 POST Export response status:', response.status);
+        
+        if (response.ok) {
+          // Get the blob data
+          const blob = await response.blob();
+          console.log('📥 Received POST blob:', blob.size, 'bytes');
+          
+          // Determine file name
+          let fileName = 'inventory_export';
+          if (type === 'expiry-tracker') {
+            fileName = 'expiry_tracker_export';
+          }
+          
+          // Create download link
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+          
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up
+          window.URL.revokeObjectURL(downloadUrl);
+          
+          console.log('✅ POST Export completed successfully');
+        } else {
+          const errorText = await response.text();
+          console.error('❌ POST Export failed:', response.status, errorText);
+          
+          if (response.status === 401) {
+            alert('❌ Not authenticated. Please log in again.');
+          } else if (response.status === 403) {
+            alert('❌ Access denied. Admin privileges required.');
+          } else {
+            alert(`❌ Export failed: ${response.status} ${errorText}`);
+          }
+        }
       }
-      
-      if (selectedSection !== 'all') {
-        const sectionInput = document.createElement('input');
-        sectionInput.type = 'hidden';
-        sectionInput.name = 'section';
-        sectionInput.value = selectedSection;
-        form.appendChild(sectionInput);
-      }
-      
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
+    } catch (error) {
+      console.error('❌ Export error:', error);
+      alert(`❌ Export failed: ${error.message}`);
     }
     
     setShowExportDropdown(false);
