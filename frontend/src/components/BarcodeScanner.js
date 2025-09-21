@@ -1151,7 +1151,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                     >
                       <Camera size={16} className="md:hidden" />
                       <Camera size={20} className="hidden md:block" />
-                      <span>🛡️ Native Mode</span>
+                      <span>📱 Clear Camera</span>
                     </button>
                     <button
                       onClick={() => setShowManualInput(!showManualInput)}
