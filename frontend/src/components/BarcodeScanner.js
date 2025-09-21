@@ -806,8 +806,22 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const cleanup = async () => {
-    console.log('🧹 Starting mobile-aware cleanup...');
+    console.log('🧹 Starting comprehensive cleanup...');
     await stopScanning();
+    
+    // Native fallback cleanup
+    if (useNativeFallback) {
+      console.log('🧹 Cleaning up native fallback...');
+      if (window.nativeScannerCleanup) {
+        window.nativeScannerCleanup();
+        window.nativeScannerCleanup = null;
+      }
+      if (nativeStream) {
+        nativeStream.getTracks().forEach(track => track.stop());
+        setNativeStream(null);
+      }
+      setUseNativeFallback(false);
+    }
     
     // Mobile: Additional safety cleanup
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
