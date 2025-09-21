@@ -8,8 +8,8 @@ const Bar3D = ({ position, height, color, label, value, maxValue }) => {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
   
-  // Calculate relative height (max 4 units)
-  const relativeHeight = (height / maxValue) * 4;
+  // Calculate relative height (max 4 units) with safety checks
+  const relativeHeight = (height && maxValue && maxValue > 0) ? (height / maxValue) * 4 : 0.1;
   
   return (
     <group position={position}>
