@@ -420,11 +420,12 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
       // Ensure cleanup of any existing scanner instance
       if (scannerInstanceRef.current) {
-        await cleanup();
-        // Add extra delay for mobile cleanup
-        if (isMobile) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+        try {
+          scannerInstanceRef.current.clear();
+        } catch (e) {
+          console.warn('Cleanup error:', e);
         }
+        scannerInstanceRef.current = null;
       }
 
       // Dynamic import with mobile-specific error handling
