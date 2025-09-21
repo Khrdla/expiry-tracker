@@ -400,9 +400,9 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         console.warn('⚠️ Scanner container has zero dimensions, may cause mobile rendering issues');
       }
 
-      // Mobile-optimized initialization delay
-      const initDelay = isIOS ? 250 : (isAndroid ? 200 : 100);
-      console.log(`⏱️ Using ${initDelay}ms initialization delay for mobile compatibility`);
+      // Anti-abort initialization with conservative delay
+      const initDelay = isIOS ? 500 : (isAndroid ? 400 : 200); // Increased delays
+      console.log(`⏱️ Using ${initDelay}ms ANTI-ABORT initialization delay for video stability`);
 
       setTimeout(() => {
         if (scannerInstanceRef.current && isMountedRef.current) {
