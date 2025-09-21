@@ -737,7 +737,7 @@ metadata:
   excel_import_functionality_working: true
 
 mobile_app_comprehensive_fixes:
-  - task: "Fix iOS barcode scanning black screen on main floating scanner"
+  - task: "Fix iOS and Android barcode scanning black screen on main floating scanner"
     implemented: false
     working: false
     file: "BarcodeScanner.js, EnhancedDashboard.js"
@@ -747,7 +747,7 @@ mobile_app_comprehensive_fixes:
     status_history:
       - working: false
         agent: "user"
-        comment: "User reported: 'Barcode scanning shows black screen on iOS main floating scanner'. Critical iOS Safari camera API compatibility issue affecting mobile users."
+        comment: "PRIORITY 1: iOS and Android barcode scanning shows black screen on main floating scanner. Critical mobile Safari/Chrome camera API compatibility issue. Need proper initialization, permissions handling, and UI thread optimization for mobile devices."
 
   - task: "Fix ALL export reports authentication errors - admin login not working"
     implemented: false
@@ -759,31 +759,7 @@ mobile_app_comprehensive_fixes:
     status_history:
       - working: false
         agent: "user"
-        comment: "User confirmed: 'ALL REPORTS FROM QUICK ACTION IS FAILING' with 'Not authenticated' error despite being logged in as admin. This affects all export functionality."
-
-  - task: "Update daily email reports to 7:00 AM with all reports consolidated in one email"
-    implemented: false
-    working: false
-    file: "server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: true
-    status_history:
-      - working: false
-        agent: "user"
-        comment: "User requested: '7:00 AM - ALL REPORTS TO BE SENT IN ONE EMAIL - IN THE FUTURE YES THEY CAN CONFIGURE REPORTS THEY RECEIVE'. Need to change from 6:00 AM to 7:00 AM and consolidate all reports."
-
-  - task: "Add enhanced visual charts to dashboard - waste, stock levels, department breakdown"
-    implemented: false
-    working: false
-    file: "EnhancedDashboard.js"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: true
-    status_history:
-      - working: false
-        agent: "user"
-        comment: "User requested: 'YES ENHANCE ALL AND ADD WASTE CHARTS, STOCK LEVELS, DEPARTEMENT BREAKDOWN, ECT'. Need comprehensive charting enhancement."
+        comment: "User confirmed: 'ALL REPORTS FROM QUICK ACTION IS FAILING' with 'Not authenticated' error despite being logged in as admin. This affects all export functionality including dashboard exports, waste reports, return forms."
 
   - task: "Fix waste report product lookup - name search not working, add scan option"
     implemented: false
@@ -795,7 +771,31 @@ mobile_app_comprehensive_fixes:
     status_history:
       - working: false
         agent: "user"
-        comment: "User reported: 'ITEM NAME SEARCH NOT WORKING ONLY BARCODE MANUAL ENTRY IS WORKING, I WANT BOTH TO WORK PROPERLY OR ADD SCAN OPTION ALSO'. Critical functionality issue."
+        comment: "User reported: 'ITEM NAME SEARCH NOT WORKING ONLY BARCODE MANUAL ENTRY IS WORKING, I WANT BOTH TO WORK PROPERLY OR ADD SCAN OPTION ALSO'. Critical functionality issue requiring fix for product name search and addition of barcode scanning capability."
+
+  - task: "Add enhanced customized 3D visual charts to dashboard"
+    implemented: false
+    working: false
+    file: "EnhancedDashboard.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requested customized 3D charts for: waste charts, stock levels, department breakdown, trend analysis. Need comprehensive dashboard enhancement with modern 3D visualization components."
+
+  - task: "Update daily email reports to 7:00 AM with all reports consolidated in one email"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requested: '7:00 AM - ALL REPORTS TO BE SENT IN ONE EMAIL - IN THE FUTURE YES THEY CAN CONFIGURE REPORTS THEY RECEIVE'. Need to change from existing 6:00 AM to 7:00 AM and consolidate all reports (waste, inventory alerts, return forms) in single email using existing SMTP configuration."
 
 test_plan:
   current_focus: 
