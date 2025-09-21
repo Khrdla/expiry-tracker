@@ -596,15 +596,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                         window.gc();
                       }
                       
-                      // 6. Very short delay then immediate restart
-                      await new Promise(resolve => setTimeout(resolve, 500));
-                      
-                      console.log('🔄 Restarting with basic camera constraints...');
-                      
-                      // 7. Restart with most basic configuration
-                      if (isMountedRef.current) {
-                        setError('🔄 Camera recovering... Please wait');
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                      // 6. Short delay then restart
+                      setTimeout(() => {
+                        console.log('🔄 Restarting with basic camera constraints...');
+                        
+                        // 7. Restart with most basic configuration
+                        if (isMountedRef.current) {
+                          setError('🔄 Camera recovering... Please wait');
+                          
+                          setTimeout(() => {
                         
                         // Reset retry counter for this attempt
                         const originalRetryCount = retryAttempts;
