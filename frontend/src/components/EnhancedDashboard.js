@@ -17,6 +17,7 @@ import {
 import { Camera } from 'lucide-react';
 import BarcodeScanner from './BarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
+import Dashboard3DCharts from './Dashboard3DCharts';
 
 const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const [dashboardData, setDashboardData] = useState(null);
