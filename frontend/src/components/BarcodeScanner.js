@@ -14,6 +14,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [scanAttempts, setScanAttempts] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
   const [scanStats, setScanStats] = useState({ successful: 0, failed: 0 });
+  const [useNativeFallback, setUseNativeFallback] = useState(false);
+  const [nativeStream, setNativeStream] = useState(null);
   
   const scannerRef = useRef(null);
   const scannerInstanceRef = useRef(null);
