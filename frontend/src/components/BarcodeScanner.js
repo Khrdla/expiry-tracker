@@ -292,7 +292,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         // Add REAL barcode detection using canvas scanning
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        let scanning = true;
+        setIsDetecting(true); // Use state instead of local variable
         
         // REAL barcode detection loop
         const detectBarcode = async () => {
