@@ -192,10 +192,10 @@ def setup_daily_email_scheduler():
     """Setup automated daily email scheduler"""
     aden_tz = pytz.timezone('Asia/Aden')
     
-    # Schedule daily alerts at 06:00 AM Aden time
+    # Schedule daily alerts at 07:00 AM Aden time
     scheduler.add_job(
         send_automated_daily_alerts,
-        CronTrigger(hour=6, minute=0, timezone=aden_tz),
+        CronTrigger(hour=7, minute=0, timezone=aden_tz),
         id='daily_inventory_alerts',
         name='Daily Inventory Alert Email',
         replace_existing=True
