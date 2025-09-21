@@ -302,7 +302,7 @@ async def send_automated_daily_alerts():
     except Exception as e:
         logger.error(f"Error in consolidated daily reports: {str(e)}")
 
-# Schedule daily alerts for 06:00 AM Aden time
+# Schedule daily alerts for 07:00 AM Aden time
 def setup_daily_email_scheduler():
     """Setup automated daily email scheduler"""
     aden_tz = pytz.timezone('Asia/Aden')
