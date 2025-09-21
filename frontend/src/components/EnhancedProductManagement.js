@@ -109,8 +109,8 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
       const token = localStorage.getItem('token');
       
       const params = new URLSearchParams({
-        skip: pagination.skip.toString(),
-        limit: pagination.limit.toString()
+        skip: (pagination.skip || 0).toString(),
+        limit: (pagination.limit || 10).toString()
       });
 
       if (filters.department && filters.department !== 'all') {
