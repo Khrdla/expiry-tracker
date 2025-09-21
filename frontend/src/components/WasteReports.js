@@ -29,6 +29,7 @@ const WasteReports = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [addingWaste, setAddingWaste] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // Department and section options
   const departments = [
