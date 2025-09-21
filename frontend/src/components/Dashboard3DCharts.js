@@ -249,11 +249,11 @@ const Dashboard3DCharts = ({ dashboardData, wasteData }) => {
     if (!dashboardData?.kpis) return [];
     
     return dashboardData.kpis.map(kpi => ({
-      department: kpi.department.replace('01-', ''),
-      total_items: kpi.total_items,
-      stock_value: kpi.total_stock_value,
-      out_of_stock: kpi.out_of_stock_items,
-      low_stock: kpi.low_stock_items,
+      department: (kpi.department || '').replace('01-', ''),
+      total_items: kpi.total_items || 0,
+      stock_value: kpi.total_stock_value || 0,
+      out_of_stock: kpi.out_of_stock_items || 0,
+      low_stock: kpi.low_stock_items || 0,
       color: kpi.department === '01-FMG' ? '#22c55e' : 
              kpi.department === '01-CGD' ? '#3b82f6' : '#8b5cf6'
     }));
