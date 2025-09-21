@@ -761,9 +761,9 @@ mobile_app_comprehensive_fixes:
         comment: "COMPREHENSIVE MOBILE BARCODE SCANNER FIXES IMPLEMENTED: ✅ Enhanced mobile device detection (iOS Safari, Android Chrome, low-end devices). ✅ Mobile-optimized camera initialization with multiple constraint fallbacks. ✅ Progressive camera constraint attempts from high-quality to basic. ✅ Mobile-specific video track validation and cleanup. ✅ Enhanced error handling for mobile browsers (NotAllowed, NotFound, Security, HTTPS requirements). ✅ Mobile-optimized Html5QrcodeScanner config (reduced FPS, dynamic scan area, mobile aspect ratios). ✅ iOS Safari and Android Chrome specific optimizations. ✅ Mobile-aware DOM cleanup to prevent black screen remnants. ✅ User gesture requirements and mobile security policy handling. ✅ Mobile-specific UI with device detection indicators. ✅ Enhanced mobile debugging and error reporting. Successfully tested on mobile viewport (390x844) showing 'Start Mobile Scan' button and modal functionality."
 
   - task: "Fix ALL export reports authentication errors - admin login not working"
-    implemented: false
-    working: false
-    file: "server.py, multiple export endpoints"
+    implemented: true
+    working: true
+    file: "EnhancedDashboard.js, ReturnForm.js, ExpiryTracker.js"
     stuck_count: 0
     priority: "critical"
     needs_retesting: true
@@ -771,6 +771,9 @@ mobile_app_comprehensive_fixes:
       - working: false
         agent: "user"
         comment: "User confirmed: 'ALL REPORTS FROM QUICK ACTION IS FAILING' with 'Not authenticated' error despite being logged in as admin. This affects all export functionality including dashboard exports, waste reports, return forms."
+      - working: true
+        agent: "main"
+        comment: "COMPREHENSIVE EXPORT AUTHENTICATION FIXES IMPLEMENTED: ✅ Fixed insecure `?token=` query parameter approach used in export functions. ✅ Replaced window.open() calls with proper fetch() requests using Authorization Bearer headers. ✅ Enhanced Dashboard exports (dashboard-excel, dashboard-pdf, inventory, expiry-tracker, return-forms) with proper authentication. ✅ Fixed ReturnForm Excel export with secure fetch and blob download. ✅ Fixed ExpiryTracker export with proper Bearer token authentication. ✅ Added comprehensive error handling for 401 (not authenticated), 403 (access denied), and other HTTP errors. ✅ Added user-friendly error messages and success notifications. ✅ Maintained secure authentication flow while providing proper file downloads. All export functions now use secure 'Authorization: Bearer {token}' headers instead of insecure query parameters."
 
   - task: "Fix waste report product lookup - name search not working, add scan option"
     implemented: false
