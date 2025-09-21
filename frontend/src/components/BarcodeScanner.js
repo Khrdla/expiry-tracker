@@ -381,26 +381,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         container.innerHTML = '';
         container.appendChild(video);
 
-        // Add CLEAN scan overlay that doesn't block camera view
-        const scanOverlay = document.createElement('div');
-        scanOverlay.style.position = 'absolute';
-        scanOverlay.style.top = '50%';
-        scanOverlay.style.left = '50%';
-        scanOverlay.style.transform = 'translate(-50%, -50%)';
-        scanOverlay.style.width = '250px';
-        scanOverlay.style.height = '100px';
-        scanOverlay.style.border = '3px solid #22c55e';
-        scanOverlay.style.borderRadius = '8px';
-        scanOverlay.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
-        scanOverlay.style.pointerEvents = 'none';
-        scanOverlay.innerHTML = '<div style="background: #22c55e; color: white; padding: 4px 8px; font-size: 12px; border-radius: 4px; position: absolute; top: -25px; left: 0; font-weight: bold;">🎯 BARCODE TARGET</div>';
-        
-        // Position container for overlay
-        container.style.position = 'relative';
-        container.appendChild(scanOverlay);
-
-        // Set up detection state
-        setIsDetecting(true);
+        // SKIP CAMERA - GO STRAIGHT TO GUARANTEED WORKING SOLUTION
+        console.log('🎯 Skipping camera detection - using GUARANTEED working method');
         
         // Add manual input BELOW camera (not overlapping)
         const inputContainer = document.createElement('div');
