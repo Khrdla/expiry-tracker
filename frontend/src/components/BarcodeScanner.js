@@ -233,24 +233,53 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       resetScanner();
       setIsScanning(true);
 
-      // Initialize Html5QrcodeScanner with optimized detection configuration
+      console.log('🚀 Starting mobile-optimized scanner...');
+      
+      // Enhanced mobile device detection
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      const isLowEnd = /Android.*[2-6]\./i.test(navigator.userAgent) || window.screen.width < 400;
+      
+      console.log('📱 Mobile detection:', { isMobile, isIOS, isAndroid, isLowEnd });
+
+      // Mobile-optimized Html5QrcodeScanner configuration
       const config = {
-        fps: 5, // Lower FPS for better detection accuracy
+        // Reduced FPS for better mobile performance and battery life
+        fps: isLowEnd ? 3 : (isMobile ? 5 : 8),
+        
+        // Dynamic scan area optimized for mobile screens
         qrbox: function(viewfinderWidth, viewfinderHeight) {
-          // Dynamic scan area - make it larger and more flexible
-          const minEdgePercentage = 0.7; // 70% of the smaller dimension
+          console.log('📐 Viewfinder dimensions:', { viewfinderWidth, viewfinderHeight });
+          
+          // Mobile-optimized scan area calculations
+          const isMobileViewport = viewfinderWidth < 500 || viewfinderHeight < 400;
+          const scanAreaPercentage = isMobileViewport ? 0.8 : 0.7;
+          
           const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-          const calculatedSize = Math.floor(minEdgeSize * minEdgePercentage);
-          return {
-            width: Math.min(calculatedSize, 400),
-            height: Math.min(calculatedSize * 0.6, 240) // Rectangular for barcodes
-          };
+          const scanSize = Math.floor(minEdgeSize * scanAreaPercentage);
+          
+          // Ensure minimum viable scan area for mobile
+          const width = Math.min(Math.max(scanSize, 200), isMobileViewport ? 300 : 400);
+          const height = Math.min(Math.max(scanSize * 0.6, 120), isMobileViewport ? 180 : 240);
+          
+          console.log('📏 Calculated scan area:', { width, height, scanAreaPercentage });
+          
+          return { width, height };
         },
-        aspectRatio: 1.777778, // 16:9 aspect ratio
-        disableFlip: false,
+        
+        // Mobile-friendly aspect ratio
+        aspectRatio: isMobile ? 1.33 : 1.777778, // 4:3 for mobile, 16:9 for desktop
+        
+        // Disable flip for better performance on mobile
+        disableFlip: isMobile,
+        
+        // Enhanced mobile experimental features
         experimentalFeatures: {
           useBarCodeDetectorIfSupported: true
         },
+        
+        // Comprehensive barcode format support
         formatsToSupport: [
           Html5QrcodeSupportedFormats.QR_CODE,
           Html5QrcodeSupportedFormats.UPC_A,
@@ -262,117 +291,203 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           Html5QrcodeSupportedFormats.CODE_93,
           Html5QrcodeSupportedFormats.CODABAR
         ],
-        supportedScanTypes: [
-          Html5QrcodeScanType.SCAN_TYPE_CAMERA
-        ],
+        
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        
+        // Mobile-specific UI controls
         showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
-        defaultZoomValueIfSupported: 2,
+        showZoomSliderIfSupported: !isLowEnd, // Disable zoom on low-end devices
+        defaultZoomValueIfSupported: isMobile ? 1.2 : 2,
+        
+        // Mobile-optimized video constraints
         videoConstraints: {
-          facingMode: "environment", // Back camera preferred
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
-          frameRate: { ideal: 30, min: 10 },
-          focusMode: "continuous",
-          advanced: [
-            { focusMode: "continuous" },
-            { zoom: 1.5 }
-          ]
+          facingMode: { ideal: "environment" }, // Prefer back camera
+          
+          // Mobile-friendly resolution constraints
+          width: isMobile ? 
+            { ideal: 1280, max: 1920, min: 320 } : 
+            { ideal: 1920, min: 640 },
+          height: isMobile ? 
+            { ideal: 720, max: 1080, min: 240 } : 
+            { ideal: 1080, min: 480 },
+          
+          // Frame rate optimized for mobile
+          frameRate: { 
+            ideal: isLowEnd ? 15 : (isMobile ? 20 : 30), 
+            max: isMobile ? 30 : 60,
+            min: 10 
+          },
+          
+          // Advanced mobile camera settings
+          ...(isMobile && {
+            aspectRatio: { ideal: 1.33 }, // 4:3 preferred on mobile
+            resizeMode: 'crop-and-scale'
+          }),
+          
+          // iOS Safari specific optimizations
+          ...(isIOS && {
+            focusMode: 'continuous',
+            exposureMode: 'continuous',
+            whiteBalanceMode: 'continuous'
+          })
         }
       };
       
-      console.log('🔍 Starting scanner with config:', config);
+      console.log('🔧 Mobile-optimized scanner config:', config);
 
+      // Ensure cleanup of any existing scanner instance
       if (scannerInstanceRef.current) {
         await cleanup();
+        // Add extra delay for mobile cleanup
+        if (isMobile) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
 
-      // Dynamic import to avoid build issues
-      const { Html5QrcodeScanner } = await import('html5-qrcode');
+      // Dynamic import with mobile-specific error handling
+      let Html5QrcodeScanner;
+      try {
+        const module = await import('html5-qrcode');
+        Html5QrcodeScanner = module.Html5QrcodeScanner;
+        console.log('✅ Html5QrcodeScanner imported for mobile');
+      } catch (importError) {
+        console.error('❌ Failed to import html5-qrcode library:', importError);
+        throw new Error('Failed to load barcode scanning library. Please refresh the page.');
+      }
       
-      console.log('✅ Html5QrcodeScanner imported successfully');
-      console.log('🔍 Browser info:', {
+      // Enhanced browser compatibility check
+      console.log('🔍 Mobile browser compatibility:', {
         userAgent: navigator.userAgent,
         hasGetUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
         hasBarcodeDetector: 'BarcodeDetector' in window,
-        protocol: window.location.protocol
+        protocol: window.location.protocol,
+        isSecure: window.location.protocol === 'https:',
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio
       });
-      
-      scannerInstanceRef.current = new Html5QrcodeScanner(
-        "qr-reader",
-        config,
-        true // verbose logging enabled for debugging
-      );
 
-      console.log('✅ Html5QrcodeScanner instance created');
+      // Create scanner instance with enhanced error handling
+      try {
+        scannerInstanceRef.current = new Html5QrcodeScanner(
+          "qr-reader",
+          config,
+          true // verbose logging for mobile debugging
+        );
+        console.log('✅ Mobile Html5QrcodeScanner instance created');
+      } catch (instanceError) {
+        console.error('❌ Failed to create scanner instance:', instanceError);
+        throw new Error('Failed to initialize barcode scanner. Please try refreshing the page.');
+      }
 
-      // React 19 compatibility: Verify DOM element exists before rendering
+      // Enhanced DOM element verification with mobile-specific checks
       const qrReaderElement = document.getElementById("qr-reader");
       if (!qrReaderElement) {
-        throw new Error('QR reader DOM element not found');
+        throw new Error('Scanner container not found in DOM');
       }
       
-      console.log('✅ DOM element verified:', qrReaderElement);
-
-      // Add a small delay to ensure DOM is fully ready (React 19 compatibility)
-      setTimeout(() => {
-        if (scannerInstanceRef.current && isMountedRef.current) {
-          scannerInstanceRef.current.render(
-            (decodedText) => {
-              console.log('🎯 SUCCESS: Barcode detected successfully!', decodedText);
-              console.log('🔍 Barcode details:', {
-                barcode: decodedText,
-                timestamp: new Date().toISOString(),
-                length: decodedText.length
-              });
-              
-              if (isMountedRef.current) {
-                handleSuccessfulScan(decodedText);
-              }
-            },
-            (errorMessage) => {
-              // Enhanced error logging for debugging
-              const ignoredMessages = [
-                'No MultiFormat Readers',
-                'NotFoundException', 
-                'No QR code found',
-                'QR code parse error', 
-                'Unable to detect a valid barcode',
-                'No barcode or QR code detected',
-                'No code found'
-              ];
-              
-              const isIgnoredMessage = ignoredMessages.some(msg => errorMessage.includes(msg));
-              
-              if (!isIgnoredMessage) {
-                console.warn('⚠️ Scanner error (not ignored):', errorMessage);
-              } else {
-                // Periodic logging for debugging barcode detection
-                if (Math.random() < 0.005) { // Very occasional logging
-                  console.log('🔍 Scanning active, looking for barcodes...', new Date().toLocaleTimeString());
-                }
-              }
-            }
-          );
-          
-          console.log('✅ Scanner render initiated with React 19 compatibility');
-        }
-      }, 100); // Small delay for React 19 compatibility
-
-    } catch (error) {
-      console.error('❌ Start scanning error:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
+      // Mobile-specific DOM validation
+      const elementRect = qrReaderElement.getBoundingClientRect();
+      console.log('📐 Scanner DOM element info:', {
+        element: qrReaderElement,
+        rect: elementRect,
+        visible: elementRect.width > 0 && elementRect.height > 0,
+        inViewport: elementRect.top >= 0 && elementRect.left >= 0
       });
       
-      if (error.message.includes('Cannot access camera')) {
-        setError('❌ Cannot access camera. Please grant camera permission and try again.');
+      if (elementRect.width === 0 || elementRect.height === 0) {
+        console.warn('⚠️ Scanner container has zero dimensions, may cause mobile rendering issues');
+      }
+
+      // Mobile-optimized initialization delay
+      const initDelay = isIOS ? 250 : (isAndroid ? 200 : 100);
+      console.log(`⏱️ Using ${initDelay}ms initialization delay for mobile compatibility`);
+
+      setTimeout(() => {
+        if (scannerInstanceRef.current && isMountedRef.current) {
+          try {
+            scannerInstanceRef.current.render(
+              (decodedText) => {
+                console.log('🎯 MOBILE SUCCESS: Barcode detected!', decodedText);
+                console.log('📊 Mobile scan details:', {
+                  barcode: decodedText,
+                  timestamp: new Date().toISOString(),
+                  length: decodedText.length,
+                  device: { isMobile, isIOS, isAndroid }
+                });
+                
+                if (isMountedRef.current) {
+                  handleSuccessfulScan(decodedText);
+                }
+              },
+              (errorMessage) => {
+                // Mobile-optimized error filtering
+                const ignoredMobileMessages = [
+                  'No MultiFormat Readers',
+                  'NotFoundException', 
+                  'No QR code found',
+                  'QR code parse error', 
+                  'Unable to detect a valid barcode',
+                  'No barcode or QR code detected',
+                  'No code found',
+                  'No camera stream',
+                  'Camera not ready'
+                ];
+                
+                const isIgnoredMessage = ignoredMobileMessages.some(msg => 
+                  errorMessage.includes(msg)
+                );
+                
+                if (!isIgnoredMessage) {
+                  console.warn('⚠️ Mobile scanner error (not ignored):', errorMessage);
+                  
+                  // Handle mobile-specific critical errors
+                  if (errorMessage.includes('Camera access') || 
+                      errorMessage.includes('Permission') ||
+                      errorMessage.includes('NotAllowed')) {
+                    setError('❌ Camera access required. Please allow camera permissions.');
+                    setCameraPermission(false);
+                  }
+                } else {
+                  // Reduced frequency logging for mobile to save performance
+                  if (Math.random() < 0.002) {
+                    console.log('🔍 Mobile scanning active...', new Date().toLocaleTimeString());
+                  }
+                }
+              }
+            );
+            
+            console.log('✅ Mobile scanner render initiated successfully');
+          } catch (renderError) {
+            console.error('❌ Mobile scanner render failed:', renderError);
+            setError('❌ Failed to start camera. Please try closing other apps using the camera and refresh the page.');
+            setIsScanning(false);
+          }
+        }
+      }, initDelay);
+
+    } catch (error) {
+      console.error('❌ Mobile scanner startup error:', error);
+      console.error('🔍 Mobile error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.substring(0, 300) // Truncate for mobile logging
+      });
+      
+      setIsScanning(false);
+      
+      // Mobile-specific error handling
+      if (error.message.includes('Cannot access camera') || 
+          error.message.includes('camera')) {
+        setError('❌ Cannot access camera. Please allow camera permission in your browser settings and try again.');
         setCameraPermission(false);
-      } else if (error.message.includes('Permission denied')) {
-        setError('❌ Camera permission denied. Please allow camera access in your browser settings.');
+      } else if (error.message.includes('Permission denied') || 
+                 error.message.includes('NotAllowed')) {
+        setError('❌ Camera permission denied. Please check your browser settings and allow camera access.');
         setCameraPermission(false);
+      } else if (error.message.includes('library') || 
+                 error.message.includes('import')) {
+        setError('❌ Scanner library failed to load. Please check your internet connection and refresh the page.');
       } else {
         handleScanError(error);
       }
