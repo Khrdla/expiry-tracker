@@ -265,10 +265,10 @@ const Dashboard3DCharts = ({ dashboardData, wasteData }) => {
     const colors = { YER: '#22c55e', SAR: '#3b82f6', EUR: '#f59e0b' };
     
     return Object.entries(wasteData.currency_totals)
-      .filter(([_, value]) => value > 0)
+      .filter(([_, value]) => value && value > 0)
       .map(([currency, value]) => ({
         currency,
-        value,
+        value: value || 0,
         color: colors[currency] || '#6b7280'
       }));
   }, [wasteData]);
