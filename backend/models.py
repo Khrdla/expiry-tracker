@@ -167,7 +167,7 @@ class Alert(BaseModel):
 
 class EmailSettings(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    daily_alert_time: str = "06:00"  # 06:00 AM Aden timezone as requested
+    daily_alert_time: str = "07:00"  # 07:00 AM Aden timezone as requested
     timezone: str = "Asia/Aden"  # GMT+3 Yemen timezone
     default_recipient: str = "imad@geantyemen.com"
     department_recipients: Dict[str, List[str]] = {}
