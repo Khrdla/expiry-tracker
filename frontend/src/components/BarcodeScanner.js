@@ -41,8 +41,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       resetScanner();
     } else {
       console.log('🔒 Scanner modal closed, cleaning up...');
+      setIsDetecting(false); // Stop detection when modal closes
       cleanup();
     }
+    
+    return () => {
+      setIsDetecting(false); // Cleanup on unmount
+      cleanup();
+    };
   }, [isOpen]);
 
   // Cleanup on unmount
