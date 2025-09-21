@@ -1220,12 +1220,12 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 {!isScanning ? (
                   <>
                     <button
-                      onClick={startScanning}
+                      onClick={startNativeScanning}
                       className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all text-sm md:text-base shadow-lg active:scale-95 transform"
                     >
                       <Camera size={16} className="md:hidden" />
                       <Camera size={20} className="hidden md:block" />
-                      <span>📱 Start Mobile Scan</span>
+                      <span>📱 Native Camera</span>
                     </button>
                     <button
                       onClick={startNativeFallback}
