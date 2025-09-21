@@ -444,9 +444,19 @@ const WasteReports = () => {
           {/* Search Product */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🔍 Search by Barcode or Product Name
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  🔍 Search by Barcode or Product Name
+                </label>
+                <button
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="flex items-center space-x-1 text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors"
+                  title="Open Barcode Scanner"
+                >
+                  <Camera size={16} />
+                  <span>📱 Scan</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
