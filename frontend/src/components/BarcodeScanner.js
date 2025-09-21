@@ -851,17 +851,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     lastScanTime.current = 0;
   };
 
-  // Native BarcodeDetector fallback for video abort issues
+  // Simple Native Camera fallback (no BarcodeDetector dependency)
   const startNativeFallback = async () => {
-    console.log('🚨 STARTING NATIVE FALLBACK to bypass video abort errors');
+    console.log('🚨 STARTING SIMPLE NATIVE CAMERA to bypass video abort errors');
     setUseNativeFallback(true);
-    setError('🔄 Switching to native camera mode...');
+    setError('🔄 Starting clear camera mode...');
     
     try {
-      // Check if BarcodeDetector is available
-      if (!('BarcodeDetector' in window)) {
-        throw new Error('BarcodeDetector API not available');
-      }
+      // Skip BarcodeDetector check - use simple camera + manual detection
+      console.log('📱 Using simple camera approach for maximum compatibility');
       
       // Get camera with most basic constraints
       const stream = await navigator.mediaDevices.getUserMedia({
