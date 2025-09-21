@@ -861,13 +861,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       // Skip BarcodeDetector check - use simple camera + manual detection
       console.log('📱 Using simple camera approach for maximum compatibility');
       
-      // Get camera with most basic constraints
+      // Get camera with CRYSTAL CLEAR constraints for barcode scanning
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
-          width: 640,
-          height: 480,
-          frameRate: 10
+          facingMode: { exact: 'environment' },
+          width: { ideal: 1920, min: 1280 }, // Higher resolution for clarity
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 30, min: 15 },
+          focusMode: 'continuous',
+          zoom: 1.0 // No zoom for clarity
         }
       });
       
