@@ -1872,7 +1872,7 @@ async def send_test_email(background_tasks: BackgroundTasks, current_user: User 
                 
                 <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;">
                     <strong>📋 System Configuration:</strong><br>
-                    • Daily alerts are scheduled for <strong>06:00 AM Aden time</strong> daily<br>
+                    • Daily alerts are scheduled for <strong>07:00 AM Aden time</strong> daily<br>
                     • Email notifications: <strong>{"Enabled" if settings.get('daily_alerts_enabled', True) else "Disabled"}</strong><br>
                     • Default recipient: <strong>{recipients[0]}</strong>
                 </div>
