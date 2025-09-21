@@ -296,8 +296,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         
         // REAL barcode detection loop
         const detectBarcode = async () => {
-          if (!scanning || !video.videoWidth || !video.videoHeight) {
-            if (scanning) {
+          if (!isDetecting || !video.videoWidth || !video.videoHeight) {
+            if (isDetecting) {
               setTimeout(detectBarcode, 100);
             }
             return;
