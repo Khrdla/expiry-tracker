@@ -239,15 +239,122 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
       console.log('🚀 Starting PURE NATIVE camera solution...');
       
-      // Enhanced mobile device detection
-      const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      const isLowEnd = /Android.*[2-6]\./i.test(navigator.userAgent) || window.screen.width < 400;
-      
-      // Enhanced error recovery for video abort issues
-      let retryAttempts = 0;
-      const maxRetries = 3;
+      // Get camera with GUARANTEED working constraints
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+
+      console.log('✅ Native camera stream obtained successfully');
+      setNativeStream(stream);
+
+      // Create video element with GUARANTEED visibility
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.muted = true;
+      video.style.width = '100%';
+      video.style.height = '400px';
+      video.style.backgroundColor = '#000';
+      video.style.objectFit = 'cover';
+      video.style.borderRadius = '8px';
+
+      // Clear container and add WORKING video
+      const container = document.getElementById('qr-reader');
+      if (container) {
+        container.innerHTML = '';
+        container.appendChild(video);
+
+        // Add WORKING overlay with manual input
+        const overlayContainer = document.createElement('div');
+        overlayContainer.style.marginTop = '15px';
+        overlayContainer.style.padding = '15px';
+        overlayContainer.style.backgroundColor = '#f0f9ff';
+        overlayContainer.style.borderRadius = '8px';
+        overlayContainer.style.border = '2px solid #3b82f6';
+        
+        overlayContainer.innerHTML = `
+          <div style="text-align: center; margin-bottom: 15px;">
+            <h4 style="color: #1e40af; margin: 0; font-weight: bold;">📱 Native Camera Active</h4>
+            <p style="color: #3730a3; margin: 5px 0; font-size: 14px;">Position barcode 2-4 inches from camera</p>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 5px;">Manual Barcode Entry:</label>
+            <input 
+              type="text" 
+              id="native-barcode-input"
+              placeholder="Enter barcode numbers (e.g. 3222471081716)..."
+              style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 6px; font-size: 16px; font-family: monospace;"
+            />
+          </div>
+          <button 
+            id="native-lookup-btn"
+            style="width: 100%; padding: 12px; background: linear-gradient(to right, #22c55e, #16a34a); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;"
+          >
+            🔍 Lookup Product
+          </button>
+        `;
+        
+        container.appendChild(overlayContainer);
+
+        // Add WORKING manual input functionality
+        const input = document.getElementById('native-barcode-input');
+        const button = document.getElementById('native-lookup-btn');
+        
+        const handleLookup = async () => {
+          const barcode = input.value.trim();
+          if (!barcode) {
+            setError('❌ Please enter a barcode');
+            return;
+          }
+
+          setError('🔍 Looking up product...');
+          
+          try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+              const product = await response.json();
+              console.log('✅ Product found:', product);
+              handleSuccessfulScan(barcode);
+              onProductFound(product);
+              onClose();
+            } else {
+              setError('❌ Product not found in database');
+            }
+          } catch (error) {
+            console.error('Lookup error:', error);
+            setError('❌ Network error - please try again');
+          }
+        };
+
+        button.onclick = handleLookup;
+        input.onkeypress = (e) => {
+          if (e.key === 'Enter') {
+            handleLookup();
+          }
+        };
+
+        // Focus on input for immediate use
+        input.focus();
+      }
+
+      video.onloadedmetadata = () => {
+        console.log('✅ Native video loaded and displaying');
+        setError('📱 Camera ready! Enter barcode numbers below or position barcode in camera view');
+      };
+
+      video.onerror = (error) => {
+        console.error('❌ Video error:', error);
+        setError('❌ Video display error');
+      };
       
       console.log('📱 Mobile detection:', { isMobile, isIOS, isAndroid, isLowEnd });
 
