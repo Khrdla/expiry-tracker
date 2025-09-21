@@ -99,55 +99,113 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
     }
   };
 
-  // Export functions
-  const handleExport = (type) => {
+  // Export functions with proper authentication
+  const handleExport = async (type) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No authentication token found');
+      console.error('❌ No authentication token found');
+      alert('Please log in again to export reports');
       return;
     }
 
+    console.log('🔍 Starting export:', type);
+    
     let url = '';
+    let isGetRequest = false;
+    
     switch (type) {
       case 'inventory':
         url = `${BACKEND_URL}/api/export/excel`;
         break;
       case 'dashboard-excel':
         url = `${BACKEND_URL}/api/export/dashboard/excel`;
+        isGetRequest = true;
         break;
       case 'dashboard-pdf':
         url = `${BACKEND_URL}/api/export/dashboard/pdf`;
+        isGetRequest = true;
         break;
       case 'expiry-tracker':
         url = `${BACKEND_URL}/api/export/expiry-tracker`;
         break;
       case 'return-forms':
         url = `${BACKEND_URL}/api/export/return-forms`;
+        isGetRequest = true;
         break;
       default:
+        console.error('❌ Unknown export type:', type);
         return;
     }
 
-    // For GET requests, just open the URL
-    if (type === 'dashboard-excel' || type === 'dashboard-pdf' || type === 'return-forms') {
-      window.open(`${url}?token=${token}`, '_blank');
-    } else {
-      // For POST requests, create a form
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = url;
-      form.target = '_blank';
+    try {
+      console.log('📡 Making authenticated request to:', url);
       
-      // Add authorization token
-      const tokenInput = document.createElement('input');
-      tokenInput.type = 'hidden';
-      tokenInput.name = 'token';
-      tokenInput.value = token;
-      form.appendChild(tokenInput);
-      
-      // Add filters if any
-      if (selectedDepartment !== 'all') {
-        const deptInput = document.createElement('input');
+      if (isGetRequest) {
+        // For GET requests, use fetch with proper Authorization header
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log('📊 Export response status:', response.status);
+        
+        if (response.ok) {
+          // Get the blob data
+          const blob = await response.blob();
+          console.log('📥 Received blob:', blob.size, 'bytes');
+          
+          // Determine file name and type
+          let fileName = 'export';
+          let fileExtension = '.xlsx';
+          
+          if (type === 'dashboard-excel') {
+            fileName = 'dashboard_export';
+            fileExtension = '.xlsx';
+          } else if (type === 'dashboard-pdf') {
+            fileName = 'dashboard_export';
+            fileExtension = '.pdf';
+          } else if (type === 'return-forms') {
+            fileName = 'return_forms_export';
+            fileExtension = '.xlsx';
+          }
+          
+          // Create download link
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `${fileName}_${new Date().toISOString().split('T')[0]}${fileExtension}`;
+          
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up
+          window.URL.revokeObjectURL(downloadUrl);
+          
+          console.log('✅ Export completed successfully');
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Export failed:', response.status, errorText);
+          
+          if (response.status === 401) {
+            alert('❌ Not authenticated. Please log in again.');
+          } else if (response.status === 403) {
+            alert('❌ Access denied. Admin privileges required.');
+          } else {
+            alert(`❌ Export failed: ${response.status} ${errorText}`);
+          }
+        }
+      } else {
+        // For POST requests, use fetch with proper headers and form data
+        const formData = new FormData();
+        
+        // Add filters if any
+        if (selectedDepartment !== 'all') {
+          formData.append('department', selectedDepartment);
         deptInput.type = 'hidden';
         deptInput.name = 'department';
         deptInput.value = selectedDepartment;
