@@ -321,7 +321,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 const barcode = barcodes[0];
                 console.log('🎯 BARCODE DETECTED:', barcode.rawValue);
                 
-                scanning = false;
+                setIsDetecting(false); // Stop detection
                 setError('✅ Barcode detected: ' + barcode.rawValue);
                 
                 // Flash green on success
