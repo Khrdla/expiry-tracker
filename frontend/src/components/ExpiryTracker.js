@@ -106,11 +106,12 @@ const ExpiryTracker = ({ user }) => {
                   console.log('🔍 Exporting expiry tracker data...');
                   
                   const response = await fetch(`${BACKEND_URL}/api/export/expiry-tracker`, {
-                    method: 'GET',
+                    method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${token}`,
                       'Content-Type': 'application/json',
                     },
+                    body: JSON.stringify({})
                   });
                   
                   console.log('📊 Expiry tracker export response status:', response.status);
