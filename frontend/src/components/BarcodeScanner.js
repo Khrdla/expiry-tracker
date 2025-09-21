@@ -1065,24 +1065,30 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setError(''); // Clear error to show clean manual entry
       setUseNativeFallback(false);
       
-      // Show manual input as fallback
+      // Show CLEAN manual input (no error messages)
       const container = document.getElementById('qr-reader');
       if (container) {
         container.innerHTML = `
-          <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
-            <h3 style="color: #333; margin-bottom: 15px;">📝 Manual Barcode Entry</h3>
+          <div style="padding: 25px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 12px; text-align: center; border: 2px solid #0ea5e9;">
+            <div style="background: #0ea5e9; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-bottom: 20px;">
+              📱 Manual Barcode Scanner
+            </div>
+            <p style="color: #0c4a6e; margin-bottom: 20px; font-size: 14px;">Enter barcode numbers for instant product lookup</p>
             <input 
               type="text" 
               id="fallback-barcode-input"
-              placeholder="Enter barcode numbers..."
-              style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 10px;"
+              placeholder="Type barcode (e.g. 3222471081716)..."
+              style="width: 100%; padding: 15px; border: 2px solid #0ea5e9; border-radius: 8px; font-size: 16px; margin-bottom: 15px; font-family: monospace; text-align: center;"
             />
             <button 
               id="fallback-submit-btn"
-              style="width: 100%; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold;"
+              style="width: 100%; padding: 15px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);"
             >
-              🔍 Lookup Barcode
+              🔍 Find Product Now
             </button>
+            <div style="margin-top: 15px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 6px;">
+              <small style="color: #166534;">✨ Works with all barcode formats: EAN, UPC, Code128</small>
+            </div>
           </div>
         `;
         
