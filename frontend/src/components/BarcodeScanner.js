@@ -443,10 +443,14 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         console.log('✅ Native video loaded - starting barcode detection');
         setError('🎯 Point camera at barcode or type manually below');
         
+        // Create detection elements
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
         // Start real barcode detection
         setTimeout(() => {
           if (isDetecting) {
-            detectBarcode();
+            detectBarcodeInFrame(video, canvas, context, scanOverlay);
             console.log('🎯 Barcode detection started');
           }
         }, 1000);
