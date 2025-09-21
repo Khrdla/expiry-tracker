@@ -776,8 +776,8 @@ mobile_app_comprehensive_fixes:
         comment: "COMPREHENSIVE EXPORT AUTHENTICATION FIXES IMPLEMENTED: ✅ Fixed insecure `?token=` query parameter approach used in export functions. ✅ Replaced window.open() calls with proper fetch() requests using Authorization Bearer headers. ✅ Enhanced Dashboard exports (dashboard-excel, dashboard-pdf, inventory, expiry-tracker, return-forms) with proper authentication. ✅ Fixed ReturnForm Excel export with secure fetch and blob download. ✅ Fixed ExpiryTracker export with proper Bearer token authentication. ✅ Added comprehensive error handling for 401 (not authenticated), 403 (access denied), and other HTTP errors. ✅ Added user-friendly error messages and success notifications. ✅ Maintained secure authentication flow while providing proper file downloads. All export functions now use secure 'Authorization: Bearer {token}' headers instead of insecure query parameters."
 
   - task: "Fix waste report product lookup - name search not working, add scan option"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "WasteReports.js"
     stuck_count: 0
     priority: "critical"
@@ -786,6 +786,9 @@ mobile_app_comprehensive_fixes:
       - working: false
         agent: "user"
         comment: "User reported: 'ITEM NAME SEARCH NOT WORKING ONLY BARCODE MANUAL ENTRY IS WORKING, I WANT BOTH TO WORK PROPERLY OR ADD SCAN OPTION ALSO'. Critical functionality issue requiring fix for product name search and addition of barcode scanning capability."
+      - working: true
+        agent: "main"
+        comment: "COMPREHENSIVE WASTE REPORT PRODUCT LOOKUP FIXES IMPLEMENTED: ✅ Enhanced product search with multi-strategy approach: (1) Smart barcode detection for 8+ digit numeric patterns, (2) Enhanced name search with word-by-word fallback, (3) Partial matching across multiple fields (product_name, arabic_description, barcode, item_number, supplier, brand). ✅ Added barcode scanner integration with mobile-optimized scanner button (📱 Scan). ✅ Imported and integrated BarcodeScanner component with proper product selection handler. ✅ Added comprehensive search logging and error handling. ✅ Implemented duplicate removal and result limiting (top 20 products). ✅ Enhanced UI with scanner button next to search input. ✅ Added proper mobile-compatible scanner modal with onProductFound callback. Both text search and barcode scanning now work reliably for waste report product lookup."
 
   - task: "Add enhanced customized 3D visual charts to dashboard"
     implemented: false
