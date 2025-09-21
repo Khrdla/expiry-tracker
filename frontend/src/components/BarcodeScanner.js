@@ -145,7 +145,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           
           // Wait a bit before next attempt on mobile
           if (isMobile) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Use setTimeout instead of await for compatibility
+            setTimeout(() => {}, 200);
           }
         }
       }
