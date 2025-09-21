@@ -736,6 +736,67 @@ metadata:
   excel_import_all_requirements_met: true
   excel_import_functionality_working: true
 
+mobile_app_comprehensive_fixes:
+  - task: "Fix iOS barcode scanning black screen on main floating scanner"
+    implemented: false
+    working: false
+    file: "BarcodeScanner.js, EnhancedDashboard.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'Barcode scanning shows black screen on iOS main floating scanner'. Critical iOS Safari camera API compatibility issue affecting mobile users."
+
+  - task: "Fix ALL export reports authentication errors - admin login not working"
+    implemented: false
+    working: false
+    file: "server.py, multiple export endpoints"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User confirmed: 'ALL REPORTS FROM QUICK ACTION IS FAILING' with 'Not authenticated' error despite being logged in as admin. This affects all export functionality."
+
+  - task: "Update daily email reports to 7:00 AM with all reports consolidated in one email"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requested: '7:00 AM - ALL REPORTS TO BE SENT IN ONE EMAIL - IN THE FUTURE YES THEY CAN CONFIGURE REPORTS THEY RECEIVE'. Need to change from 6:00 AM to 7:00 AM and consolidate all reports."
+
+  - task: "Add enhanced visual charts to dashboard - waste, stock levels, department breakdown"
+    implemented: false
+    working: false
+    file: "EnhancedDashboard.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requested: 'YES ENHANCE ALL AND ADD WASTE CHARTS, STOCK LEVELS, DEPARTEMENT BREAKDOWN, ECT'. Need comprehensive charting enhancement."
+
+  - task: "Fix waste report product lookup - name search not working, add scan option"
+    implemented: false
+    working: false
+    file: "WasteReports.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'ITEM NAME SEARCH NOT WORKING ONLY BARCODE MANUAL ENTRY IS WORKING, I WANT BOTH TO WORK PROPERLY OR ADD SCAN OPTION ALSO'. Critical functionality issue."
+
 test_plan:
   current_focus: 
     - "Excel Import functionality testing completed"
