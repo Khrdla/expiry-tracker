@@ -609,31 +609,97 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const stopScanning = async () => {
-    console.log('🛑 Stopping scanner...');
+    console.log('🛑 Stopping mobile scanner...');
     setIsScanning(false);
     
     if (scannerInstanceRef.current) {
       try {
-        // React 19 compatibility: Ensure proper cleanup
-        console.log('🧹 Cleaning up scanner instance...');
+        console.log('🧹 Cleaning up mobile scanner instance...');
+        
+        // Mobile-optimized cleanup sequence
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+        
+        if (isMobile) {
+          // On mobile, stop all video tracks first to prevent black screen
+          const videoElement = document.querySelector('#qr-reader video');
+          if (videoElement && videoElement.srcObject) {
+            const stream = videoElement.srcObject;
+            if (stream) {
+              stream.getTracks().forEach(track => {
+                console.log('🎥 Stopping video track:', track.kind, track.label);
+                track.stop();
+              });
+              videoElement.srcObject = null;
+            }
+          }
+        }
+        
+        // Clear the scanner instance
         await scannerInstanceRef.current.clear();
         
-        // Additional cleanup for React 19
+        // Mobile-specific additional cleanup delay
+        const cleanupDelay = isMobile ? 150 : 50;
         setTimeout(() => {
           scannerInstanceRef.current = null;
-          console.log('✅ Scanner cleanup completed');
-        }, 50);
+          console.log('✅ Mobile scanner cleanup completed');
+          
+          // Mobile: Force DOM cleanup to prevent black screen remnants
+          if (isMobile) {
+            const qrReaderElement = document.getElementById("qr-reader");
+            if (qrReaderElement) {
+              qrReaderElement.innerHTML = '';
+              console.log('🧹 Mobile DOM cleanup completed');
+            }
+          }
+        }, cleanupDelay);
         
       } catch (error) {
-        console.warn('⚠️ Error during scanner cleanup:', error);
-        // Force cleanup even if error occurs
+        console.warn('⚠️ Error during mobile scanner cleanup:', error);
+        
+        // Force cleanup even if error occurs - critical for mobile
         scannerInstanceRef.current = null;
+        
+        // Mobile: Emergency cleanup
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+        if (isMobile) {
+          try {
+            // Force stop any remaining video streams
+            navigator.mediaDevices.getUserMedia({ video: false }).catch(() => {});
+            
+            // Clear DOM
+            const qrReaderElement = document.getElementById("qr-reader");
+            if (qrReaderElement) {
+              qrReaderElement.innerHTML = '';
+            }
+            
+            console.log('🚨 Mobile emergency cleanup completed');
+          } catch (emergencyError) {
+            console.warn('⚠️ Emergency mobile cleanup error:', emergencyError);
+          }
+        }
       }
     }
   };
 
   const cleanup = async () => {
+    console.log('🧹 Starting mobile-aware cleanup...');
     await stopScanning();
+    
+    // Mobile: Additional safety cleanup
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    if (isMobile) {
+      // Ensure all camera resources are released on mobile
+      setTimeout(() => {
+        const videos = document.querySelectorAll('#qr-reader video');
+        videos.forEach(video => {
+          if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+          }
+        });
+        console.log('🧹 Mobile video cleanup completed');
+      }, 100);
+    }
   };
 
   const resetScanner = () => {
