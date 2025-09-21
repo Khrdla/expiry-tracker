@@ -71,10 +71,28 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         const data = await response.json();
         setDashboardData(data);
       }
+      
+      // Also fetch waste data for 3D charts
+      await fetchWasteData(token);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWasteData = async (token) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/waste/reports?period=weekly`, {
+        headers: { 'Authorization': `Bearer ${token || localStorage.getItem('token')}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWasteData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching waste data:', error);
     }
   };
 
