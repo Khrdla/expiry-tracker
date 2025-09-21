@@ -548,7 +548,6 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             setIsScanning(false);
           }
         }
-      }, initDelay);
 
     } catch (error) {
       console.error('❌ Mobile scanner startup error:', error);
