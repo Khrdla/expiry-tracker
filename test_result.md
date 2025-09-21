@@ -747,11 +747,11 @@ metadata:
 mobile_app_comprehensive_fixes:
   - task: "Fix iOS and Android barcode scanning black screen on main floating scanner"
     implemented: true
-    working: true
+    working: false
     file: "BarcodeScanner.js, EnhancedDashboard.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -759,14 +759,17 @@ mobile_app_comprehensive_fixes:
       - working: true
         agent: "main"
         comment: "COMPREHENSIVE MOBILE BARCODE SCANNER FIXES IMPLEMENTED: ✅ Enhanced mobile device detection (iOS Safari, Android Chrome, low-end devices). ✅ Mobile-optimized camera initialization with multiple constraint fallbacks. ✅ Progressive camera constraint attempts from high-quality to basic. ✅ Mobile-specific video track validation and cleanup. ✅ Enhanced error handling for mobile browsers (NotAllowed, NotFound, Security, HTTPS requirements). ✅ Mobile-optimized Html5QrcodeScanner config (reduced FPS, dynamic scan area, mobile aspect ratios). ✅ iOS Safari and Android Chrome specific optimizations. ✅ Mobile-aware DOM cleanup to prevent black screen remnants. ✅ User gesture requirements and mobile security policy handling. ✅ Mobile-specific UI with device detection indicators. ✅ Enhanced mobile debugging and error reporting. Successfully tested on mobile viewport (390x844) showing 'Start Mobile Scan' button and modal functionality."
+      - working: false
+        agent: "testing"
+        comment: "MOBILE BARCODE SCANNER BACKEND TESTING COMPLETED - SUCCESS RATE: 80% (4/5 sample barcodes working). ✅ CRITICAL REQUIREMENTS VERIFIED: 1) Barcode Lookup API (GET /api/barcode/{barcode}): 4/5 sample barcodes tested successfully (3222471081716, 3222471052747, 3222471075722, 3222471081273). One barcode (9501100046987) returned 404 Not Found. 2) Authentication: Correctly requires Bearer token (returns 403 without auth), accepts valid admin credentials (imadqejji/066380531I). 3) CORS/Mobile Headers: No CORS headers detected in response - may need CORS configuration for mobile browsers. 4) Response Format: All required fields present (product_name, item_number, barcode, department, section, purchase_price, purchase_currency, selling_price, supplier, quantity, status), JSON serializable, mobile-friendly response sizes (757-906 bytes). 5) Error Handling: Invalid barcodes correctly return 404 Not Found with mobile-friendly error messages. ✅ MOBILE PERFORMANCE: Excellent response times, mobile-friendly response sizes (<1KB), sub-second performance suitable for mobile networks. ❌ ISSUES FOUND: Missing CORS headers for mobile browser compatibility, one sample barcode not found in database. Backend API is 80% functional but needs CORS configuration and database verification."
 
   - task: "Fix ALL export reports authentication errors - admin login not working"
     implemented: true
-    working: true
+    working: false
     file: "EnhancedDashboard.js, ReturnForm.js, ExpiryTracker.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -774,6 +777,9 @@ mobile_app_comprehensive_fixes:
       - working: true
         agent: "main"
         comment: "COMPREHENSIVE EXPORT AUTHENTICATION FIXES IMPLEMENTED: ✅ Fixed insecure `?token=` query parameter approach used in export functions. ✅ Replaced window.open() calls with proper fetch() requests using Authorization Bearer headers. ✅ Enhanced Dashboard exports (dashboard-excel, dashboard-pdf, inventory, expiry-tracker, return-forms) with proper authentication. ✅ Fixed ReturnForm Excel export with secure fetch and blob download. ✅ Fixed ExpiryTracker export with proper Bearer token authentication. ✅ Added comprehensive error handling for 401 (not authenticated), 403 (access denied), and other HTTP errors. ✅ Added user-friendly error messages and success notifications. ✅ Maintained secure authentication flow while providing proper file downloads. All export functions now use secure 'Authorization: Bearer {token}' headers instead of insecure query parameters."
+      - working: false
+        agent: "testing"
+        comment: "EXPORT REPORTS AUTHENTICATION TESTING COMPLETED - SUCCESS RATE: 40% (2/5 export endpoints working). ✅ WORKING EXPORTS: 1) Dashboard Excel Export: Works with Bearer token, generates 7039 bytes Excel file with proper MIME type. 2) Dashboard PDF Export: Works with Bearer token, generates 3252 bytes PDF file with proper MIME type. ❌ FAILING EXPORTS: 1) Return Forms Export: Returns 500 Internal Server Error with Bearer token. 2) Expiry Tracker Export: Returns 405 Method Not Allowed. 3) General Excel Export: Returns 405 Method Not Allowed. ✅ AUTHENTICATION: All endpoints correctly require authentication (return 403 without token). ❌ CRITICAL ISSUES: 3/5 export endpoints are not working properly - some return 500 errors, others return 405 Method Not Allowed indicating endpoints may not exist or have wrong HTTP methods. Only dashboard exports are fully functional."
 
   - task: "Fix waste report product lookup - name search not working, add scan option"
     implemented: true
@@ -781,14 +787,17 @@ mobile_app_comprehensive_fixes:
     file: "WasteReports.js"
     stuck_count: 0
     priority: "critical"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
         comment: "User reported: 'ITEM NAME SEARCH NOT WORKING ONLY BARCODE MANUAL ENTRY IS WORKING, I WANT BOTH TO WORK PROPERLY OR ADD SCAN OPTION ALSO'. Critical functionality issue requiring fix for product name search and addition of barcode scanning capability."
       - working: true
         agent: "main"
-        comment: "COMPREHENSIVE WASTE REPORT PRODUCT LOOKUP FIXES IMPLEMENTED: ✅ Enhanced product search with multi-strategy approach: (1) Smart barcode detection for 8+ digit numeric patterns, (2) Enhanced name search with word-by-word fallback, (3) Partial matching across multiple fields (product_name, arabic_description, barcode, item_number, supplier, brand). ✅ Added barcode scanner integration with mobile-optimized scanner button (📱 Scan). ✅ Imported and integrated BarcodeScanner component with proper product selection handler. ✅ Added comprehensive search logging and error handling. ✅ Implemented duplicate removal and result limiting (top 20 products). ✅ Enhanced UI with scanner button next to search input. ✅ Added proper mobile-compatible scanner modal with onProductFound callback. Both text search and barcode scanning now work reliably for waste report product lookup."
+        comment: "COMPREHENSIVE WASTE REPORT PRODUCT LOOKUP FIXES"
+      - working: true
+        agent: "testing"
+        comment: "WASTE REPORT PRODUCT LOOKUP TESTING COMPLETED - SUCCESS RATE: 100% (8/8 tests passed). ✅ ENHANCED SEARCH FUNCTIONALITY WORKING: 1) Multi-word product searches: 'Apple Juice' (10 results), 'Orange Nectar' (2 results), 'Mountain Water' (2 results) all working perfectly. 2) Single word searches: 'Lemonade' (3 results) working correctly. 3) Size and package searches: 'Box 1L' (4 results) working with proper word-by-word matching. ✅ BARCODE VS NAME SEARCH LOGIC: Barcode searches (3222471081716) return exact matches, name searches return partial matches with proper word matching logic. ✅ COMPREHENSIVE FIELD COVERAGE: All required fields present for waste reporting (product_name, item_number, barcode, department, section, purchase_price, purchase_currency, selling_price, supplier, quantity, status). ✅ SEARCH PERFORMANCE: Fast response times, accurate results, proper currency handling (EUR, SAR, YER). The enhanced waste product lookup system is fully functional with both name search and barcode detection working correctly." IMPLEMENTED: ✅ Enhanced product search with multi-strategy approach: (1) Smart barcode detection for 8+ digit numeric patterns, (2) Enhanced name search with word-by-word fallback, (3) Partial matching across multiple fields (product_name, arabic_description, barcode, item_number, supplier, brand). ✅ Added barcode scanner integration with mobile-optimized scanner button (📱 Scan). ✅ Imported and integrated BarcodeScanner component with proper product selection handler. ✅ Added comprehensive search logging and error handling. ✅ Implemented duplicate removal and result limiting (top 20 products). ✅ Enhanced UI with scanner button next to search input. ✅ Added proper mobile-compatible scanner modal with onProductFound callback. Both text search and barcode scanning now work reliably for waste report product lookup."
 
   - task: "Add enhanced customized 3D visual charts to dashboard"
     implemented: true
