@@ -607,18 +607,21 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                           setTimeout(() => {
                         
                         // Reset retry counter for this attempt
-                        const originalRetryCount = retryAttempts;
-                        
-                        // Start fresh scanner instance
-                        startScanning();
-                        
-                        // Clear recovery message after delay
-                        setTimeout(() => {
-                          if (isMountedRef.current) {
-                            setError('');
-                          }
-                        }, 3000);
-                      }
+                            // Reset retry counter for this attempt
+                            const originalRetryCount = retryAttempts;
+                            
+                            // Start fresh scanner instance
+                            startNativeScanning();
+                            
+                            // Clear recovery message after delay
+                            setTimeout(() => {
+                              if (isMountedRef.current) {
+                                setError('');
+                              }
+                            }, 3000);
+                          }, 500);
+                        }
+                      }, 500);
                       
                     } catch (recoveryError) {
                       console.error('❌ Aggressive recovery failed:', recoveryError);
