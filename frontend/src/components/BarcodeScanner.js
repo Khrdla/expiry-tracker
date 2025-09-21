@@ -50,6 +50,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   }, []);
 
   const initializeCamera = async () => {
+    // Enhanced mobile browser detection - moved outside try block for catch block access
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
     try {
       console.log('🔍 Initializing camera for mobile device...');
       console.log('📱 Device info:', {
@@ -62,11 +67,6 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         protocol: window.location.protocol,
         isSecure: window.location.protocol === 'https:'
       });
-      
-      // Enhanced mobile browser detection
-      const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
       
       // Check if mediaDevices API is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
