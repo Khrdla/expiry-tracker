@@ -530,6 +530,70 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           }
         };
 
+        // Add FORCE SCAN functionality
+        forceScanBtn.onclick = () => {
+          forceScanBtn.innerHTML = '⚡ FORCING...';
+          forceScanBtn.disabled = true;
+          setError('🎯 FORCE SCANNING - Hold camera steady...');
+          
+          // Force multiple rapid detection attempts
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          
+          let attempts = 0;
+          const maxAttempts = 10;
+          
+          const forceDetect = async () => {
+            attempts++;
+            
+            try {
+              if (video.videoWidth && video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+                
+                if ('BarcodeDetector' in window) {
+                  const detector = new BarcodeDetector({
+                    formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code']
+                  });
+                  
+                  const barcodes = await detector.detect(canvas);
+                  if (barcodes.length > 0) {
+                    const barcode = barcodes[0].rawValue;
+                    setError('🎯 FORCE SCAN SUCCESS: ' + barcode);
+                    input.value = barcode;
+                    handleLookup();
+                    return;
+                  }
+                }
+              }
+            } catch (e) {
+              // Continue trying
+            }
+            
+            setError(`🎯 FORCE SCANNING... Attempt ${attempts}/${maxAttempts}`);
+            
+            if (attempts < maxAttempts) {
+              setTimeout(forceDetect, 200);
+            } else {
+              setError('❌ Force scan failed - Use manual entry');
+              forceScanBtn.innerHTML = '❌ Failed';
+              setTimeout(() => {
+                forceScanBtn.innerHTML = '🎯 FORCE SCAN NOW';
+                forceScanBtn.disabled = false;
+              }, 2000);
+            }
+          };
+          
+          forceDetect();
+        };
+        
+        // Add TEST BARCODE functionality
+        testBarcodeBtn.onclick = () => {
+          input.value = '3222471081716';
+          handleLookup();
+        };
+        
         // Store cleanup function
         window.cleanupDetection = () => {
           setIsDetecting(false);
