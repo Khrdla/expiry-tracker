@@ -812,15 +812,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <>
                     <button
                       onClick={startScanning}
-                      className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all text-sm md:text-base shadow-lg"
+                      className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all text-sm md:text-base shadow-lg active:scale-95 transform"
                     >
                       <Camera size={16} className="md:hidden" />
                       <Camera size={20} className="hidden md:block" />
-                      <span>⚡ Start Fast Scan</span>
+                      <span>📱 Start Mobile Scan</span>
                     </button>
                     <button
                       onClick={() => setShowManualInput(!showManualInput)}
-                      className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
+                      className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base active:scale-95 transform"
                     >
                       <Keyboard size={16} className="md:hidden" />
                       <Keyboard size={20} className="hidden md:block" />
