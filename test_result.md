@@ -880,11 +880,12 @@ mobile_app_comprehensive_fixes:
 
 test_plan:
   current_focus: 
-    - "Comprehensive barcode scanner redesign audit completed"
+    - "SimpleBarcodeScanner.js component testing completed"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
   frontend_testing_completed: true
+  simple_barcode_scanner_testing_completed: true
   barcode_testing_completed: true
   barcode_frontend_testing_completed: true
   excel_lookup_backend_testing_completed: true
