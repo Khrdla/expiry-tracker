@@ -353,7 +353,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             // Silent - detection errors are normal when no barcode present
           }
           
-          if (scanning) {
+          if (isDetecting) {
             setTimeout(detectBarcode, 200); // 5 FPS detection
           }
         };
