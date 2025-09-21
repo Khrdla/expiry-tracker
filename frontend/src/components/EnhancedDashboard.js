@@ -763,7 +763,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       </div>
 
       {/* Barcode Scanner Modal */}
-      <BarcodeScanner
+      <SimpleBarcodeScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onProductFound={(product) => {
