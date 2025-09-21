@@ -384,7 +384,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         
         container.appendChild(inputContainer);
 
-        // Add WORKING manual input functionality
+        // Add manual lookup functionality
         const input = document.getElementById('native-barcode-input');
         const button = document.getElementById('native-lookup-btn');
         
@@ -395,7 +395,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             return;
           }
 
-          setError('🔍 Looking up product...');
+          setError('🔍 Looking up: ' + barcode);
           
           try {
             const token = localStorage.getItem('token');
@@ -405,16 +405,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             
             if (response.ok) {
               const product = await response.json();
-              console.log('✅ Product found:', product);
+              console.log('✅ Manual lookup success:', product);
               handleSuccessfulScan(barcode);
               onProductFound(product);
               onClose();
             } else {
-              setError('❌ Product not found in database');
+              setError('❌ Product not found: ' + barcode);
             }
           } catch (error) {
-            console.error('Lookup error:', error);
-            setError('❌ Network error - please try again');
+            console.error('Manual lookup error:', error);
+            setError('❌ Network error');
           }
         };
 
@@ -425,8 +425,10 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           }
         };
 
-        // Focus on input for immediate use
-        input.focus();
+        // Store cleanup function
+        window.cleanupDetection = () => {
+          scanning = false;
+        };
       }
 
       video.onloadedmetadata = () => {
