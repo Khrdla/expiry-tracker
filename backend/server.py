@@ -201,7 +201,7 @@ def setup_daily_email_scheduler():
         replace_existing=True
     )
     
-    logger.info("Daily email scheduler configured for 06:00 AM Asia/Aden timezone")
+    logger.info("Daily email scheduler configured for 07:00 AM Asia/Aden timezone")
 
 # Start scheduler
 @asynccontextmanager
