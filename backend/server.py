@@ -1969,7 +1969,7 @@ async def get_email_status(current_user: User = Depends(get_admin_user)):
         return {
             "current_aden_time": current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z'),
             "timezone": "Asia/Aden (GMT+3)",
-            "daily_alert_time": settings.get('daily_alert_time', '06:00'),
+            "daily_alert_time": settings.get('daily_alert_time', '07:00'),
             "daily_alerts_enabled": settings.get('daily_alerts_enabled', True),
             "default_recipient": settings.get('default_recipient', 'imad@geantyemen.com'),
             "sender_email": sender_email,
