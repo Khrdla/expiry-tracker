@@ -1252,28 +1252,23 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </div>
               )}
 
-              {/* Enhanced Mobile Instructions */}
-              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-                <p>📱 <strong>Close-Range Mobile Scanner Tips:</strong></p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-left">
-                  <p>📱 Tap "Start Mobile Scan" for camera</p>
-                  <p>💡 Ensure good lighting</p>
-                  <p>🎯 Hold steady, 2-8 inches away (CLOSE)</p>
-                  <p>🔄 Auto video recovery system</p>
-                  <p>📊 Supports: EAN, UPC, Code128, QR</p>
-                  <p>⚡ Anti-abort camera technology</p>
-                  <p>🛡️ Native Mode for video issues</p>
-                  <p>🚀 Dual scanning system</p>
+              {/* ELEGANT Simple Instructions */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-center mb-3">
+                  <h4 className="text-lg font-semibold text-gray-800">📱 Quick Barcode Scanner</h4>
+                  <p className="text-sm text-gray-600">Position barcode 2-4 inches from camera</p>
                 </div>
-                {/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent) && (
-                  <div className="mt-3 p-2 bg-green-50 rounded border-green-200 border">
-                    <p className="text-green-700 font-medium">📱 Mobile Device Detected</p>
-                    <p className="text-green-600 text-xs">Optimized camera settings activated for your device</p>
+                
+                <div className="flex items-center justify-center space-x-6 text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    EAN, UPC, QR
                   </div>
-                )}
-                {retryCount > 0 && (
-                  <p className="text-orange-600 font-medium">• Having trouble? Try the "Manual Entry" option or restart your browser</p>
-                )}
+                  <div className="flex items-center">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                    Auto Detection
+                  </div>
+                </div>
               </div>
             </div>
           )}
