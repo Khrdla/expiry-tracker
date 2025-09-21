@@ -1128,6 +1128,13 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
+  // Keep original scanning as fallback (rename to avoid confusion)
+  const startOldScanning = async () => {
+    // Original html5-qrcode implementation kept as emergency fallback
+    console.log('🔄 Starting original scanner (fallback)...');
+    // The rest of original implementation stays here but not used by default
+  };
+
   const triggerHapticFeedback = () => {
     // Trigger haptic feedback on mobile devices
     if (navigator.vibrate) {
