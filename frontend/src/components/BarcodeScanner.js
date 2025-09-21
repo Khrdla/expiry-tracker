@@ -868,6 +868,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       const context = canvas.getContext('2d');
       
       // Create barcode detector
+      // eslint-disable-next-line no-undef
       const barcodeDetector = new BarcodeDetector({
         formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
       });
