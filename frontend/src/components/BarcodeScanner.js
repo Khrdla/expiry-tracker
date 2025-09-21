@@ -254,25 +254,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         // Optimized FPS for better detection at close range
         fps: isLowEnd ? 5 : (isMobile ? 8 : 10),
         
-        // Enhanced scan area for close-range barcode detection (2-8 inches)
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
-          console.log('📐 Viewfinder dimensions:', { viewfinderWidth, viewfinderHeight });
-          
-          // Larger scan area for close-range detection (2-8 inches optimal)
-          const isMobileViewport = viewfinderWidth < 500 || viewfinderHeight < 400;
-          const scanAreaPercentage = isMobileViewport ? 0.9 : 0.8; // Increased for better close detection
-          
-          const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-          const scanSize = Math.floor(minEdgeSize * scanAreaPercentage);
-          
-          // Optimized for close-range scanning (2-8 inches)
-          const width = Math.min(Math.max(scanSize, 250), isMobileViewport ? 350 : 450); // Increased minimum
-          const height = Math.min(Math.max(scanSize * 0.7, 175), isMobileViewport ? 245 : 315); // Better ratio for barcodes
-          
-          console.log('📏 Close-range scan area:', { width, height, scanAreaPercentage, optimal: '2-8 inches' });
-          
-          return { width, height };
-        },
+        // ELEGANT scan area - clean and professional
+        qrbox: { width: 280, height: 180 }, // Fixed size for consistency
         
         // Mobile-friendly aspect ratio
         aspectRatio: isMobile ? 1.33 : 1.777778, // 4:3 for mobile, 16:9 for desktop
