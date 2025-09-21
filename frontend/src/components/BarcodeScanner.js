@@ -411,18 +411,32 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         inputContainer.style.border = '1px solid #e2e8f0';
         
         inputContainer.innerHTML = `
-          <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
             <input 
               type="text" 
               id="native-barcode-input"
-              placeholder="Or type barcode..."
+              placeholder="Type barcode for instant lookup..."
               style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; font-family: monospace;"
             />
             <button 
               id="native-lookup-btn"
-              style="padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap;"
+              style="padding: 8px 12px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap;"
             >
-              🔍 Find
+              ⚡ Find
+            </button>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button 
+              id="force-scan-btn"
+              style="flex: 1; padding: 8px; background: #f59e0b; color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;"
+            >
+              🎯 FORCE SCAN NOW
+            </button>
+            <button 
+              id="test-barcode-btn"
+              style="flex: 1; padding: 8px; background: #8b5cf6; color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;"
+            >
+              🧪 Test: 3222471081716
             </button>
           </div>
         `;
