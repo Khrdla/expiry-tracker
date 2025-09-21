@@ -2643,9 +2643,9 @@ async def update_email_settings(
     settings: EmailSettings,
     current_user: User = Depends(get_admin_user)
 ):
-    # Ensure timezone is set to Asia/Aden and alert time is 06:00 as requested
+    # Ensure timezone is set to Asia/Aden and alert time is 07:00 as requested
     settings.timezone = "Asia/Aden"
-    settings.daily_alert_time = "06:00"
+    settings.daily_alert_time = "07:00"
     settings.updated_at = datetime.now(pytz.timezone('Asia/Aden'))
     
     await db.email_settings.replace_one({}, settings.dict(), upsert=True)
