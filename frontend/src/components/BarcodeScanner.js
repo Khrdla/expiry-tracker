@@ -425,7 +425,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 }
               },
               (errorMessage) => {
-                // Mobile-optimized error filtering
+                // Enhanced mobile error handling with video abort recovery
                 const ignoredMobileMessages = [
                   'No MultiFormat Readers',
                   'NotFoundException', 
@@ -438,11 +438,73 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   'Camera not ready'
                 ];
                 
+                const criticalVideoErrors = [
+                  'video surface onabort',
+                  'RenderedCameraImpl',
+                  'Video stream error',
+                  'Camera stream interrupted',
+                  'MediaStream error',
+                  'Video element error'
+                ];
+                
                 const isIgnoredMessage = ignoredMobileMessages.some(msg => 
                   errorMessage.includes(msg)
                 );
                 
-                if (!isIgnoredMessage) {
+                const isVideoAbortError = criticalVideoErrors.some(err => 
+                  errorMessage.includes(err)
+                );
+                
+                if (isVideoAbortError && retryAttempts < maxRetries) {
+                  retryAttempts++;
+                  console.warn(`🔄 Video abort detected, attempting recovery ${retryAttempts}/${maxRetries}:`, errorMessage);
+                  
+                  // Attempt recovery after delay
+                  setTimeout(async () => {
+                    try {
+                      console.log('🔄 Attempting camera recovery...');
+                      
+                      // Stop current instance
+                      if (scannerInstanceRef.current) {
+                        await scannerInstanceRef.current.clear();
+                      }
+                      
+                      // Force cleanup of video elements
+                      const videos = document.querySelectorAll('#qr-reader video');
+                      videos.forEach(video => {
+                        if (video.srcObject) {
+                          video.srcObject.getTracks().forEach(track => track.stop());
+                          video.srcObject = null;
+                        }
+                        video.remove();
+                      });
+                      
+                      // Clear container
+                      const qrContainer = document.getElementById('qr-reader');
+                      if (qrContainer) {
+                        qrContainer.innerHTML = '';
+                      }
+                      
+                      // Wait before retry
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      
+                      // Restart scanner with basic constraints
+                      console.log('🔄 Restarting scanner after video abort recovery...');
+                      startScanning();
+                      
+                    } catch (recoveryError) {
+                      console.error('❌ Recovery attempt failed:', recoveryError);
+                      if (retryAttempts >= maxRetries) {
+                        setError('❌ Camera error: Multiple recovery attempts failed. Please refresh the page.');
+                        setIsScanning(false);
+                      }
+                    }
+                  }, 2000); // 2 second delay for recovery
+                  
+                  return; // Exit error handler for recovery attempt
+                }
+                
+                if (!isIgnoredMessage && !isVideoAbortError) {
                   console.warn('⚠️ Mobile scanner error (not ignored):', errorMessage);
                   
                   // Handle mobile-specific critical errors
@@ -451,8 +513,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       errorMessage.includes('NotAllowed')) {
                     setError('❌ Camera access required. Please allow camera permissions.');
                     setCameraPermission(false);
+                  } else if (retryAttempts >= maxRetries) {
+                    setError('❌ Camera initialization failed after multiple attempts. Please refresh the page.');
+                    setIsScanning(false);
                   }
-                } else {
+                } else if (!isVideoAbortError) {
                   // Reduced frequency logging for mobile to save performance
                   if (Math.random() < 0.002) {
                     console.log('🔍 Mobile scanning active...', new Date().toLocaleTimeString());
