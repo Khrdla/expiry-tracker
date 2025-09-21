@@ -753,6 +753,14 @@ metadata:
   mobile_barcode_scanner_backend_tests_passed: "22/22"
   mobile_barcode_scanner_backend_all_requirements_met: true
   mobile_barcode_scanner_backend_functionality_working: true
+  barcode_scanner_performance_testing_date: "2025-01-21"
+  barcode_scanner_performance_testing_success_rate: "100%"
+  barcode_scanner_performance_tests_passed: "10/10"
+  barcode_scanner_performance_all_requirements_met: true
+  barcode_scanner_performance_authentication_speed: "321ms"
+  barcode_scanner_performance_lookup_speed: "14ms"
+  barcode_scanner_performance_requirements_exceeded: true
+  barcode_scanner_backend_ready_for_simple_component: true
   comprehensive_mobile_backend_testing_date: "2025-01-21"
   comprehensive_mobile_backend_testing_success_rate: "68.9%"
   comprehensive_mobile_backend_tests_passed: "31/45"
