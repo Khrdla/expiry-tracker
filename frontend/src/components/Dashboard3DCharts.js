@@ -111,7 +111,7 @@ const PieSlice3D = ({
           anchorX="center"
           anchorY="middle"
         >
-          {`${value.toLocaleString()} (${percentage}%)`}
+          {`${value ? value.toLocaleString() : '0'} (${percentage || '0'}%)`}
         </Text>
       )}
     </group>
