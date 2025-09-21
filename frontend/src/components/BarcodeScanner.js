@@ -1089,6 +1089,15 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       <span>📱 Start Mobile Scan</span>
                     </button>
                     <button
+                      onClick={startNativeFallback}
+                      className="flex items-center justify-center space-x-2 bg-orange-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-orange-600 transition-colors text-sm md:text-base active:scale-95 transform"
+                      title="Use if regular scanner has issues"
+                    >
+                      <Camera size={16} className="md:hidden" />
+                      <Camera size={20} className="hidden md:block" />
+                      <span>🛡️ Native Mode</span>
+                    </button>
+                    <button
                       onClick={() => setShowManualInput(!showManualInput)}
                       className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base active:scale-95 transform"
                     >
