@@ -995,17 +995,47 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             </div>
           )}
 
-          {/* Loading Camera */}
+          {/* Loading Camera - Mobile Optimized */}
           {cameraPermission === null && (
             <div className="text-center py-6 md:py-8">
               <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-sm md:text-base text-gray-600">⚡ Initializing fast scanner...</p>
+              <p className="text-sm md:text-base text-gray-600">📱 Initializing mobile scanner...</p>
+              
+              {/* Mobile Detection Info */}
+              {/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent) && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-700 font-medium text-sm">📱 Mobile Device Detected</p>
+                  <p className="text-blue-600 text-xs mt-1">
+                    {/iPad|iPhone|iPod/.test(navigator.userAgent) ? '🍎 iOS Safari optimizations active' :
+                     /Android/.test(navigator.userAgent) ? '🤖 Android Chrome optimizations active' :
+                     '📱 Mobile optimizations active'}
+                  </p>
+                </div>
+              )}
+              
               <div className="text-xs text-gray-500 mt-4 bg-gray-50 p-3 rounded-lg">
-                <p><strong>🔍 Debug Info:</strong></p>
+                <p><strong>🔍 Mobile Debug Info:</strong></p>
                 <p>📍 URL: {window.location.protocol}//{window.location.host}</p>
-                <p>🔒 Secure: {window.location.protocol === 'https:' ? '✅ HTTPS' : '❌ HTTP (camera may not work)'}</p>
-                <p>🌐 Browser: {navigator.userAgent.split(' ').slice(-2).join(' ')}</p>
+                <p>🔒 Secure: {window.location.protocol === 'https:' ? '✅ HTTPS' : '❌ HTTP (camera may not work on mobile)'}</p>
+                <p>📱 Device: {
+                  /iPad|iPhone|iPod/.test(navigator.userAgent) ? 'iOS Safari' :
+                  /Android/.test(navigator.userAgent) ? 'Android Chrome' :
+                  'Desktop Browser'
+                }</p>
                 <p>📹 Camera API: {(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '✅ Available' : '❌ Not available'}</p>
+                <p>📐 Viewport: {window.innerWidth}x{window.innerHeight}</p>
+                <p>🎮 Touch: {'ontouchstart' in window ? '✅ Supported' : '❌ Not detected'}</p>
+              </div>
+              
+              {/* Mobile-specific tips during loading */}
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-yellow-700 text-xs">
+                  <strong>📱 Mobile Camera Tips:</strong><br/>
+                  • Allow camera permission when prompted<br/>
+                  • Close other apps using camera<br/>
+                  • Ensure stable internet connection<br/>
+                  • Use back camera for best results
+                </p>
               </div>
             </div>
           )}
