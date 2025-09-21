@@ -875,14 +875,17 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       setNativeStream(stream);
       
-      // Create video element
+      // Create CRYSTAL CLEAR video element
       const video = document.createElement('video');
       video.srcObject = stream;
       video.autoplay = true;
       video.playsInline = true;
+      video.muted = true; // Prevent audio issues
       video.style.width = '100%';
-      video.style.height = '300px';
+      video.style.height = '400px'; // Increased height for better view
       video.style.objectFit = 'cover';
+      video.style.borderRadius = '8px';
+      video.style.backgroundColor = '#000';
       
       // Create canvas for frame capture
       const canvas = document.createElement('canvas');
