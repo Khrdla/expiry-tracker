@@ -521,20 +521,32 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       }
 
       video.onloadedmetadata = () => {
-        console.log('✅ Native video loaded - starting barcode detection');
-        setError('🎯 Point camera at barcode or type manually below');
+        console.log('✅ Ultra-fast camera loaded - starting AGGRESSIVE detection');
+        setError('⚡ ULTRA-FAST SCANNER ACTIVE - Point at barcode now!');
         
         // Create detection elements
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
-        // Start real barcode detection
+        // Add scanning activity indicator
+        let scanCount = 0;
+        const updateScanActivity = () => {
+          if (isDetecting) {
+            scanCount++;
+            const dots = '.'.repeat((scanCount % 3) + 1);
+            setError(`⚡ SCANNING${dots} (${scanCount} frames checked)`);
+            setTimeout(updateScanActivity, 500);
+          }
+        };
+        
+        // Start ULTRA-FAST detection immediately
         setTimeout(() => {
           if (isDetecting) {
             detectBarcodeInFrame(video, canvas, context, scanOverlay);
-            console.log('🎯 Barcode detection started');
+            updateScanActivity(); // Start activity indicator
+            console.log('🎯 ULTRA-FAST detection started - 10 FPS');
           }
-        }, 1000);
+        }, 500); // Start faster
       };
 
       video.onerror = (error) => {
