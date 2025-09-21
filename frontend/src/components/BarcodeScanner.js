@@ -457,51 +457,100 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 
                 if (isVideoAbortError && retryAttempts < maxRetries) {
                   retryAttempts++;
-                  console.warn(`🔄 Video abort detected, attempting recovery ${retryAttempts}/${maxRetries}:`, errorMessage);
+                  console.warn(`🔄 AGGRESSIVE VIDEO ABORT RECOVERY ${retryAttempts}/${maxRetries}:`, errorMessage);
                   
-                  // Attempt recovery after delay
-                  setTimeout(async () => {
+                  // Immediate aggressive recovery without delay
+                  (async () => {
                     try {
-                      console.log('🔄 Attempting camera recovery...');
+                      console.log('🚨 Starting aggressive camera recovery...');
                       
-                      // Stop current instance
+                      // 1. Immediate stop of all scanner instances
                       if (scannerInstanceRef.current) {
-                        await scannerInstanceRef.current.clear();
+                        try {
+                          await scannerInstanceRef.current.clear();
+                        } catch (clearError) {
+                          console.warn('Clear error (continuing):', clearError);
+                        }
+                        scannerInstanceRef.current = null;
                       }
                       
-                      // Force cleanup of video elements
-                      const videos = document.querySelectorAll('#qr-reader video');
-                      videos.forEach(video => {
-                        if (video.srcObject) {
-                          video.srcObject.getTracks().forEach(track => track.stop());
-                          video.srcObject = null;
+                      // 2. Force stop ALL video tracks on page
+                      navigator.mediaDevices.getUserMedia({ video: false }).catch(() => {});
+                      
+                      // 3. Aggressive video element cleanup
+                      const allVideos = document.querySelectorAll('video');
+                      allVideos.forEach(video => {
+                        try {
+                          if (video.srcObject) {
+                            video.srcObject.getTracks().forEach(track => {
+                              console.log('🛑 Force stopping track:', track.kind, track.readyState);
+                              track.stop();
+                            });
+                            video.srcObject = null;
+                          }
+                          video.pause();
+                          video.load(); // Reset video element
+                          if (video.parentNode) {
+                            video.remove();
+                          }
+                        } catch (videoError) {
+                          console.warn('Video cleanup error (continuing):', videoError);
                         }
-                        video.remove();
                       });
                       
-                      // Clear container
-                      const qrContainer = document.getElementById('qr-reader');
-                      if (qrContainer) {
-                        qrContainer.innerHTML = '';
+                      // 4. Clear ALL scanner containers
+                      const containers = document.querySelectorAll('#qr-reader, [id*="qr-"], [class*="qr-"]');
+                      containers.forEach(container => {
+                        container.innerHTML = '';
+                      });
+                      
+                      // 5. Force garbage collection hint
+                      if (window.gc) {
+                        window.gc();
                       }
                       
-                      // Wait before retry
-                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      // 6. Very short delay then immediate restart
+                      await new Promise(resolve => setTimeout(resolve, 500));
                       
-                      // Restart scanner with basic constraints
-                      console.log('🔄 Restarting scanner after video abort recovery...');
-                      startScanning();
+                      console.log('🔄 Restarting with basic camera constraints...');
+                      
+                      // 7. Restart with most basic configuration
+                      if (isMountedRef.current) {
+                        setError('🔄 Camera recovering... Please wait');
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        // Reset retry counter for this attempt
+                        const originalRetryCount = retryAttempts;
+                        
+                        // Start fresh scanner instance
+                        startScanning();
+                        
+                        // Clear recovery message after delay
+                        setTimeout(() => {
+                          if (isMountedRef.current) {
+                            setError('');
+                          }
+                        }, 3000);
+                      }
                       
                     } catch (recoveryError) {
-                      console.error('❌ Recovery attempt failed:', recoveryError);
+                      console.error('❌ Aggressive recovery failed:', recoveryError);
                       if (retryAttempts >= maxRetries) {
-                        setError('❌ Camera error: Multiple recovery attempts failed. Please refresh the page.');
+                        setError('❌ Camera system error: Recovery failed. Please close and reopen the scanner.');
                         setIsScanning(false);
+                      } else {
+                        // Try one more time with even more basic approach
+                        setTimeout(() => {
+                          if (isMountedRef.current) {
+                            setError('🔄 Final recovery attempt...');
+                            startScanning();
+                          }
+                        }, 1000);
                       }
                     }
-                  }, 2000); // 2 second delay for recovery
+                  })();
                   
-                  return; // Exit error handler for recovery attempt
+                  return; // Exit error handler immediately
                 }
                 
                 if (!isIgnoredMessage && !isVideoAbortError) {
