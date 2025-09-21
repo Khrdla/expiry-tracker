@@ -47,7 +47,7 @@ const Bar3D = ({ position, height, color, label, value, maxValue }) => {
           anchorX="center"
           anchorY="middle"
         >
-          {value.toLocaleString()}
+          {value ? value.toLocaleString() : '0'}
         </Text>
       )}
     </group>
