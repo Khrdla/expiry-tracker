@@ -305,34 +305,19 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         showZoomSliderIfSupported: !isLowEnd, // Disable zoom on low-end devices
         defaultZoomValueIfSupported: isMobile ? 1.2 : 2,
         
-        // Anti-abort video constraints with aggressive fallback
+        // ULTRA-STABLE video constraints to minimize abort errors
         videoConstraints: {
-          facingMode: "environment", // Force back camera (not ideal, but more stable)
+          facingMode: "environment", // Simple back camera selection
           
-          // Conservative resolution to prevent abort
-          width: isMobile ? 
-            { ideal: 640, max: 1280, min: 320 } : // Reduced ideal resolution
-            { ideal: 1280, max: 1920, min: 640 },
-          height: isMobile ? 
-            { ideal: 480, max: 720, min: 240 } : // Reduced ideal resolution
-            { ideal: 720, max: 1080, min: 480 },
+          // Very conservative resolution for maximum stability
+          width: { ideal: 640, max: 800 }, // Much lower to prevent abort
+          height: { ideal: 480, max: 600 },
           
-          // Conservative frame rate to reduce video abort risk
-          frameRate: { 
-            ideal: isLowEnd ? 10 : (isMobile ? 15 : 20), // Reduced FPS for stability
-            max: 20, // Hard limit to prevent overload
-            min: 8
-          },
+          // Ultra-conservative frame rate
+          frameRate: { ideal: 10, max: 15 }, // Very low FPS for stability
           
-          // Minimal advanced settings to reduce complexity
-          ...(isMobile && {
-            aspectRatio: 1.33 // Simple fixed ratio
-          }),
-          
-          // Minimal iOS settings to prevent conflicts
-          ...(isIOS && {
-            focusMode: 'manual' // Changed from continuous to prevent abort
-          })
+          // No advanced settings that might cause conflicts
+          aspectRatio: 1.33
         }
       };
       
