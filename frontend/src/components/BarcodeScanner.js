@@ -977,64 +977,9 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         };
       }
       
-      // Start scanning loop
-      let scanning = true;
-      
-      const scanFrame = async () => {
-        if (!scanning || !video.videoWidth || !video.videoHeight) {
-          setTimeout(scanFrame, 100);
-          return;
-        }
-        
-        try {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0);
-          
-          const barcodes = await barcodeDetector.detect(canvas);
-          
-          if (barcodes.length > 0) {
-            const barcode = barcodes[0];
-            console.log('🎯 NATIVE FALLBACK SUCCESS:', barcode.rawValue);
-            
-            scanning = false;
-            
-            // Look up product
-            try {
-              const token = localStorage.getItem('token');
-              const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode.rawValue}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-              });
-              
-              if (response.ok) {
-                const product = await response.json();
-                handleSuccessfulScan(barcode.rawValue);
-                onProductFound(product);
-                onClose();
-                return;
-              }
-            } catch (lookupError) {
-              console.warn('Product lookup failed:', lookupError);
-            }
-            
-            // Fallback to manual entry with detected barcode
-            handleSuccessfulScan(barcode.rawValue);
-            return;
-          }
-          
-        } catch (detectError) {
-          console.warn('Detection error:', detectError);
-        }
-        
-        if (scanning) {
-          setTimeout(scanFrame, 200); // 5 FPS
-        }
-      };
-      
       video.onloadedmetadata = () => {
-        console.log('✅ Native video loaded, starting detection');
-        setError('🎯 Native scanner active - position barcode in green box');
-        scanFrame();
+        console.log('✅ Crystal clear camera loaded');
+        setError('📱 Crystal clear camera active! Use manual entry below or type barcode numbers');
       };
       
       // Cleanup function
