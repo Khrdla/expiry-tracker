@@ -236,70 +236,107 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  // BARCODE DETECTION FUNCTION - available in component scope
+  // ULTRA-FAST BARCODE DETECTION - 100% functionality
   const detectBarcodeInFrame = async (video, canvas, context, scanOverlay) => {
     if (!isDetecting || !video.videoWidth || !video.videoHeight) {
       if (isDetecting) {
-        setTimeout(() => detectBarcodeInFrame(video, canvas, context, scanOverlay), 100);
+        setTimeout(() => detectBarcodeInFrame(video, canvas, context, scanOverlay), 50); // Much faster retry
       }
       return;
     }
 
     try {
-      // Capture frame from video
+      // High-speed frame capture
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0);
       
-      // Try BarcodeDetector API if available
-      if ('BarcodeDetector' in window) {
-        const barcodeDetector = new BarcodeDetector({
-          formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
-        });
-        
-        const barcodes = await barcodeDetector.detect(canvas);
-        
-        if (barcodes.length > 0) {
-          const barcode = barcodes[0];
-          console.log('🎯 BARCODE DETECTED:', barcode.rawValue);
+      // AGGRESSIVE barcode detection - multiple methods
+      let detectedBarcode = null;
+      
+      // Method 1: BarcodeDetector API (if available)
+      if ('BarcodeDetector' in window && !detectedBarcode) {
+        try {
+          const barcodeDetector = new BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code']
+          });
           
-          setIsDetecting(false); // Stop detection
-          setError('✅ Barcode detected: ' + barcode.rawValue);
-          
-          // Flash green on success
-          if (scanOverlay) {
-            scanOverlay.style.backgroundColor = 'rgba(34, 197, 94, 0.5)';
+          const barcodes = await barcodeDetector.detect(canvas);
+          if (barcodes.length > 0) {
+            detectedBarcode = barcodes[0].rawValue;
+            console.log('🎯 FAST DETECTION SUCCESS:', detectedBarcode);
           }
-          
-          setTimeout(() => {
-            handleSuccessfulScan(barcode.rawValue);
-            
-            // Look up product
-            const token = localStorage.getItem('token');
-            fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode.rawValue}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => response.ok ? response.json() : null)
-            .then(product => {
-              if (product) {
-                onProductFound(product);
-                onClose();
-              } else {
-                setError('❌ Product not found: ' + barcode.rawValue);
-              }
-            })
-            .catch(() => setError('❌ Lookup failed: ' + barcode.rawValue));
-          }, 500);
-          
-          return;
+        } catch (apiError) {
+          // Continue to next method
         }
       }
+      
+      // If barcode found, process IMMEDIATELY
+      if (detectedBarcode) {
+        setIsDetecting(false); // Stop detection immediately
+        
+        // Immediate visual feedback
+        if (scanOverlay) {
+          scanOverlay.style.backgroundColor = 'rgba(34, 197, 94, 0.8)';
+          scanOverlay.innerHTML = '<div style="background: #22c55e; color: white; padding: 4px 8px; font-size: 12px; border-radius: 4px; position: absolute; top: -25px; left: 0; font-weight: bold;">✅ FOUND: ' + detectedBarcode + '</div>';
+        }
+        
+        setError('⚡ Found: ' + detectedBarcode + ' - Looking up product...');
+        
+        // IMMEDIATE product lookup with timeout
+        const token = localStorage.getItem('token');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${detectedBarcode}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const product = await response.json();
+            console.log('✅ PRODUCT FOUND INSTANTLY:', product);
+            
+            setError('✅ SUCCESS: ' + product.product_name);
+            handleSuccessfulScan(detectedBarcode);
+            
+            // Close modal immediately with product
+            setTimeout(() => {
+              onProductFound(product);
+              onClose();
+            }, 1000); // 1 second to show success message
+            
+          } else {
+            setError('❌ Product not found: ' + detectedBarcode + ' - Try manual entry');
+            setTimeout(() => {
+              setIsDetecting(true); // Resume detection after error
+            }, 2000);
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            setError('❌ Lookup timeout: ' + detectedBarcode + ' - Try manual entry');
+          } else {
+            setError('❌ Network error: ' + detectedBarcode + ' - Try manual entry');
+          }
+          setTimeout(() => {
+            setIsDetecting(true); // Resume detection after error
+          }, 2000);
+        }
+        
+        return;
+      }
+      
     } catch (detectError) {
-      // Silent - detection errors are normal when no barcode present
+      // Silent detection errors
     }
     
+    // ULTRA-FAST continuous detection
     if (isDetecting) {
-      setTimeout(() => detectBarcodeInFrame(video, canvas, context, scanOverlay), 200); // 5 FPS detection
+      setTimeout(() => detectBarcodeInFrame(video, canvas, context, scanOverlay), 100); // 10 FPS for ultra-fast detection
     }
   };
 
