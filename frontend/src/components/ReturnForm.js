@@ -271,15 +271,63 @@ const ReturnForm = ({ user }) => {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No authentication token found');
+      console.error('❌ No authentication token found');
+      setMessage({ type: 'error', text: 'Please log in again to export reports.' });
       return;
     }
 
-    // Export all return forms as Excel
-    window.open(`${BACKEND_URL}/api/export/return-forms?token=${token}`, '_blank');
+    try {
+      console.log('🔍 Exporting return forms to Excel...');
+      
+      const response = await fetch(`${BACKEND_URL}/api/export/return-forms`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('📊 Return forms export response status:', response.status);
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        console.log('📥 Received return forms blob:', blob.size, 'bytes');
+        
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `return_forms_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        console.log('✅ Return forms export completed successfully');
+        setMessage({ type: 'success', text: 'Return forms exported successfully!' });
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Return forms export failed:', response.status, errorText);
+        
+        if (response.status === 401) {
+          setMessage({ type: 'error', text: 'Not authenticated. Please log in again.' });
+        } else if (response.status === 403) {
+          setMessage({ type: 'error', text: 'Access denied. Admin privileges required.' });
+        } else {
+          setMessage({ type: 'error', text: `Export failed: ${response.status}` });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Return forms export error:', error);
+      setMessage({ type: 'error', text: `Export failed: ${error.message}` });
+    }
   };
 
   return (
