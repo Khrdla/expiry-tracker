@@ -438,7 +438,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         
         // Start real barcode detection
         setTimeout(() => {
-          if (scanning) {
+          if (isDetecting) {
             detectBarcode();
             console.log('🎯 Barcode detection started');
           }
