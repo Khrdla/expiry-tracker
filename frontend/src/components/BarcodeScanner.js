@@ -228,14 +228,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  const startScanning = async () => {
+  // PURE NATIVE CAMERA SOLUTION - bypasses html5-qrcode completely
+  const startNativeScanning = async () => {
     if (!isMountedRef.current) return;
     
     try {
       resetScanner();
       setIsScanning(true);
+      setError('📱 Starting native camera...');
 
-      console.log('🚀 Starting mobile-optimized scanner...');
+      console.log('🚀 Starting PURE NATIVE camera solution...');
       
       // Enhanced mobile device detection
       const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
