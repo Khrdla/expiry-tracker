@@ -241,6 +241,10 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       const isAndroid = /Android/.test(navigator.userAgent);
       const isLowEnd = /Android.*[2-6]\./i.test(navigator.userAgent) || window.screen.width < 400;
       
+      // Enhanced error recovery for video abort issues
+      let retryAttempts = 0;
+      const maxRetries = 3;
+      
       console.log('📱 Mobile detection:', { isMobile, isIOS, isAndroid, isLowEnd });
 
       // Mobile-optimized Html5QrcodeScanner configuration
