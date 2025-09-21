@@ -956,7 +956,7 @@ const WasteReports = () => {
       )}
 
       {/* Barcode Scanner Modal */}
-      <BarcodeScanner
+      <SimpleBarcodeScanner
         isOpen={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onProductFound={handleBarcodeFound}
