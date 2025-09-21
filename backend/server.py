@@ -1880,7 +1880,7 @@ async def send_test_email(background_tasks: BackgroundTasks, current_user: User 
                 <p><strong>Next Steps:</strong></p>
                 <ul>
                     <li>If you received this email, the system is working correctly</li>
-                    <li>Daily alerts will be sent automatically at 06:00 AM Aden time</li>
+                    <li>Daily alerts will be sent automatically at 07:00 AM Aden time</li>
                     <li>Check the Settings panel for email configuration options</li>
                 </ul>
             </div>
