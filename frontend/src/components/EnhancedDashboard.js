@@ -136,6 +136,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
     switch (type) {
       case 'inventory':
         url = `${BACKEND_URL}/api/export/excel`;
+        // This is a POST request
         break;
       case 'dashboard-excel':
         url = `${BACKEND_URL}/api/export/dashboard/excel`;
@@ -147,6 +148,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         break;
       case 'expiry-tracker':
         url = `${BACKEND_URL}/api/export/expiry-tracker`;
+        // This is a POST request
         break;
       case 'return-forms':
         url = `${BACKEND_URL}/api/export/return-forms`;
