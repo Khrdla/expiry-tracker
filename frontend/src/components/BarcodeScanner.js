@@ -984,7 +984,6 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       // Cleanup function
       const cleanup = () => {
-        scanning = false;
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
         }
