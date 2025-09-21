@@ -1062,7 +1062,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
     } catch (nativeError) {
       console.error('❌ Native camera failed:', nativeError);
-      setError('❌ Camera not available. Please use manual barcode entry instead.');
+      setError(''); // Clear error to show clean manual entry
       setUseNativeFallback(false);
       
       // Show manual input as fallback
