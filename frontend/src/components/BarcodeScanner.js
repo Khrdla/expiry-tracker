@@ -993,9 +993,64 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       window.nativeScannerCleanup = cleanup;
       
     } catch (nativeError) {
-      console.error('❌ Native fallback failed:', nativeError);
-      setError('❌ Camera system error. Please refresh the page.');
+      console.error('❌ Native camera failed:', nativeError);
+      setError('❌ Camera not available. Please use manual barcode entry instead.');
       setUseNativeFallback(false);
+      
+      // Show manual input as fallback
+      const container = document.getElementById('qr-reader');
+      if (container) {
+        container.innerHTML = `
+          <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+            <h3 style="color: #333; margin-bottom: 15px;">📝 Manual Barcode Entry</h3>
+            <input 
+              type="text" 
+              id="fallback-barcode-input"
+              placeholder="Enter barcode numbers..."
+              style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; margin-bottom: 10px;"
+            />
+            <button 
+              id="fallback-submit-btn"
+              style="width: 100%; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold;"
+            >
+              🔍 Lookup Barcode
+            </button>
+          </div>
+        `;
+        
+        const fallbackInput = document.getElementById('fallback-barcode-input');
+        const fallbackBtn = document.getElementById('fallback-submit-btn');
+        
+        const handleFallbackSubmit = async () => {
+          const barcode = fallbackInput.value.trim();
+          if (barcode) {
+            setError('🔍 Looking up barcode...');
+            try {
+              const token = localStorage.getItem('token');
+              const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (response.ok) {
+                const product = await response.json();
+                handleSuccessfulScan(barcode);
+                onProductFound(product);
+                onClose();
+              } else {
+                setError('❌ Barcode not found');
+              }
+            } catch (error) {
+              setError('❌ Lookup failed');
+            }
+          }
+        };
+        
+        fallbackBtn.onclick = handleFallbackSubmit;
+        fallbackInput.onkeypress = (e) => {
+          if (e.key === 'Enter') handleFallbackSubmit();
+        };
+        fallbackInput.focus();
+      }
     }
   };
 
