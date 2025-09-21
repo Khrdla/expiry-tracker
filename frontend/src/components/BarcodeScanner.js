@@ -429,33 +429,10 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         scannerInstanceRef.current = null;
       }
 
-      // Skip html5-qrcode completely - use pure native solution
-      console.log('✅ Using pure native camera solution - no external libraries');
-      
-      // Enhanced browser compatibility check
-      console.log('🔍 Mobile browser compatibility:', {
-        userAgent: navigator.userAgent,
-        hasGetUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-        hasBarcodeDetector: 'BarcodeDetector' in window,
-        protocol: window.location.protocol,
-        isSecure: window.location.protocol === 'https:',
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight,
-        devicePixelRatio: window.devicePixelRatio
-      });
-
-      // Create scanner instance with enhanced error handling
-      try {
-        scannerInstanceRef.current = new Html5QrcodeScanner(
-          "qr-reader",
-          config,
-          true // verbose logging for mobile debugging
-        );
-        console.log('✅ Mobile Html5QrcodeScanner instance created');
-      } catch (instanceError) {
-        console.error('❌ Failed to create scanner instance:', instanceError);
-        throw new Error('Failed to initialize barcode scanner. Please try refreshing the page.');
-      }
+      // Use the native camera solution instead
+      console.log('✅ Starting pure native camera - bypassing html5-qrcode completely');
+      startNativeScanning();
+      return;
 
       // Enhanced DOM element verification with mobile-specific checks
       const qrReaderElement = document.getElementById("qr-reader");
