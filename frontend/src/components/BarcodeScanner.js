@@ -288,19 +288,12 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         showZoomSliderIfSupported: !isLowEnd, // Disable zoom on low-end devices
         defaultZoomValueIfSupported: isMobile ? 1.2 : 2,
         
-        // ULTRA-STABLE video constraints to minimize abort errors
+        // MINIMAL video constraints to prevent black screen
         videoConstraints: {
-          facingMode: "environment", // Simple back camera selection
-          
-          // Very conservative resolution for maximum stability
-          width: { ideal: 640, max: 800 }, // Much lower to prevent abort
-          height: { ideal: 480, max: 600 },
-          
-          // Ultra-conservative frame rate
-          frameRate: { ideal: 10, max: 15 }, // Very low FPS for stability
-          
-          // No advanced settings that might cause conflicts
-          aspectRatio: 1.33
+          facingMode: "environment",
+          width: 640,
+          height: 480,
+          frameRate: 15
         }
       };
       
