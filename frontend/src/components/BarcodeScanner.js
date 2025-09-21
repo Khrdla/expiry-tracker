@@ -432,13 +432,21 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       }
 
       video.onloadedmetadata = () => {
-        console.log('✅ Native video loaded and displaying');
-        setError('📱 Camera ready! Enter barcode numbers below or position barcode in camera view');
+        console.log('✅ Native video loaded - starting barcode detection');
+        setError('🎯 Point camera at barcode or type manually below');
+        
+        // Start real barcode detection
+        setTimeout(() => {
+          if (scanning) {
+            detectBarcode();
+            console.log('🎯 Barcode detection started');
+          }
+        }, 1000);
       };
 
       video.onerror = (error) => {
         console.error('❌ Video error:', error);
-        setError('❌ Video display error');
+        setError('❌ Camera error - use manual entry');
       };
 
     } catch (nativeError) {
