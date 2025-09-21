@@ -1112,6 +1112,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
+  const startScanning = async () => {
+    // Redirect to native scanning solution
+    console.log('🔄 Redirecting to native camera solution');
+    startNativeScanning();
+  };
   // Keep original scanning as fallback (rename to avoid confusion)
   const startOldScanning = async () => {
     // Original html5-qrcode implementation kept as emergency fallback
