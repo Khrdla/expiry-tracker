@@ -355,6 +355,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         console.error('❌ Video error:', error);
         setError('❌ Video display error');
       };
+
+    } catch (nativeError) {
+      console.error('❌ Native camera failed:', nativeError);
+      setError('❌ Camera not available. Using manual entry mode.');
+      setIsScanning(false);
+      
+      // Show manual entry fallback
+      startNativeFallback();
+    }
+  };
       
       console.log('📱 Mobile detection:', { isMobile, isIOS, isAndroid, isLowEnd });
 
