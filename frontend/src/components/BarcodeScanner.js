@@ -443,9 +443,11 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         
         container.appendChild(inputContainer);
 
-        // Add manual lookup functionality
+        // Add enhanced lookup functionality
         const input = document.getElementById('native-barcode-input');
         const button = document.getElementById('native-lookup-btn');
+        const forceScanBtn = document.getElementById('force-scan-btn');
+        const testBarcodeBtn = document.getElementById('test-barcode-btn');
         
         const handleLookup = async () => {
           const barcode = input.value.trim();
