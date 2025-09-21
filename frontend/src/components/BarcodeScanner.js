@@ -429,16 +429,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         scannerInstanceRef.current = null;
       }
 
-      // Dynamic import with mobile-specific error handling
-      let Html5QrcodeScanner;
-      try {
-        const module = await import('html5-qrcode');
-        Html5QrcodeScanner = module.Html5QrcodeScanner;
-        console.log('✅ Html5QrcodeScanner imported for mobile');
-      } catch (importError) {
-        console.error('❌ Failed to import html5-qrcode library:', importError);
-        throw new Error('Failed to load barcode scanning library. Please refresh the page.');
-      }
+      // Skip html5-qrcode completely - use pure native solution
+      console.log('✅ Using pure native camera solution - no external libraries');
       
       // Enhanced browser compatibility check
       console.log('🔍 Mobile browser compatibility:', {
