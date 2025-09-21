@@ -337,13 +337,40 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware - Enhanced for mobile compatibility
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-CSRFToken",
+        "Cache-Control",
+        "Pragma",
+        "User-Agent",
+        "DNT",
+        "If-Modified-Since",
+        "Keep-Alive",
+        "Origin",
+        "X-Requested-With",
+        "Content-Range",
+        "Range"
+    ],
+    expose_headers=[
+        "Content-Length",
+        "Content-Range",
+        "Content-Type",
+        "Cache-Control",
+        "Expires",
+        "Last-Modified"
+    ],
+    max_age=3600,
 )
 
 # Database setup
