@@ -59,6 +59,10 @@
 ## agent_communication:
 ##     -agent: "main"  # or "testing" or "user"
 ##     -message: "Communication message between agents"
+##     -agent: "user"
+##     -message: "User reported: 'the barecode scanner in the app STILL CAN NOT FITCH THE PRODUCT DETAILS OR IT TAKES VERY LONG TIME'. Need to implement bulletproof, super simple solution focusing on SPEED."
+##     -agent: "main"
+##     -message: "Starting comprehensive audit and implementation of simplified barcode scanner. Current BarcodeScanner.js has 1397 lines of complex code which is causing reliability issues. Backend API is fast (27ms response), issue is in frontend complexity. Plan: 1) Simplify scanner drastically, 2) Use pure BarcodeDetector or manual entry, 3) Focus on SPEED over features."
 
 # Protocol Guidelines for Main agent
 #
