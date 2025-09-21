@@ -298,9 +298,9 @@ const AddNewItemForm = ({ user }) => {
         item_number: lookupResults.item_number,
         barcode: lookupResults.barcode,
         supplier: lookupResults.supplier,
-        purchase_price: lookupResults.purchase_price.toString(),
+        purchase_price: lookupResults.purchase_price ? lookupResults.purchase_price.toString() : '',
         purchase_currency: lookupResults.purchase_currency,
-        selling_price: lookupResults.selling_price.toString(),
+        selling_price: lookupResults.selling_price ? lookupResults.selling_price.toString() : '',
         section: lookupResults.section,
         department: lookupResults.department,
         description: lookupResults.arabic_description || ''
