@@ -1086,16 +1086,16 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
               {/* Enhanced Mobile Instructions */}
               <div className="text-center text-xs md:text-sm text-gray-600 space-y-2 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-                <p>📱 <strong>Mobile Barcode Scanner Tips:</strong></p>
+                <p>📱 <strong>Close-Range Mobile Scanner Tips:</strong></p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-left">
                   <p>📱 Tap "Start Mobile Scan" for camera</p>
                   <p>💡 Ensure good lighting</p>
-                  <p>🎯 Hold steady, 6-12 inches away</p>
-                  <p>🔄 Auto-retry on scan failures</p>
+                  <p>🎯 Hold steady, 2-8 inches away (CLOSE)</p>
+                  <p>🔄 Auto video recovery system</p>
                   <p>📊 Supports: EAN, UPC, Code128, QR</p>
-                  <p>⚡ Optimized for mobile devices</p>
-                  <p>🍎 iOS Safari compatible</p>
-                  <p>🤖 Android Chrome optimized</p>
+                  <p>⚡ Anti-abort camera technology</p>
+                  <p>🍎 iOS Safari stabilized</p>
+                  <p>🤖 Android Chrome enhanced</p>
                 </div>
                 {/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent) && (
                   <div className="mt-3 p-2 bg-green-50 rounded border-green-200 border">
