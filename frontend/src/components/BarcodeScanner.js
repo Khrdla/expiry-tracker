@@ -1272,8 +1272,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <p>🔄 Auto video recovery system</p>
                   <p>📊 Supports: EAN, UPC, Code128, QR</p>
                   <p>⚡ Anti-abort camera technology</p>
-                  <p>🍎 iOS Safari stabilized</p>
-                  <p>🤖 Android Chrome enhanced</p>
+                  <p>🛡️ Native Mode for video issues</p>
+                  <p>🚀 Dual scanning system</p>
                 </div>
                 {/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent) && (
                   <div className="mt-3 p-2 bg-green-50 rounded border-green-200 border">
