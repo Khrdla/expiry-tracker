@@ -548,7 +548,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       </div>
 
       {/* Enhanced 3D Charts Section */}
-      <Dashboard3DCharts dashboardData={dashboardData} wasteData={null} />
+      <Dashboard3DCharts dashboardData={dashboardData} wasteData={wasteData} />
 
       {/* Top Suppliers Section */}
       <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
