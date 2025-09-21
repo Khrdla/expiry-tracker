@@ -303,36 +303,33 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         showZoomSliderIfSupported: !isLowEnd, // Disable zoom on low-end devices
         defaultZoomValueIfSupported: isMobile ? 1.2 : 2,
         
-        // Mobile-optimized video constraints
+        // Anti-abort video constraints with aggressive fallback
         videoConstraints: {
-          facingMode: { ideal: "environment" }, // Prefer back camera
+          facingMode: "environment", // Force back camera (not ideal, but more stable)
           
-          // Mobile-friendly resolution constraints
+          // Conservative resolution to prevent abort
           width: isMobile ? 
-            { ideal: 1280, max: 1920, min: 320 } : 
-            { ideal: 1920, min: 640 },
+            { ideal: 640, max: 1280, min: 320 } : // Reduced ideal resolution
+            { ideal: 1280, max: 1920, min: 640 },
           height: isMobile ? 
-            { ideal: 720, max: 1080, min: 240 } : 
-            { ideal: 1080, min: 480 },
+            { ideal: 480, max: 720, min: 240 } : // Reduced ideal resolution
+            { ideal: 720, max: 1080, min: 480 },
           
-          // Frame rate optimized for mobile
+          // Conservative frame rate to reduce video abort risk
           frameRate: { 
-            ideal: isLowEnd ? 15 : (isMobile ? 20 : 30), 
-            max: isMobile ? 30 : 60,
-            min: 10 
+            ideal: isLowEnd ? 10 : (isMobile ? 15 : 20), // Reduced FPS for stability
+            max: 20, // Hard limit to prevent overload
+            min: 8
           },
           
-          // Advanced mobile camera settings
+          // Minimal advanced settings to reduce complexity
           ...(isMobile && {
-            aspectRatio: { ideal: 1.33 }, // 4:3 preferred on mobile
-            resizeMode: 'crop-and-scale'
+            aspectRatio: 1.33 // Simple fixed ratio
           }),
           
-          // iOS Safari specific optimizations
+          // Minimal iOS settings to prevent conflicts
           ...(isIOS && {
-            focusMode: 'continuous',
-            exposureMode: 'continuous',
-            whiteBalanceMode: 'continuous'
+            focusMode: 'manual' // Changed from continuous to prevent abort
           })
         }
       };
