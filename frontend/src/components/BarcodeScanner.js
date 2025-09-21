@@ -363,14 +363,13 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         console.warn('⚠️ Scanner container has zero dimensions, may cause mobile rendering issues');
       }
 
-      // Anti-abort initialization with conservative delay
-      const initDelay = isIOS ? 500 : (isAndroid ? 400 : 200); // Increased delays
-      console.log(`⏱️ Using ${initDelay}ms ANTI-ABORT initialization delay for video stability`);
+      // ZERO-DELAY initialization for immediate camera start
+      console.log('⚡ Starting camera immediately - no delays');
 
-      setTimeout(() => {
-        if (scannerInstanceRef.current && isMountedRef.current) {
-          try {
-            scannerInstanceRef.current.render(
+      // Immediate render without timeout to prevent black screen
+      if (scannerInstanceRef.current && isMountedRef.current) {
+        try {
+          scannerInstanceRef.current.render(
               (decodedText) => {
                 console.log('🎯 MOBILE SUCCESS: Barcode detected!', decodedText);
                 console.log('📊 Mobile scan details:', {
