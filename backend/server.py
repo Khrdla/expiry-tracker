@@ -47,9 +47,9 @@ import pytz
 scheduler = AsyncIOScheduler()
 
 async def send_automated_daily_alerts():
-    """Automated function to send daily alerts at 06:00 AM Aden time"""
+    """Automated function to send consolidated daily reports at 07:00 AM Aden time"""
     try:
-        logger.info("Starting automated daily alert email...")
+        logger.info("Starting consolidated daily reports email...")
         
         # Get email settings
         settings = await db.email_settings.find_one() or {}
@@ -61,8 +61,10 @@ async def send_automated_daily_alerts():
         
         # Get all departments
         departments = [Department.FMG, Department.CGD, Department.OPSS]
+        aden_tz = pytz.timezone('Asia/Aden')
+        current_aden_time = datetime.now(aden_tz)
         
-        # Collect alert data
+        # 1. Collect inventory alert data
         out_of_stock_items = []
         near_expiry_items = []
         
@@ -90,91 +92,204 @@ async def send_automated_daily_alerts():
                         "section": product["section"]
                     })
         
-        # Create email content
-        subject = f"Geant Hypermarket - Daily Inventory Alert ({datetime.now().strftime('%Y-%m-%d')})"
-        
-        # Generate PDF report
-        pdf_data = await generate_daily_alert_pdf(out_of_stock_items, near_expiry_items)
-        
-        # Generate Excel report 
-        excel_data = await generate_daily_alert_excel(out_of_stock_items, near_expiry_items)
-        
-        # Prepare attachments
-        attachments = [
-            {
-                "data": pdf_data,
-                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
-            },
-            {
-                "data": excel_data,
-                "filename": f"Daily_Inventory_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        # 2. Get waste report data (weekly summary)
+        waste_data = {"currency_totals": {"YER": 0, "SAR": 0, "EUR": 0}, "total_entries": 0}
+        try:
+            # Get weekly waste report
+            end_date = current_aden_time
+            start_date = end_date - timedelta(days=7)
+            
+            waste_entries = await db.waste_entries.find({
+                "created_at": {
+                    "$gte": start_date.replace(tzinfo=None),
+                    "$lt": end_date.replace(tzinfo=None)
+                }
+            }).to_list(None)
+            
+            waste_totals = {"YER": 0, "SAR": 0, "EUR": 0}
+            for entry in waste_entries:
+                currency = entry.get("purchase_currency", "YER")
+                waste_value = entry.get("waste_value", 0)
+                if currency in waste_totals:
+                    waste_totals[currency] += waste_value
+            
+            waste_data = {
+                "currency_totals": waste_totals,
+                "total_entries": len(waste_entries),
+                "period": "Last 7 Days"
             }
-        ]
+        except Exception as e:
+            logger.warning(f"Could not fetch waste data: {str(e)}")
         
-        # Create HTML email body
-        aden_tz = pytz.timezone('Asia/Aden')
-        current_aden_time = datetime.now(aden_tz)
+        # 3. Get return forms count (last 7 days)
+        return_forms_count = 0
+        try:
+            return_forms = await db.return_forms.find({
+                "created_at": {
+                    "$gte": (current_aden_time - timedelta(days=7)).replace(tzinfo=None),
+                    "$lt": current_aden_time.replace(tzinfo=None)
+                }
+            }).to_list(None)
+            return_forms_count = len(return_forms)
+        except Exception as e:
+            logger.warning(f"Could not fetch return forms data: {str(e)}")
+        
+        # 4. Generate all report attachments
+        attachments = []
+        
+        # Daily Inventory Report (PDF & Excel)
+        try:
+            pdf_data = await generate_daily_alert_pdf(out_of_stock_items, near_expiry_items)
+            excel_data = await generate_daily_alert_excel(out_of_stock_items, near_expiry_items)
+            
+            attachments.extend([
+                {
+                    "data": pdf_data,
+                    "filename": f"Daily_Inventory_Report_{current_aden_time.strftime('%Y%m%d')}.pdf"
+                },
+                {
+                    "data": excel_data,
+                    "filename": f"Daily_Inventory_Report_{current_aden_time.strftime('%Y%m%d')}.xlsx"
+                }
+            ])
+        except Exception as e:
+            logger.warning(f"Could not generate daily inventory reports: {str(e)}")
+        
+        # Weekly Waste Report (if data exists)
+        if waste_data["total_entries"] > 0:
+            try:
+                from io import BytesIO
+                import xlsxwriter
+                
+                # Generate waste report Excel
+                output = BytesIO()
+                workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+                
+                # Add company branding
+                branding = get_company_branding()
+                worksheet = workbook.add_worksheet('Waste Report')
+                add_logo_to_excel(workbook, worksheet, branding)
+                
+                # Header format
+                header_format = workbook.add_format({
+                    'bold': True, 'bg_color': branding['primary_color'], 'color': 'white',
+                    'align': 'center', 'border': 1
+                })
+                
+                # Write waste summary
+                worksheet.write('A8', 'Weekly Waste Report Summary', header_format)
+                worksheet.write('A10', 'Currency')
+                worksheet.write('B10', 'Total Waste Value')
+                
+                row = 11
+                for currency, value in waste_data["currency_totals"].items():
+                    if value > 0:
+                        worksheet.write(row, 0, currency)
+                        worksheet.write(row, 1, value)
+                        row += 1
+                
+                worksheet.write(row + 1, 0, 'Total Entries')
+                worksheet.write(row + 1, 1, waste_data["total_entries"])
+                
+                workbook.close()
+                waste_excel_data = output.getvalue()
+                
+                attachments.append({
+                    "data": waste_excel_data,
+                    "filename": f"Weekly_Waste_Report_{current_aden_time.strftime('%Y%m%d')}.xlsx"
+                })
+                
+            except Exception as e:
+                logger.warning(f"Could not generate waste report: {str(e)}")
+        
+        # 5. Create consolidated email subject and body
+        subject = f"Geant Hypermarket - Consolidated Daily Reports ({current_aden_time.strftime('%Y-%m-%d')})"
         
         body = f"""
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 20px; color: white; text-align: center;">
                 <h1>🏢 Geant Hypermarket</h1>
-                <h2>📊 Daily Inventory Alert Report</h2>
+                <h2>📊 Consolidated Daily Reports</h2>
                 <p>Automated Report - {current_aden_time.strftime('%Y-%m-%d %H:%M:%S')} (Aden Time)</p>
             </div>
             
             <div style="padding: 30px;">
-                <h2>📈 Daily Summary</h2>
+                <h2>📈 Daily Business Summary</h2>
                 <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
                     <tr style="background-color: #f8fafc;">
-                        <td style="padding: 15px; font-weight: bold;">Out of Stock Items</td>
+                        <td style="padding: 15px; font-weight: bold; color: #dc2626;">📦 Out of Stock Items</td>
                         <td style="padding: 15px; color: #dc2626; font-weight: bold; font-size: 18px;">{len(out_of_stock_items)}</td>
                     </tr>
                     <tr style="background-color: #f8fafc;">
-                        <td style="padding: 15px; font-weight: bold;">Near Expiry Items</td>
+                        <td style="padding: 15px; font-weight: bold; color: #f59e0b;">⏰ Near Expiry Items</td>
                         <td style="padding: 15px; color: #f59e0b; font-weight: bold; font-size: 18px;">{len(near_expiry_items)}</td>
                     </tr>
                     <tr style="background-color: #f8fafc;">
-                        <td style="padding: 15px; font-weight: bold;">Report Generated</td>
+                        <td style="padding: 15px; font-weight: bold; color: #ef4444;">🗑️ Waste Entries (7 days)</td>
+                        <td style="padding: 15px; color: #ef4444; font-weight: bold; font-size: 18px;">{waste_data['total_entries']}</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 15px; font-weight: bold; color: #8b5cf6;">🔄 Return Forms (7 days)</td>
+                        <td style="padding: 15px; color: #8b5cf6; font-weight: bold; font-size: 18px;">{return_forms_count}</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 15px; font-weight: bold;">📅 Report Generated</td>
                         <td style="padding: 15px;">{current_aden_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden)</td>
                     </tr>
                 </table>
                 
+                {f'''
+                <h3 style="color: #ef4444;">💰 Weekly Waste Value Summary</h3>
+                <table border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+                    {"".join([f'<tr><td style="padding: 10px; font-weight: bold;">{currency}</td><td style="padding: 10px;">{value:,.2f}</td></tr>' 
+                              for currency, value in waste_data["currency_totals"].items() if value > 0])}
+                </table>
+                ''' if waste_data['total_entries'] > 0 else ''}
+                
                 <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
-                    <h3>📎 Attachments Included:</h3>
+                    <h3>📎 All Reports Included in This Email:</h3>
                     <ul>
-                        <li><strong>PDF Report:</strong> Professional formatted inventory report</li>
-                        <li><strong>Excel Report:</strong> Detailed data for analysis and filtering</li>
+                        <li><strong>📄 Daily Inventory Report (PDF):</strong> Professional formatted daily inventory alerts</li>
+                        <li><strong>📊 Daily Inventory Report (Excel):</strong> Detailed data for analysis and filtering</li>
+                        {f'<li><strong>🗑️ Weekly Waste Report (Excel):</strong> Waste tracking and value analysis</li>' if waste_data['total_entries'] > 0 else ''}
                     </ul>
+                    <p style="margin-top: 10px; color: #3b82f6;"><strong>📧 All reports consolidated in one email as requested!</strong></p>
                 </div>
                 
                 <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;">
-                    <p><strong>🎯 Next Steps:</strong></p>
+                    <p><strong>🎯 Action Items:</strong></p>
                     <ul>
                         <li>Review out-of-stock items for immediate restocking</li>
                         <li>Check near-expiry items for promotional opportunities</li>
+                        <li>Analyze waste patterns to reduce losses</li>
+                        <li>Follow up on pending return forms</li>
                         <li>Contact suppliers for critical inventory items</li>
                     </ul>
+                </div>
+                
+                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                    <p><strong>⚙️ Future Configuration Available:</strong></p>
+                    <p>Report selection and timing can be customized through the Settings panel as needed.</p>
                 </div>
             </div>
             
             <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f3f4f6; border-radius: 8px;">
                 <p style="color: #666; font-size: 14px;">
-                    This is an automated daily report from Geant Hypermarket Inventory Management System<br>
+                    This is an automated consolidated daily report from Geant Hypermarket Inventory Management System<br>
                     Generated on {current_aden_time.strftime('%Y-%m-%d at %H:%M:%S')} (Asia/Aden timezone)<br>
-                    Scheduled daily at 06:00 AM Aden time
+                    Scheduled daily at 07:00 AM Aden time - All reports in one email
                 </p>
             </div>
         </body>
         </html>
         """
         
-        # Send email with attachments
+        # Send consolidated email with all attachments
         success = await send_email_alert(recipients, subject, body, attachments)
         
         if success:
-            logger.info(f"Automated daily alert sent successfully to {recipients}")
+            logger.info(f"Consolidated daily reports sent successfully to {recipients} with {len(attachments)} attachments")
             # Update last automated email timestamp
             await db.email_settings.update_one(
                 {},
@@ -182,10 +297,10 @@ async def send_automated_daily_alerts():
                 upsert=True
             )
         else:
-            logger.error("Failed to send automated daily alert")
+            logger.error("Failed to send consolidated daily reports")
             
     except Exception as e:
-        logger.error(f"Error in automated daily alert: {str(e)}")
+        logger.error(f"Error in consolidated daily reports: {str(e)}")
 
 # Schedule daily alerts for 06:00 AM Aden time
 def setup_daily_email_scheduler():
