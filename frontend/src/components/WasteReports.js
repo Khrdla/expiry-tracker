@@ -954,6 +954,13 @@ const WasteReports = () => {
           )}
         </>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onProductFound={handleBarcodeFound}
+      />
     </div>
   );
 };
