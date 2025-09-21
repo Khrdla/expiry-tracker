@@ -118,6 +118,13 @@ const WasteReports = () => {
     setSearchResults([]);
   };
 
+  // Handle barcode scanner result
+  const handleBarcodeFound = (product) => {
+    console.log('📱 Barcode scanner found product:', product);
+    selectProduct(product);
+    setShowBarcodeScanner(false);
+  };
+
   // Add waste entry to the list
   const addWasteEntry = () => {
     if (!currentEntry.product || !currentEntry.quantity) return;
