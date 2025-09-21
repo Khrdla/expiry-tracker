@@ -1114,7 +1114,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {cameraPermission === null && (
             <div className="text-center py-6 md:py-8">
               <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-sm md:text-base text-gray-600">📱 Initializing mobile scanner...</p>
+              <p className="text-sm md:text-base text-gray-600">📱 Initializing anti-abort mobile scanner...</p>
               
               {/* Mobile Detection Info */}
               {/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent) && (
