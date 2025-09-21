@@ -247,27 +247,27 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       console.log('📱 Mobile detection:', { isMobile, isIOS, isAndroid, isLowEnd });
 
-      // Mobile-optimized Html5QrcodeScanner configuration
+      // Mobile-optimized Html5QrcodeScanner configuration with close-range detection
       const config = {
-        // Reduced FPS for better mobile performance and battery life
-        fps: isLowEnd ? 3 : (isMobile ? 5 : 8),
+        // Optimized FPS for better detection at close range
+        fps: isLowEnd ? 5 : (isMobile ? 8 : 10),
         
-        // Dynamic scan area optimized for mobile screens
+        // Enhanced scan area for close-range barcode detection (2-8 inches)
         qrbox: function(viewfinderWidth, viewfinderHeight) {
           console.log('📐 Viewfinder dimensions:', { viewfinderWidth, viewfinderHeight });
           
-          // Mobile-optimized scan area calculations
+          // Larger scan area for close-range detection (2-8 inches optimal)
           const isMobileViewport = viewfinderWidth < 500 || viewfinderHeight < 400;
-          const scanAreaPercentage = isMobileViewport ? 0.8 : 0.7;
+          const scanAreaPercentage = isMobileViewport ? 0.9 : 0.8; // Increased for better close detection
           
           const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
           const scanSize = Math.floor(minEdgeSize * scanAreaPercentage);
           
-          // Ensure minimum viable scan area for mobile
-          const width = Math.min(Math.max(scanSize, 200), isMobileViewport ? 300 : 400);
-          const height = Math.min(Math.max(scanSize * 0.6, 120), isMobileViewport ? 180 : 240);
+          // Optimized for close-range scanning (2-8 inches)
+          const width = Math.min(Math.max(scanSize, 250), isMobileViewport ? 350 : 450); // Increased minimum
+          const height = Math.min(Math.max(scanSize * 0.7, 175), isMobileViewport ? 245 : 315); // Better ratio for barcodes
           
-          console.log('📏 Calculated scan area:', { width, height, scanAreaPercentage });
+          console.log('📏 Close-range scan area:', { width, height, scanAreaPercentage, optimal: '2-8 inches' });
           
           return { width, height };
         },
