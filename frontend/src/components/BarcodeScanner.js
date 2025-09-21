@@ -16,6 +16,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [scanStats, setScanStats] = useState({ successful: 0, failed: 0 });
   const [useNativeFallback, setUseNativeFallback] = useState(false);
   const [nativeStream, setNativeStream] = useState(null);
+  const [isDetecting, setIsDetecting] = useState(false);
   
   const scannerRef = useRef(null);
   const scannerInstanceRef = useRef(null);
