@@ -830,6 +830,151 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     lastScanTime.current = 0;
   };
 
+  // Native BarcodeDetector fallback for video abort issues
+  const startNativeFallback = async () => {
+    console.log('🚨 STARTING NATIVE FALLBACK to bypass video abort errors');
+    setUseNativeFallback(true);
+    setError('🔄 Switching to native camera mode...');
+    
+    try {
+      // Check if BarcodeDetector is available
+      if (!('BarcodeDetector' in window)) {
+        throw new Error('BarcodeDetector API not available');
+      }
+      
+      // Get camera with most basic constraints
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: 640,
+          height: 480,
+          frameRate: 10
+        }
+      });
+      
+      setNativeStream(stream);
+      
+      // Create video element
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.style.width = '100%';
+      video.style.height = '300px';
+      video.style.objectFit = 'cover';
+      
+      // Create canvas for frame capture
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      // Create barcode detector
+      const barcodeDetector = new BarcodeDetector({
+        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
+      });
+      
+      // Clear container and add video
+      const container = document.getElementById('qr-reader');
+      if (container) {
+        container.innerHTML = '';
+        
+        // Add video
+        container.appendChild(video);
+        
+        // Add scan overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.top = '50%';
+        overlay.style.left = '50%';
+        overlay.style.transform = 'translate(-50%, -50%)';
+        overlay.style.width = '250px';
+        overlay.style.height = '150px';
+        overlay.style.border = '2px solid #22c55e';
+        overlay.style.borderRadius = '8px';
+        overlay.style.pointerEvents = 'none';
+        overlay.innerHTML = '<div style="background: rgba(34, 197, 94, 0.9); color: white; padding: 4px 8px; font-size: 12px; border-radius: 4px; position: absolute; top: -30px; left: 0;">🎯 Position barcode here</div>';
+        
+        container.style.position = 'relative';
+        container.appendChild(overlay);
+      }
+      
+      // Start scanning loop
+      let scanning = true;
+      
+      const scanFrame = async () => {
+        if (!scanning || !video.videoWidth || !video.videoHeight) {
+          setTimeout(scanFrame, 100);
+          return;
+        }
+        
+        try {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0);
+          
+          const barcodes = await barcodeDetector.detect(canvas);
+          
+          if (barcodes.length > 0) {
+            const barcode = barcodes[0];
+            console.log('🎯 NATIVE FALLBACK SUCCESS:', barcode.rawValue);
+            
+            scanning = false;
+            
+            // Look up product
+            try {
+              const token = localStorage.getItem('token');
+              const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode.rawValue}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (response.ok) {
+                const product = await response.json();
+                handleSuccessfulScan(barcode.rawValue);
+                onProductFound(product);
+                onClose();
+                return;
+              }
+            } catch (lookupError) {
+              console.warn('Product lookup failed:', lookupError);
+            }
+            
+            // Fallback to manual entry with detected barcode
+            handleSuccessfulScan(barcode.rawValue);
+            return;
+          }
+          
+        } catch (detectError) {
+          console.warn('Detection error:', detectError);
+        }
+        
+        if (scanning) {
+          setTimeout(scanFrame, 200); // 5 FPS
+        }
+      };
+      
+      video.onloadedmetadata = () => {
+        console.log('✅ Native video loaded, starting detection');
+        setError('🎯 Native scanner active - position barcode in green box');
+        scanFrame();
+      };
+      
+      // Cleanup function
+      const cleanup = () => {
+        scanning = false;
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+      };
+      
+      // Store cleanup for later use
+      window.nativeScannerCleanup = cleanup;
+      
+    } catch (nativeError) {
+      console.error('❌ Native fallback failed:', nativeError);
+      setError('❌ Camera system error. Please refresh the page.');
+      setUseNativeFallback(false);
+    }
+  };
+
   const triggerHapticFeedback = () => {
     // Trigger haptic feedback on mobile devices
     if (navigator.vibrate) {
