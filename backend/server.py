@@ -1867,7 +1867,7 @@ async def send_test_email(background_tasks: BackgroundTasks, current_user: User 
                     • <strong>Sent Time (Aden):</strong> {current_aden_time.strftime('%Y-%m-%d %H:%M:%S %Z')}<br>
                     • <strong>Timezone:</strong> Asia/Aden (GMT+3)<br>
                     • <strong>Recipient:</strong> {recipients[0]}<br>
-                    • <strong>Daily Alert Time:</strong> {settings.get('daily_alert_time', '06:00')} AM Aden Time
+                    • <strong>Daily Alert Time:</strong> {settings.get('daily_alert_time', '07:00')} AM Aden Time
                 </div>
                 
                 <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;">
