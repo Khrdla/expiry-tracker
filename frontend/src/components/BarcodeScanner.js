@@ -428,7 +428,7 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
         // Store cleanup function
         window.cleanupDetection = () => {
-          scanning = false;
+          setIsDetecting(false);
         };
       }
 
