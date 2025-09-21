@@ -51,68 +51,175 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const initializeCamera = async () => {
     try {
-      console.log('🔍 Initializing camera...');
+      console.log('🔍 Initializing camera for mobile device...');
+      console.log('📱 Device info:', {
+        userAgent: navigator.userAgent,
+        isMobile: /Mobi|Android/i.test(navigator.userAgent),
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        isAndroid: /Android/.test(navigator.userAgent),
+        isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent),
+        isChrome: /Chrome/.test(navigator.userAgent),
+        protocol: window.location.protocol,
+        isSecure: window.location.protocol === 'https:'
+      });
       
-      // Check if mediaDevices API is available first
+      // Enhanced mobile browser detection
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      // Check if mediaDevices API is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera API not available in this browser');
+        throw new Error('Camera API not available in this browser. Please use a modern mobile browser.');
       }
       
-      // Try with basic constraints first
-      let constraints = { video: true };
+      // Check for secure context (required on mobile)
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        throw new Error('Camera requires HTTPS connection on mobile devices');
+      }
       
-      try {
-        // Try enhanced constraints for better quality
-        constraints = {
+      // Mobile-optimized camera constraints with multiple fallbacks
+      const mobileConstraints = [
+        // First attempt: Mobile-optimized high quality
+        {
           video: {
-            facingMode: 'environment', // Prefer back camera
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 }
+            facingMode: { ideal: 'environment' }, // Prefer back camera
+            width: { ideal: 1280, max: 1920, min: 320 },
+            height: { ideal: 720, max: 1080, min: 240 },
+            frameRate: { ideal: 30, max: 60, min: 10 },
+            aspectRatio: { ideal: 1.7777777778 }
           }
-        };
-        
-        console.log('🔍 Requesting camera with enhanced constraints:', constraints);
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        setCameraPermission(true);
-        console.log('✅ Camera access granted with enhanced constraints');
-        
-        // Stop the test stream
-        stream.getTracks().forEach(track => track.stop());
-        
-      } catch (enhancedError) {
-        console.warn('⚠️ Enhanced camera constraints failed, trying basic constraints:', enhancedError);
-        
-        // Fallback to basic constraints
-        constraints = { video: true };
-        console.log('🔍 Requesting camera with basic constraints:', constraints);
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        setCameraPermission(true);
-        console.log('✅ Camera access granted with basic constraints');
-        
-        // Stop the test stream
-        stream.getTracks().forEach(track => track.stop());
+        },
+        // Second attempt: iOS Safari compatible
+        {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 15, max: 30 }
+          }
+        },
+        // Third attempt: Android Chrome compatible
+        {
+          video: {
+            facingMode: 'environment',
+            width: 640,
+            height: 480
+          }
+        },
+        // Fourth attempt: Basic mobile
+        {
+          video: {
+            facingMode: 'environment'
+          }
+        },
+        // Final fallback: Any camera
+        {
+          video: true
+        }
+      ];
+      
+      let stream = null;
+      let usedConstraints = null;
+      
+      // Try each constraint set until one works
+      for (let i = 0; i < mobileConstraints.length; i++) {
+        try {
+          const constraints = mobileConstraints[i];
+          console.log(`🔍 Attempt ${i + 1}: Trying constraints:`, constraints);
+          
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          usedConstraints = constraints;
+          console.log(`✅ Camera initialized with attempt ${i + 1}`);
+          break;
+          
+        } catch (constraintError) {
+          console.warn(`⚠️ Constraint attempt ${i + 1} failed:`, constraintError);
+          
+          // If this is the last attempt, throw the error
+          if (i === mobileConstraints.length - 1) {
+            throw constraintError;
+          }
+          
+          // Wait a bit before next attempt on mobile
+          if (isMobile) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
       }
+      
+      if (!stream) {
+        throw new Error('Unable to initialize camera with any constraints');
+      }
+      
+      // Verify stream is actually working
+      const tracks = stream.getVideoTracks();
+      if (tracks.length === 0) {
+        stream.getTracks().forEach(track => track.stop());
+        throw new Error('No video tracks available');
+      }
+      
+      const videoTrack = tracks[0];
+      const settings = videoTrack.getSettings();
+      console.log('✅ Camera stream settings:', settings);
+      
+      // Mobile-specific validation
+      if (isMobile) {
+        // Check if we got the back camera as requested
+        if (settings.facingMode && settings.facingMode !== 'environment') {
+          console.warn('⚠️ Front camera detected, back camera preferred for barcode scanning');
+        }
+        
+        // Ensure minimum resolution for barcode detection
+        if (settings.width < 320 || settings.height < 240) {
+          console.warn('⚠️ Low camera resolution detected, barcode detection may be affected');
+        }
+      }
+      
+      setCameraPermission(true);
+      console.log('✅ Mobile camera initialization successful');
+      console.log('📊 Final camera settings:', {
+        width: settings.width,
+        height: settings.height,
+        frameRate: settings.frameRate,
+        facingMode: settings.facingMode,
+        aspectRatio: settings.aspectRatio
+      });
+      
+      // Stop the test stream
+      stream.getTracks().forEach(track => track.stop());
       
     } catch (error) {
-      console.error('❌ Camera initialization error:', error);
+      console.error('❌ Mobile camera initialization error:', error);
       setCameraPermission(false);
       
-      let errorMessage = '❌ Camera access denied. ';
+      let errorMessage = '❌ Camera initialization failed. ';
       
+      // Mobile-specific error messages
       if (error.name === 'NotAllowedError') {
-        errorMessage += 'Please allow camera access and try again.';
+        if (isIOS) {
+          errorMessage += 'Please allow camera access in Safari Settings > Privacy & Security > Camera > This Website.';
+        } else if (isAndroid) {
+          errorMessage += 'Please allow camera access by tapping the camera icon in the address bar.';
+        } else {
+          errorMessage += 'Please allow camera access and try again.';
+        }
       } else if (error.name === 'NotFoundError') {
-        errorMessage += 'No camera found on this device.';
+        errorMessage += 'No camera found. Please ensure your device has a working camera.';
       } else if (error.name === 'NotReadableError') {
-        errorMessage += 'Camera is being used by another app. Close other camera apps and try again.';
+        errorMessage += 'Camera is being used by another app. Please close other camera apps and try again.';
       } else if (error.name === 'OverconstrainedError') {
-        errorMessage += 'Camera constraints not supported. Try refreshing the page.';
+        errorMessage += 'Camera configuration not supported. This may happen on older devices.';
+      } else if (error.name === 'AbortError') {
+        errorMessage += 'Camera access was interrupted. Please try again.';
+      } else if (error.name === 'SecurityError') {
+        errorMessage += 'Camera access blocked by security policy. Please enable camera permissions.';
+      } else if (error.message.includes('HTTPS')) {
+        errorMessage += 'Camera requires secure connection. Please ensure you are using HTTPS.';
       } else if (error.message.includes('not available')) {
-        errorMessage += 'Camera API not supported in this browser. Please use Chrome, Firefox, or Safari.';
+        errorMessage += 'Camera API not supported. Please update your browser to the latest version.';
       } else {
-        errorMessage += `${error.message || 'Unknown camera error'}`;
+        errorMessage += `${error.message || 'Unknown camera error'}. Please try refreshing the page.`;
       }
       
       setError(errorMessage);
