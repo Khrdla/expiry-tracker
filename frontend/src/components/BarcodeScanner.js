@@ -898,21 +898,83 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         // Add video
         container.appendChild(video);
         
-        // Add scan overlay
+        // Add CLEAR barcode targeting overlay
         const overlay = document.createElement('div');
         overlay.style.position = 'absolute';
         overlay.style.top = '50%';
         overlay.style.left = '50%';
         overlay.style.transform = 'translate(-50%, -50%)';
-        overlay.style.width = '250px';
-        overlay.style.height = '150px';
-        overlay.style.border = '2px solid #22c55e';
-        overlay.style.borderRadius = '8px';
+        overlay.style.width = '280px';
+        overlay.style.height = '120px';
+        overlay.style.border = '3px solid #22c55e';
+        overlay.style.borderRadius = '12px';
+        overlay.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
         overlay.style.pointerEvents = 'none';
-        overlay.innerHTML = '<div style="background: rgba(34, 197, 94, 0.9); color: white; padding: 4px 8px; font-size: 12px; border-radius: 4px; position: absolute; top: -30px; left: 0;">🎯 Position barcode here</div>';
+        overlay.innerHTML = '<div style="background: rgba(34, 197, 94, 0.95); color: white; padding: 8px 12px; font-size: 14px; font-weight: bold; border-radius: 6px; position: absolute; top: -40px; left: 0;">🎯 CRYSTAL CLEAR VIEW - Hold 2-4 inches away</div>';
+        
+        // Add manual input below video
+        const inputContainer = document.createElement('div');
+        inputContainer.style.marginTop = '15px';
+        inputContainer.style.padding = '15px';
+        inputContainer.style.backgroundColor = '#f8f9fa';
+        inputContainer.style.borderRadius = '8px';
+        inputContainer.innerHTML = `
+          <div style="margin-bottom: 10px; font-weight: bold; color: #333;">📝 Manual Barcode Entry:</div>
+          <input 
+            type="text" 
+            id="manual-barcode-input"
+            placeholder="Type barcode numbers here..."
+            style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; font-family: monospace;"
+          />
+          <button 
+            id="manual-submit-btn"
+            style="width: 100%; margin-top: 10px; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold;"
+          >
+            🔍 Lookup Barcode
+          </button>
+        `;
         
         container.style.position = 'relative';
         container.appendChild(overlay);
+        container.appendChild(inputContainer);
+        
+        // Add manual input handler
+        const manualInput = document.getElementById('manual-barcode-input');
+        const submitBtn = document.getElementById('manual-submit-btn');
+        
+        const handleManualSubmit = async () => {
+          const barcode = manualInput.value.trim();
+          if (barcode) {
+            console.log('📝 Manual barcode entered:', barcode);
+            setError('🔍 Looking up barcode...');
+            
+            try {
+              const token = localStorage.getItem('token');
+              const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (response.ok) {
+                const product = await response.json();
+                handleSuccessfulScan(barcode);
+                onProductFound(product);
+                onClose();
+                return;
+              } else {
+                setError('❌ Barcode not found in database');
+              }
+            } catch (error) {
+              setError('❌ Error looking up barcode');
+            }
+          }
+        };
+        
+        submitBtn.onclick = handleManualSubmit;
+        manualInput.onkeypress = (e) => {
+          if (e.key === 'Enter') {
+            handleManualSubmit();
+          }
+        };
       }
       
       // Start scanning loop
