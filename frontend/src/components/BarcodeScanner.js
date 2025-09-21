@@ -436,30 +436,74 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         const handleLookup = async () => {
           const barcode = input.value.trim();
           if (!barcode) {
-            setError('❌ Please enter a barcode');
+            setError('❌ Please enter a barcode number');
+            input.focus();
             return;
           }
 
-          setError('🔍 Looking up: ' + barcode);
+          // Immediate feedback
+          button.disabled = true;
+          button.innerHTML = '⏳ Finding...';
+          setError('⚡ FAST LOOKUP: ' + barcode);
+          
+          // ULTRA-FAST lookup with timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
           
           try {
             const token = localStorage.getItem('token');
+            const startTime = Date.now();
+            
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
+              headers: { 'Authorization': `Bearer ${token}` },
+              signal: controller.signal
             });
+            
+            const endTime = Date.now();
+            const lookupTime = endTime - startTime;
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
               const product = await response.json();
-              console.log('✅ Manual lookup success:', product);
+              console.log(`✅ INSTANT SUCCESS (${lookupTime}ms):`, product);
+              
+              setError(`✅ FOUND in ${lookupTime}ms: ${product.product_name}`);
+              button.innerHTML = '✅ Found!';
+              
               handleSuccessfulScan(barcode);
-              onProductFound(product);
-              onClose();
+              
+              // Close with product immediately
+              setTimeout(() => {
+                onProductFound(product);
+                onClose();
+              }, 1000);
+              
             } else {
-              setError('❌ Product not found: ' + barcode);
+              setError('❌ Product not found: ' + barcode + ' - Check barcode number');
+              button.innerHTML = '❌ Not Found';
+              setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = '🔍 Find';
+                input.focus();
+              }, 2000);
             }
           } catch (error) {
-            console.error('Manual lookup error:', error);
-            setError('❌ Network error');
+            clearTimeout(timeoutId);
+            console.error('Fast lookup error:', error);
+            
+            if (error.name === 'AbortError') {
+              setError('❌ Lookup timeout - Server too slow');
+            } else {
+              setError('❌ Network error - Check connection');
+            }
+            
+            button.innerHTML = '❌ Error';
+            setTimeout(() => {
+              button.disabled = false;
+              button.innerHTML = '🔍 Find';
+              input.focus();
+            }, 2000);
           }
         };
 
