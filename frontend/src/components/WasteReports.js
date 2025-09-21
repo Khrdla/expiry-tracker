@@ -65,28 +65,93 @@ const WasteReports = () => {
     fetchWasteReport();
   }, [period, department, section]);
 
-  // Search product by barcode or name
+  // Enhanced product search with improved name search
   const searchProduct = async (searchTerm) => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
       return;
     }
 
+    console.log('🔍 Searching products with term:', searchTerm);
     setSearching(true);
+    
     try {
-      // Try barcode lookup first
-      let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${searchTerm}`, {
+      // Check if the search term looks like a barcode (numeric and long)
+      const isNumericBarcode = /^\d{8,}$/.test(searchTerm);
+      
+      if (isNumericBarcode) {
+        console.log('📊 Detected numeric barcode pattern, trying barcode lookup first');
+        // Try barcode lookup first for numeric patterns
+        let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${searchTerm}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const product = await response.json();
+          console.log('✅ Barcode lookup successful:', product);
+          setSearchResults([product]);
+          return;
+        } else {
+          console.log('⚠️ Barcode lookup failed, trying product name search');
+        }
+      }
+
+      // Enhanced product name search with multiple search strategies
+      console.log('🔍 Performing enhanced product name search');
+      
+      // Strategy 1: Exact search with the original term
+      let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(searchTerm)}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      let products = [];
       if (response.ok) {
-        const product = await response.json();
-        setSearchResults([product]);
-      } else {
-        // If barcode fails, search by product name
-        response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(searchTerm)}`, {
+        const data = await response.json();
+        products = data.products || [];
+        console.log('📊 Initial search results:', products.length, 'products found');
+      }
+
+      // Strategy 2: If no results and search term has spaces, try each word separately
+      if (products.length === 0 && searchTerm.includes(' ')) {
+        console.log('🔍 Trying word-by-word search');
+        const words = searchTerm.split(' ').filter(word => word.length > 2);
+        
+        for (const word of words) {
+          response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(word)}&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const wordResults = data.products || [];
+            console.log(`📊 Search for "${word}":`, wordResults.length, 'products');
+            
+            // Filter results that contain the original search term (case insensitive)
+            const relevantResults = wordResults.filter(product => 
+              product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            products = [...products, ...relevantResults];
+          }
+        }
+        
+        // Remove duplicates based on product ID or barcode
+        products = products.filter((product, index, self) => 
+          index === self.findIndex(p => p.barcode === product.barcode || p.item_number === product.item_number)
+        );
+      }
+
+      // Strategy 3: If still no results, try partial matching
+      if (products.length === 0) {
+        console.log('🔍 Trying partial matching search');
+        // Search with less strict parameters
+        response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?limit=50`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -94,13 +159,27 @@ const WasteReports = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setSearchResults(data.products || []);
-        } else {
-          setSearchResults([]);
+          const allProducts = data.products || [];
+          
+          // Filter products that partially match the search term
+          products = allProducts.filter(product => 
+            product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (product.arabic_description && product.arabic_description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (product.barcode && product.barcode.includes(searchTerm)) ||
+            (product.item_number && product.item_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (product.supplier && product.supplier.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+          );
+          
+          console.log('📊 Partial matching results:', products.length, 'products');
         }
       }
+
+      console.log('✅ Final search results:', products.length, 'products found');
+      setSearchResults(products.slice(0, 20)); // Limit to top 20 results
+      
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error('❌ Error searching products:', error);
       setSearchResults([]);
     } finally {
       setSearching(false);
