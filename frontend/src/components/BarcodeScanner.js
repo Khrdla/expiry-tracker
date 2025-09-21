@@ -295,74 +295,8 @@ const BarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         container.style.position = 'relative';
         container.appendChild(scanOverlay);
 
-        // Add REAL barcode detection using canvas scanning
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        setIsDetecting(true); // Use state instead of local variable
-        
-        // REAL barcode detection loop
-        const detectBarcode = async () => {
-          if (!isDetecting || !video.videoWidth || !video.videoHeight) {
-            if (isDetecting) {
-              setTimeout(detectBarcode, 100);
-            }
-            return;
-          }
-
-          try {
-            // Capture frame from video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
-            
-            // Try BarcodeDetector API if available
-            if ('BarcodeDetector' in window) {
-              const barcodeDetector = new BarcodeDetector({
-                formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code']
-              });
-              
-              const barcodes = await barcodeDetector.detect(canvas);
-              
-              if (barcodes.length > 0) {
-                const barcode = barcodes[0];
-                console.log('🎯 BARCODE DETECTED:', barcode.rawValue);
-                
-                setIsDetecting(false); // Stop detection
-                setError('✅ Barcode detected: ' + barcode.rawValue);
-                
-                // Flash green on success
-                scanOverlay.style.backgroundColor = 'rgba(34, 197, 94, 0.5)';
-                setTimeout(() => {
-                  handleSuccessfulScan(barcode.rawValue);
-                  
-                  // Look up product
-                  const token = localStorage.getItem('token');
-                  fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${barcode.rawValue}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                  })
-                  .then(response => response.ok ? response.json() : null)
-                  .then(product => {
-                    if (product) {
-                      onProductFound(product);
-                      onClose();
-                    } else {
-                      setError('❌ Product not found: ' + barcode.rawValue);
-                    }
-                  })
-                  .catch(() => setError('❌ Lookup failed: ' + barcode.rawValue));
-                }, 500);
-                
-                return;
-              }
-            }
-          } catch (detectError) {
-            // Silent - detection errors are normal when no barcode present
-          }
-          
-          if (isDetecting) {
-            setTimeout(detectBarcode, 200); // 5 FPS detection
-          }
-        };
+        // Set up detection state
+        setIsDetecting(true);
         
         // Add manual input BELOW camera (not overlapping)
         const inputContainer = document.createElement('div');
