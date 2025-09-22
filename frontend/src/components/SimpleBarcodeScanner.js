@@ -1,35 +1,58 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Keyboard, Zap, AlertCircle, CheckCircle, Package } from 'lucide-react';
+import { X, Camera, Keyboard, Zap, AlertCircle, CheckCircle, Package, CameraOff } from 'lucide-react';
 
 const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [cameraReady, setCameraReady] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cameraPermission, setCameraPermission] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const detectorRef = useRef(null);
   const scanningRef = useRef(false);
+  const animationRef = useRef(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-  // Initialize BarcodeDetector
+  // Initialize scanner on open
   useEffect(() => {
-    if ('BarcodeDetector' in window) {
-      detectorRef.current = new BarcodeDetector({
-        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code']
-      });
-      console.log('✅ BarcodeDetector initialized');
+    if (isOpen) {
+      initializeScanner();
     } else {
-      console.log('❌ BarcodeDetector not available - will use manual entry');
-      setManualMode(true);
+      cleanup();
     }
-  }, []);
+  }, [isOpen]);
+
+  const initializeScanner = async () => {
+    try {
+      // Always try camera first - don't check for BarcodeDetector
+      console.log('🚀 Initializing fast barcode scanner...');
+      
+      // Try to initialize BarcodeDetector if available
+      if ('BarcodeDetector' in window) {
+        detectorRef.current = new BarcodeDetector({
+          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code']
+        });
+        console.log('✅ BarcodeDetector available');
+      } else {
+        console.log('ℹ️ BarcodeDetector not available - using visual scanning');
+      }
+      
+      // Start camera immediately
+      await startCamera();
+      
+    } catch (error) {
+      console.error('Scanner initialization error:', error);
+      setError('📱 Camera initialization failed - manual entry available');
+      setCameraPermission(false);
+    }
+  };
 
   // Cleanup on close
   useEffect(() => {
