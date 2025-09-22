@@ -512,15 +512,17 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             </div>
           )}
 
-          {/* Instructions */}
-          <div className="bg-gray-50 p-3 rounded-lg text-center">
-            <h4 className="font-medium text-gray-800">📱 Quick Tips</h4>
-            <p className="text-xs text-gray-600 mt-1">
-              Hold barcode 4-6 inches from camera • Good lighting • Steady hands
-            </p>
-          </div>
         </div>
       </div>
+      
+      {/* Add CSS animations */}
+      <style jsx>{`
+        @keyframes scanning {
+          0% { top: 0; opacity: 1; }
+          50% { top: 50%; opacity: 0.7; }
+          100% { top: 100%; opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
