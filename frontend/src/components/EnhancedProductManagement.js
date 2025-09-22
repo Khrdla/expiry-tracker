@@ -349,7 +349,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
               <div className="h-48 md:h-56 relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
                 {product.image_url ? (
                   <img 
-                    src={`${BACKEND_URL}/api${product.image_url}`}
+                    src={`${BACKEND_URL}${product.image_url}`}
                     alt={product.product_name}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
