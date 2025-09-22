@@ -347,17 +347,10 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
             >
               {/* Product Image */}
               <div className="h-48 md:h-56 relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-                {product.image_url ? (
-                  <img 
-                    src={`${BACKEND_URL}${product.image_url}`}
-                    alt={product.product_name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      // Hide image and show fallback by setting src to empty
-                      e.target.src = '';
-                    }}
-                  />
-                ) : null}
+                <ProductImage 
+                  imageUrl={product.image_url ? `${BACKEND_URL}${product.image_url}` : null}
+                  alt={product.product_name}
+                />
                 <div className={`w-full h-full flex flex-col items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
                   <div className="bg-white rounded-full p-3 mb-2 shadow-md">
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
