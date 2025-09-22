@@ -83,20 +83,29 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
             <div className="flex justify-center">
               {product.image_url ? (
                 <div className="w-full max-w-lg">
+                  {imageLoading && !imageError && (
+                    <div className="w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex flex-col items-center justify-center">
+                      <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+                      <p className="text-slate-500 text-lg font-medium">Loading image...</p>
+                    </div>
+                  )}
+                  
                   <img 
                     src={`${BACKEND_URL}${product.image_url}`}
                     alt={product.product_name}
-                    className="w-full h-80 object-cover rounded-3xl shadow-2xl border-8 border-white bg-white hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02]"
+                    className={`w-full h-80 object-cover rounded-3xl shadow-2xl border-8 border-white bg-white hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02] ${imageLoading || imageError ? 'hidden' : ''}`}
                     style={{
                       filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))'
                     }}
                     onError={(e) => {
-                      console.error('Image failed to load:', `${BACKEND_URL}${product.image_url}`);
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      console.error('❌ Image failed to load:', `${BACKEND_URL}${product.image_url}`);
+                      setImageLoading(false);
+                      setImageError(true);
                     }}
                     onLoad={() => {
                       console.log('✅ Product image loaded successfully:', `${BACKEND_URL}${product.image_url}`);
+                      setImageLoading(false);
+                      setImageError(false);
                     }}
                   />
                   <div className="hidden w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex-col items-center justify-center">
