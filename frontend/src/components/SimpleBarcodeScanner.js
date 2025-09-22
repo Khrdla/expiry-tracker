@@ -530,6 +530,19 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 </button>
               </div>
               
+              {/* Debug Controls */}
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  onClick={() => {
+                    cleanup();
+                    setTimeout(() => startCamera(), 500);
+                  }}
+                  className="bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 text-sm transition-all"
+                >
+                  🔄 Restart Camera
+                </button>
+              </div>
+              
               {/* Quick tips */}
               <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                 <div className="text-center">
