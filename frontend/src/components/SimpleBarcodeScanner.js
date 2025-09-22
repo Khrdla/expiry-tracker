@@ -239,6 +239,10 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     scanningRef.current = false;
     setScanning(false);
     setError('');
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
   };
 
   if (!isOpen) return null;
