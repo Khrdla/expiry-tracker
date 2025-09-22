@@ -325,11 +325,20 @@ const MobileBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <div className="w-60 h-20 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-20">
                     {cameraActive && (
                       <div className="absolute -top-6 left-0 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                        📱 Point at barcode
+                        {detectorRef.current ? '📱 Point at barcode' : '📱 Enhanced scanning active'}
                       </div>
                     )}
                   </div>
                 </div>
+                
+                {/* Quick manual entry overlay for better UX */}
+                {cameraActive && !detectorRef.current && (
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="bg-black bg-opacity-75 text-white p-2 rounded-lg text-center">
+                      <p className="text-xs">Can't find barcode? Try manual entry! 👇</p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Status indicator */}
                 {cameraActive && (
