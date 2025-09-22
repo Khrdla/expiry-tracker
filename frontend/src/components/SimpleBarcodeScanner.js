@@ -67,6 +67,13 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     setCameraReady(false);
     setError('');
     setSuccess('');
+    setCameraPermission(null);
+    setShowManualEntry(false);
+    
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
     
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
