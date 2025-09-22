@@ -28,6 +28,13 @@ const MobileBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   }, [isOpen]);
 
   const cleanup = () => {
+    // Stop QuaggaJS
+    try {
+      Quagga.stop();
+    } catch (e) {
+      // QuaggaJS not running
+    }
+    
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
