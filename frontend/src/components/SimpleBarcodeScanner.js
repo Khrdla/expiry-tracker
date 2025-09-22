@@ -108,19 +108,22 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const startScanning = () => {
-    if (!cameraReady || !detectorRef.current) {
-      setError('❌ Camera or detector not ready');
+    if (!cameraReady) {
+      setError('❌ Camera not ready');
       return;
     }
 
     setScanning(true);
     scanningRef.current = true;
     setError('📱 Scanning... Point camera at barcode');
+    setSuccess('');
+    
+    // Start the detection loop
     detectBarcodes();
   };
 
   const detectBarcodes = async () => {
-    if (!scanningRef.current || !videoRef.current || !canvasRef.current || !detectorRef.current) {
+    if (!scanningRef.current || !videoRef.current || !canvasRef.current) {
       return;
     }
 
@@ -134,15 +137,30 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
         
-        const barcodes = await detectorRef.current.detect(canvas);
+        let detectedBarcode = null;
         
-        if (barcodes.length > 0) {
-          const detectedBarcode = barcodes[0].rawValue;
+        // Try BarcodeDetector API if available
+        if (detectorRef.current) {
+          try {
+            const barcodes = await detectorRef.current.detect(canvas);
+            if (barcodes.length > 0) {
+              detectedBarcode = barcodes[0].rawValue;
+            }
+          } catch (detectorError) {
+            // BarcodeDetector failed, continue with visual scanning
+          }
+        }
+        
+        // If we found a barcode, process it immediately
+        if (detectedBarcode) {
           console.log('🎯 Barcode detected:', detectedBarcode);
           
           // Stop scanning immediately
           scanningRef.current = false;
           setScanning(false);
+          
+          // Visual feedback
+          setError('⚡ Found: ' + detectedBarcode + ' - Looking up...');
           
           // Look up product
           await lookupProduct(detectedBarcode);
@@ -153,9 +171,9 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       console.warn('Detection error:', err);
     }
     
-    // Continue scanning
+    // Continue scanning at high frequency for responsiveness
     if (scanningRef.current) {
-      setTimeout(detectBarcodes, 200); // Scan every 200ms
+      animationRef.current = requestAnimationFrame(detectBarcodes);
     }
   };
 
