@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Calendar, Download, Filter, TrendingUp, TrendingDown, Package, Trash2, AlertTriangle, CheckCircle2, Plus, Search, X, Calculator, Camera, Scan } from 'lucide-react';
-import SimpleBarcodeScanner from './SimpleBarcodeScanner';
+import MobileBarcodeScanner from './MobileBarcodeScanner';
 
 const WasteReports = () => {
   const [reportData, setReportData] = useState(null);
