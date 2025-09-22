@@ -439,7 +439,15 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-72 object-cover"
+                  controls={false}
+                  webkit-playsinline="true"
+                  className="w-full h-72 object-cover bg-black"
+                  style={{
+                    objectFit: 'cover',
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#000'
+                  }}
                 />
                 <canvas ref={canvasRef} className="hidden" />
                 
