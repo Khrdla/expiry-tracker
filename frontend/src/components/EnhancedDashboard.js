@@ -33,6 +33,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [wasteData, setWasteData] = useState(null);
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
