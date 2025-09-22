@@ -353,8 +353,8 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
                     alt={product.product_name}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      // Hide image and show fallback by setting src to empty
+                      e.target.src = '';
                     }}
                   />
                 ) : null}
