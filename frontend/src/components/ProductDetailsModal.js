@@ -5,6 +5,14 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
   const [imageLoading, setImageLoading] = React.useState(true);
   const [imageError, setImageError] = React.useState(false);
   
+  // Reset image states when product changes
+  React.useEffect(() => {
+    if (product?.image_url) {
+      setImageLoading(true);
+      setImageError(false);
+    }
+  }, [product?.image_url]);
+  
   if (!isOpen || !product) return null;
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
