@@ -451,6 +451,17 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                 />
                 <canvas ref={canvasRef} className="hidden" />
                 
+                {/* Camera loading indicator */}
+                {!cameraReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+                    <div className="text-center text-white">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+                      <p className="text-sm">📱 Starting camera...</p>
+                      <p className="text-xs text-gray-300 mt-1">Please allow camera access</p>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Elegant Scanning Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
