@@ -81,15 +81,19 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
               {product.image_url ? (
                 <div className="w-full max-w-lg">
                   <img 
-                    src={`${BACKEND_URL}/api${product.image_url}`}
+                    src={`${BACKEND_URL}${product.image_url}`}
                     alt={product.product_name}
                     className="w-full h-80 object-cover rounded-3xl shadow-2xl border-8 border-white bg-white hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02]"
                     style={{
                       filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))'
                     }}
                     onError={(e) => {
+                      console.error('Image failed to load:', `${BACKEND_URL}${product.image_url}`);
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Product image loaded successfully:', `${BACKEND_URL}${product.image_url}`);
                     }}
                   />
                   <div className="hidden w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex-col items-center justify-center">
@@ -101,6 +105,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                     </div>
                     <p className="text-slate-500 text-lg font-medium">Image not available</p>
                     <p className="text-slate-400 text-sm mt-2">Product image failed to load</p>
+                    <p className="text-slate-300 text-xs mt-1">URL: {`${BACKEND_URL}${product.image_url}`}</p>
                   </div>
                 </div>
               ) : (
