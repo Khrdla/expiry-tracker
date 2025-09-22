@@ -798,6 +798,13 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
           setSelectedProduct(null);
         }}
       />
+
+      {/* Advanced Barcode Features Modal */}
+      {showAdvancedFeatures && (
+        <AdvancedBarcodeFeatures
+          onClose={() => setShowAdvancedFeatures(false)}
+        />
+      )}
     </div>
   );
 };
