@@ -107,11 +107,85 @@ const MobileBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   };
 
   const startScanning = () => {
-    if (!detectorRef.current || scanIntervalRef.current) {
+    setError('🔍 Scanning for barcodes...');
+    
+    // Use QuaggaJS for barcode detection since BarcodeDetector is not available
+    if (!detectorRef.current) {
+      startQuaggaScanning();
+    } else {
+      startNativeScanning();
+    }
+  };
+
+  const startQuaggaScanning = () => {
+    if (!videoRef.current) return;
+    
+    console.log('🔍 Starting QuaggaJS scanning...');
+    setError('🔍 QuaggaJS scanning active...');
+    
+    // Configure QuaggaJS for mobile barcode scanning
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: videoRef.current,
+        constraints: {
+          width: 640,
+          height: 480,
+          facingMode: "environment"
+        }
+      },
+      locator: {
+        patchSize: "medium",
+        halfSample: true
+      },
+      numOfWorkers: 2,
+      frequency: 10,
+      decoder: {
+        readers: [
+          "code_128_reader",
+          "ean_reader",
+          "ean_8_reader",
+          "code_39_reader",
+          "code_39_vin_reader",
+          "codabar_reader",
+          "upc_reader",
+          "upc_e_reader"
+        ]
+      },
+      locate: true
+    }, (err) => {
+      if (err) {
+        console.error('❌ QuaggaJS init error:', err);
+        setError('❌ Scanner initialization failed - use manual entry');
+        return;
+      }
+      
+      console.log('✅ QuaggaJS initialized');
+      setError('🎯 Ready! Point camera at barcode');
+      
+      // Start scanning
+      Quagga.start();
+      
+      // Listen for barcode detection
+      Quagga.onDetected((data) => {
+        const barcode = data.codeResult.code;
+        console.log('🎯 Barcode detected by QuaggaJS:', barcode);
+        
+        // Stop scanning
+        Quagga.stop();
+        setError('⚡ Found: ' + barcode + ' - Looking up...');
+        
+        // Lookup product
+        lookupProduct(barcode);
+      });
+    });
+  };
+
+  const startNativeScanning = () => {
+    if (scanIntervalRef.current) {
       return;
     }
-    
-    setError('🔍 Scanning for barcodes...');
     
     scanIntervalRef.current = setInterval(async () => {
       try {
