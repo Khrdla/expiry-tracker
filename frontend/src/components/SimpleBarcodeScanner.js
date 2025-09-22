@@ -90,48 +90,150 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setError('📱 Starting camera...');
       setCameraPermission(null);
       
-      // Enhanced camera constraints for better barcode scanning
-      const constraints = {
-        video: { 
-          facingMode: 'environment', // Back camera
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 },
-          frameRate: { ideal: 30 },
-          focusMode: 'continuous'
+      // Mobile-optimized camera constraints with multiple fallbacks
+      const constraints = [
+        // First attempt: High quality for barcode scanning
+        {
+          video: { 
+            facingMode: { exact: 'environment' }, // Force back camera
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 },
+            frameRate: { ideal: 30, min: 15 }
+          }
+        },
+        // Second attempt: iOS Safari compatible
+        {
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        // Third attempt: Basic mobile
+        {
+          video: { 
+            facingMode: 'environment'
+          }
+        },
+        // Final fallback: Any camera
+        {
+          video: true
         }
-      };
+      ];
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream = null;
+      let constraintUsed = null;
+      
+      // Try each constraint set until one works
+      for (let i = 0; i < constraints.length; i++) {
+        try {
+          console.log(`📱 Attempting camera constraint ${i + 1}/${constraints.length}`);
+          stream = await navigator.mediaDevices.getUserMedia(constraints[i]);
+          constraintUsed = i + 1;
+          console.log(`✅ Camera initialized with constraint set ${constraintUsed}`);
+          break;
+        } catch (constraintError) {
+          console.warn(`⚠️ Constraint ${i + 1} failed:`, constraintError.message);
+          if (i === constraints.length - 1) {
+            throw constraintError; // Last attempt failed
+          }
+          // Small delay before next attempt
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      if (!stream) {
+        throw new Error('Failed to initialize camera with any constraints');
+      }
+
       streamRef.current = stream;
       setCameraPermission(true);
       
+      // Enhanced video element setup for mobile
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          setCameraReady(true);
-          setError('');
-          console.log('✅ Camera ready for scanning');
+        const video = videoRef.current;
+        
+        // Clear any existing source
+        video.srcObject = null;
+        
+        // Mobile-specific video attributes
+        video.autoplay = true;
+        video.playsInline = true; // Critical for iOS
+        video.muted = true;
+        video.controls = false;
+        video.style.objectFit = 'cover';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        
+        // Set the stream
+        video.srcObject = stream;
+        
+        // Enhanced event handlers for mobile
+        video.onloadedmetadata = async () => {
+          console.log('📱 Video metadata loaded');
           
-          // Auto-start scanning when camera is ready
-          setTimeout(() => {
-            if (!showManualEntry) {
-              startScanning();
-            }
-          }, 500);
+          // Force play on mobile
+          try {
+            await video.play();
+            console.log('✅ Video playing successfully');
+            
+            setCameraReady(true);
+            setError('🎯 Camera ready! Point at barcode to scan');
+            
+            // Auto-start scanning when camera is ready
+            setTimeout(() => {
+              if (!showManualEntry) {
+                startScanning();
+              }
+            }, 1000); // Longer delay for mobile
+            
+          } catch (playError) {
+            console.error('❌ Video play error:', playError);
+            setError('❌ Camera display failed - try manual entry');
+          }
         };
+        
+        video.onloadeddata = () => {
+          console.log('📱 Video data loaded');
+        };
+        
+        video.oncanplay = () => {
+          console.log('📱 Video can start playing');
+        };
+        
+        video.onerror = (error) => {
+          console.error('❌ Video error:', error);
+          setError('❌ Camera display error - use manual entry');
+        };
+        
+        // Fallback: Force play after a delay
+        setTimeout(async () => {
+          if (video.paused) {
+            try {
+              await video.play();
+              console.log('🔄 Forced video play successful');
+            } catch (forcePlayError) {
+              console.warn('⚠️ Force play failed:', forcePlayError);
+            }
+          }
+        }, 1500);
       }
       
     } catch (err) {
-      console.error('Camera error:', err);
+      console.error('❌ Camera initialization failed:', err);
       setCameraPermission(false);
       
       let errorMessage = '❌ Camera not available. ';
       if (err.name === 'NotAllowedError') {
-        errorMessage += 'Please allow camera access and try again.';
+        errorMessage += 'Please allow camera access in your browser settings.';
       } else if (err.name === 'NotFoundError') {
-        errorMessage += 'No camera found on this device.';
+        errorMessage += 'No camera found. Try manual entry instead.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage += 'Camera in use by another app. Close other camera apps.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage += 'Camera settings not supported. Try manual entry.';
       } else {
-        errorMessage += 'Please check camera permissions.';
+        errorMessage += 'Use manual entry for barcode scanning.';
       }
       
       setError(errorMessage);
