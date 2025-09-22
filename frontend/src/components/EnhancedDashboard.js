@@ -19,6 +19,7 @@ import MobileBarcodeScanner from './MobileBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import Dashboard3DCharts from './Dashboard3DCharts';
 import EnhancedVisualCharts from './EnhancedVisualCharts';
+import AdvancedBarcodeFeatures from './AdvancedBarcodeFeatures';
 
 const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   const [dashboardData, setDashboardData] = useState(null);
