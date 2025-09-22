@@ -2,6 +2,9 @@ import React from 'react';
 import { X, Package, MapPin, Users, Calendar, DollarSign, Hash, Barcode } from 'lucide-react';
 
 const ProductDetailsModal = ({ product, isOpen, onClose }) => {
+  const [imageLoading, setImageLoading] = React.useState(true);
+  const [imageError, setImageError] = React.useState(false);
+  
   if (!isOpen || !product) return null;
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
