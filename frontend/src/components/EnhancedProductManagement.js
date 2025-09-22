@@ -1007,9 +1007,8 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
                         src={imagePreview} 
                         alt="Product preview" 
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
+                        onError={() => {
+                          setImagePreview(null); // This will trigger the else case below
                         }}
                       />
                     </div>
