@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Package, Plus, Edit, Trash2, Download, Upload, BarChart3, Camera, X } from 'lucide-react';
-import SimpleBarcodeScanner from './SimpleBarcodeScanner';
+import MobileBarcodeScanner from './MobileBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 
 const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
