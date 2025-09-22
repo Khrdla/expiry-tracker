@@ -680,7 +680,7 @@ const EnhancedProductManagement = ({ user, selectedFilters = {} }) => {
       )}
 
       {/* Barcode Scanner Modal */}
-      <SimpleBarcodeScanner
+      <MobileBarcodeScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onProductFound={(product) => {
