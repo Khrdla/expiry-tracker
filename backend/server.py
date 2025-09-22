@@ -3814,6 +3814,204 @@ async def download_import_template(current_user: User = Depends(get_current_user
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate template: {str(e)}")
 
+# Master Data Import Endpoints
+@api_router.post("/master-data/import")
+async def import_master_data(
+    current_user: User = Depends(get_current_user)
+):
+    """Import master data from Excel file"""
+    try:
+        from master_data_importer import MasterDataImporter
+        
+        # Check if user has admin privileges
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required for master data import")
+        
+        # Initialize importer
+        mongo_url = os.environ.get('MONGO_URL')
+        importer = MasterDataImporter(mongo_url)
+        
+        # Check if master data file exists
+        excel_file = '/app/master_data.xlsx'
+        if not os.path.exists(excel_file):
+            raise HTTPException(status_code=404, detail="Master data file not found. Please upload the Excel file first.")
+        
+        # Import data
+        stats = await importer.import_master_data(excel_file)
+        
+        return {
+            "message": "Master data import completed successfully",
+            "stats": stats,
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Master data import failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+
+@api_router.get("/master-data/summary")
+async def get_master_data_summary(
+    current_user: User = Depends(get_current_user)
+):
+    """Get summary of imported master data"""
+    try:
+        from master_data_importer import MasterDataImporter
+        
+        mongo_url = os.environ.get('MONGO_URL')
+        importer = MasterDataImporter(mongo_url)
+        
+        summary = await importer.get_import_summary()
+        return summary
+        
+    except Exception as e:
+        logger.error(f"Failed to get master data summary: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get summary: {str(e)}")
+
+@api_router.post("/master-data/upload")
+async def upload_master_data_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload master data Excel file"""
+    try:
+        # Check if user has admin privileges
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required for file upload")
+        
+        # Validate file type
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are allowed")
+        
+        # Save uploaded file
+        file_path = f'/app/master_data.xlsx'
+        with open(file_path, 'wb') as f:
+            content = await file.read()
+            f.write(content)
+        
+        return {
+            "message": "Master data file uploaded successfully",
+            "filename": file.filename,
+            "size": len(content),
+            "timestamp": datetime.now(timezone.utc)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+# Enhanced Analytics Endpoints for Visual Charts
+@api_router.get("/analytics/department-breakdown")
+async def get_department_breakdown(
+    current_user: User = Depends(get_current_user)
+):
+    """Get detailed department breakdown for visual charts"""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$department",
+                    "total_products": {"$sum": 1},
+                    "total_stock": {"$sum": "$quantity"},
+                    "total_value_yer": {"$sum": "$stock_value_yer"},
+                    "total_value_usd": {"$sum": "$stock_value_usd"},
+                    "avg_price": {"$avg": "$purchase_price"},
+                    "low_stock_items": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "low_stock"]}, 1, 0]}
+                    },
+                    "out_of_stock_items": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "out_of_stock"]}, 1, 0]}
+                    }
+                }
+            },
+            {"$sort": {"total_value_yer": -1}}
+        ]
+        
+        result = await db.products.aggregate(pipeline).to_list(None)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to get department breakdown: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get department breakdown")
+
+@api_router.get("/analytics/stock-levels")
+async def get_stock_levels_analytics(
+    current_user: User = Depends(get_current_user)
+):
+    """Get stock levels analytics for visual charts"""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$status",
+                    "count": {"$sum": 1},
+                    "total_value": {"$sum": "$stock_value_yer"},
+                    "departments": {"$addToSet": "$department"}
+                }
+            }
+        ]
+        
+        status_breakdown = await db.products.aggregate(pipeline).to_list(None)
+        
+        # Get stock distribution by range
+        stock_ranges_pipeline = [
+            {
+                "$bucket": {
+                    "groupBy": "$quantity",
+                    "boundaries": [0, 1, 5, 10, 25, 50, 100],
+                    "default": "100+",
+                    "output": {
+                        "count": {"$sum": 1},
+                        "total_value": {"$sum": "$stock_value_yer"}
+                    }
+                }
+            }
+        ]
+        
+        stock_ranges = await db.products.aggregate(stock_ranges_pipeline).to_list(None)
+        
+        return {
+            "status_breakdown": status_breakdown,
+            "stock_ranges": stock_ranges
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get stock analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get stock analytics")
+
+@api_router.get("/analytics/supplier-performance")
+async def get_supplier_performance(
+    current_user: User = Depends(get_current_user)
+):
+    """Get supplier performance analytics"""
+    try:
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$supplier",
+                    "total_products": {"$sum": 1},
+                    "total_stock_value": {"$sum": "$stock_value_yer"},
+                    "avg_price": {"$avg": "$purchase_price"},
+                    "departments": {"$addToSet": "$department"},
+                    "out_of_stock_count": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "out_of_stock"]}, 1, 0]}
+                    }
+                }
+            },
+            {"$sort": {"total_stock_value": -1}},
+            {"$limit": 20}  # Top 20 suppliers
+        ]
+        
+        result = await db.products.aggregate(pipeline).to_list(None)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to get supplier performance: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get supplier performance")
+
 # Include router after all endpoints are defined
 app.include_router(api_router)
 
