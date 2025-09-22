@@ -87,30 +87,54 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const startCamera = async () => {
     try {
-      setError('');
+      setError('📱 Starting camera...');
+      setCameraPermission(null);
       
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Enhanced camera constraints for better barcode scanning
+      const constraints = {
         video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode: 'environment', // Back camera
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 30 },
+          focusMode: 'continuous'
         }
-      });
+      };
 
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      setCameraPermission(true);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           setCameraReady(true);
-          console.log('✅ Camera ready');
+          setError('');
+          console.log('✅ Camera ready for scanning');
+          
+          // Auto-start scanning when camera is ready
+          setTimeout(() => {
+            if (!showManualEntry) {
+              startScanning();
+            }
+          }, 500);
         };
       }
       
     } catch (err) {
       console.error('Camera error:', err);
-      setError('❌ Camera not available. Using manual entry.');
-      setManualMode(true);
+      setCameraPermission(false);
+      
+      let errorMessage = '❌ Camera not available. ';
+      if (err.name === 'NotAllowedError') {
+        errorMessage += 'Please allow camera access and try again.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage += 'No camera found on this device.';
+      } else {
+        errorMessage += 'Please check camera permissions.';
+      }
+      
+      setError(errorMessage);
     }
   };
 
