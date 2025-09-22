@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Keyboard, Zap, AlertCircle, CheckCircle } from 'lucide-react';
+import Quagga from 'quagga';
 
 const MobileBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const [error, setError] = useState('');
