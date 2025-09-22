@@ -108,17 +108,21 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                       setImageError(false);
                     }}
                   />
-                  <div className="hidden w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex-col items-center justify-center">
-                    <div className="bg-white rounded-full p-6 mb-6 shadow-xl">
-                      <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                  {imageError && (
+                    <div className="w-full h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex flex-col items-center justify-center">
+                      <div className="bg-white rounded-full p-6 mb-6 shadow-xl">
+                        <svg className="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-slate-500 text-lg font-medium">Image not available</p>
+                      <p className="text-slate-400 text-sm mt-2">Product image failed to load</p>
+                      <p className="text-slate-300 text-xs mt-1 text-center px-4 break-all">
+                        URL: {`${BACKEND_URL}${product.image_url}`}
+                      </p>
                     </div>
-                    <p className="text-slate-500 text-lg font-medium">Image not available</p>
-                    <p className="text-slate-400 text-sm mt-2">Product image failed to load</p>
-                    <p className="text-slate-300 text-xs mt-1">URL: {`${BACKEND_URL}${product.image_url}`}</p>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <div className="w-full max-w-lg h-80 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-3xl shadow-2xl border-8 border-white flex flex-col items-center justify-center">
