@@ -539,6 +539,19 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   </p>
                 </div>
               </div>
+              
+              {/* Debug info for mobile */}
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                <div className="text-center">
+                  <p className="text-gray-700 text-xs font-medium">🔍 Debug Info</p>
+                  <div className="text-xs text-gray-600 mt-1 space-y-1">
+                    <p>Camera Ready: {cameraReady ? '✅ Yes' : '❌ No'}</p>
+                    <p>Permission: {cameraPermission === true ? '✅ Granted' : cameraPermission === false ? '❌ Denied' : '⏳ Pending'}</p>
+                    <p>Stream: {streamRef.current ? '✅ Active' : '❌ None'}</p>
+                    <p>Video Size: {videoRef.current ? `${videoRef.current.videoWidth || 0}x${videoRef.current.videoHeight || 0}` : 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
