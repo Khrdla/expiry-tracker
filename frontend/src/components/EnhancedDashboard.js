@@ -15,7 +15,7 @@ import {
   Line
 } from 'recharts';
 import { Camera } from 'lucide-react';
-import SimpleBarcodeScanner from './SimpleBarcodeScanner';
+import MobileBarcodeScanner from './MobileBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import Dashboard3DCharts from './Dashboard3DCharts';
 
