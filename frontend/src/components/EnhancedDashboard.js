@@ -398,6 +398,16 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
             </button>
             
             <button
+              onClick={() => setShowAdvancedFeatures(true)}
+              className="w-full sm:w-auto bg-purple-500 bg-opacity-80 hover:bg-opacity-100 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
+              title="Advanced Barcode Features - Bulk Scan, History, Analytics"
+            >
+              <span className="text-lg">🚀</span>
+              <span className="hidden sm:inline">Advanced</span>
+              <span className="sm:hidden">Pro</span>
+            </button>
+            
+            <button
               onClick={fetchDashboardData}
               className="w-full sm:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all text-sm md:text-base"
             >
