@@ -435,9 +435,27 @@ const MobileBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {/* Debug Info */}
           <div className="bg-gray-50 p-2 rounded-lg text-xs text-gray-600">
             <p>Camera: {cameraActive ? '✅ Active' : '❌ Inactive'}</p>
-            <p>Detector: {detectorRef.current ? '✅ Available' : '❌ Unavailable'}</p>
+            <p>Detector: {detectorRef.current ? '✅ Native API' : '🔧 QuaggaJS Fallback'}</p>
             <p>Stream: {streamRef.current ? '✅ Ready' : '❌ None'}</p>
           </div>
+          
+          {/* Auto-suggest manual entry if scanning issues */}
+          {cameraActive && !detectorRef.current && (
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div className="text-center">
+                <p className="text-blue-800 text-sm font-medium">💡 Quick Tip</p>
+                <p className="text-blue-600 text-xs mt-1">
+                  Your device uses enhanced scanning. If barcodes aren't detected automatically, try manual entry for fastest results!
+                </p>
+                <button
+                  onClick={() => setManualMode(true)}
+                  className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
+                >
+                  ⚡ Quick Manual Entry
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
