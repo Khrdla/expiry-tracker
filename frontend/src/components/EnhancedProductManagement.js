@@ -718,8 +718,8 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
   useEffect(() => {
     if (product) {
       setFormData(product);
-      // Use API endpoint to serve images (this will be properly routed)
-      const imageUrl = product.image_url ? `${BACKEND_URL}/api${product.image_url}` : null;
+      // Use direct static file serving (without /api prefix)
+      const imageUrl = product.image_url ? `${BACKEND_URL}${product.image_url}` : null;
       setImagePreview(imageUrl);
     }
   }, [product, BACKEND_URL]);
