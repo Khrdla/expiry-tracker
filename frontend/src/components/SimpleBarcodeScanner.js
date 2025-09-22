@@ -301,98 +301,160 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         {/* Content */}
         <div className="p-4 space-y-4">
           
-          {/* Camera Scanner */}
-          {!manualMode && (
-            <div className="space-y-3">
-              
-              {/* Camera View */}
-              <div className="relative bg-black rounded-lg overflow-hidden">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-64 object-cover"
-                />
-                <canvas ref={canvasRef} className="hidden" />
-                
-                {/* Scanning overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-48 h-24 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-10">
-                    <div className="absolute -top-6 left-0 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                      Aim here
-                    </div>
-                  </div>
-                </div>
-                
-                {scanning && (
-                  <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                    📱 Scanning...
-                  </div>
-                )}
-              </div>
-              
-              {/* Camera Controls */}
-              <div className="flex space-x-2">
-                {!cameraReady ? (
-                  <button
-                    onClick={startCamera}
-                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2"
-                  >
-                    <Camera size={16} />
-                    <span>Start Camera</span>
-                  </button>
-                ) : !scanning ? (
-                  <button
-                    onClick={startScanning}
-                    className="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2"
-                  >
-                    <Zap size={16} />
-                    <span>Start Scanning</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopScanning}
-                    className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600"
-                  >
-                    Stop Scanning
-                  </button>
-                )}
-                
+          {/* Camera Permission Request */}
+          {cameraPermission === false && (
+            <div className="text-center py-6">
+              <CameraOff size={48} className="text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">🔒 Camera Access Required</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                To scan barcodes with your camera, please allow camera access.
+              </p>
+              <div className="space-y-2">
                 <button
-                  onClick={() => setManualMode(true)}
-                  className="bg-gray-500 text-white px-4 py-3 rounded-lg hover:bg-gray-600"
-                  title="Manual Entry"
+                  onClick={startCamera}
+                  className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  <Keyboard size={16} />
+                  📷 Allow Camera Access
+                </button>
+                <button
+                  onClick={() => setShowManualEntry(true)}
+                  className="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                >
+                  ⌨️ Use Manual Entry Instead
                 </button>
               </div>
             </div>
           )}
 
-          {/* Manual Entry */}
-          {manualMode && (
-            <div className="space-y-3">
-              <div className="text-center">
-                <h3 className="font-semibold text-gray-800">⌨️ Manual Entry</h3>
-                <p className="text-sm text-gray-600">Type barcode for instant lookup</p>
+          {/* Camera Scanner Interface */}
+          {cameraPermission === true && !showManualEntry && (
+            <div className="space-y-4">
+              
+              {/* Camera View */}
+              <div className="relative bg-black rounded-xl overflow-hidden shadow-lg">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-72 object-cover"
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {/* Elegant Scanning Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative">
+                    {/* Scanning frame */}
+                    <div className="w-64 h-32 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-10 relative">
+                      {/* Animated corners */}
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400 rounded-tl-lg"></div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400 rounded-tr-lg"></div>
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400 rounded-bl-lg"></div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400 rounded-br-lg"></div>
+                      
+                      {/* Scanning line animation */}
+                      {scanning && (
+                        <div className="absolute inset-0 overflow-hidden rounded-lg">
+                          <div className="w-full h-0.5 bg-green-400 absolute animate-pulse" 
+                               style={{
+                                 top: '50%',
+                                 animation: 'scanning 2s infinite'
+                               }}></div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Instructions */}
+                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">
+                      {scanning ? '📱 Scanning...' : '🎯 Position barcode in frame'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Status indicator */}
+                {scanning && (
+                  <div className="absolute top-3 left-3 bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
+                    ⚡ Live Scanning
+                  </div>
+                )}
               </div>
               
-              <form onSubmit={handleManualSubmit} className="space-y-3">
-                <input
-                  type="text"
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  placeholder="Enter barcode (e.g. 3222471081716)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center font-mono text-lg focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                />
+              {/* Camera Controls */}
+              <div className="grid grid-cols-2 gap-3">
+                {!scanning ? (
+                  <button
+                    onClick={startScanning}
+                    disabled={!cameraReady}
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center space-x-2 shadow-lg"
+                  >
+                    <Zap size={18} />
+                    <span>Start Scanning</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopScanning}
+                    className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium flex items-center justify-center space-x-2 shadow-lg"
+                  >
+                    <CameraOff size={18} />
+                    <span>Stop Scanning</span>
+                  </button>
+                )}
                 
-                <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowManualEntry(true)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium flex items-center justify-center space-x-2 shadow-lg"
+                >
+                  <Keyboard size={18} />
+                  <span>Manual Entry</span>
+                </button>
+              </div>
+              
+              {/* Quick tips */}
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="text-center">
+                  <p className="text-blue-800 text-sm font-medium">📱 Scanning Tips</p>
+                  <p className="text-blue-600 text-xs mt-1">
+                    Hold steady • Good lighting • 4-8 inches away • All formats supported
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Entry Mode */}
+          {showManualEntry && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-800">⌨️ Manual Barcode Entry</h3>
+                <p className="text-sm text-gray-600">Type or paste barcode for instant lookup</p>
+              </div>
+              
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    placeholder="Enter barcode (e.g. 3222471081716)"
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg text-center font-mono text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    autoFocus
+                  />
+                  {barcode && (
+                    <button
+                      type="button"
+                      onClick={() => setBarcode('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={20} />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="submit"
                     disabled={!barcode.trim() || loading}
-                    className="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 font-medium"
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg"
                   >
                     {loading ? '⚡ Finding...' : '🔍 Find Product'}
                   </button>
@@ -400,22 +462,31 @@ const SimpleBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                   <button
                     type="button"
                     onClick={() => setBarcode('3222471081716')}
-                    className="bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600"
-                    title="Test barcode"
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all font-medium shadow-lg flex items-center justify-center space-x-2"
+                    title="Test with sample barcode"
                   >
                     <Package size={16} />
+                    <span>Test</span>
                   </button>
                 </div>
               </form>
               
-              {!manualMode && detectorRef.current && (
+              {cameraPermission === true && (
                 <button
-                  onClick={() => setManualMode(false)}
-                  className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 text-sm"
+                  onClick={() => setShowManualEntry(false)}
+                  className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all text-sm"
                 >
-                  📱 Back to Camera
+                  📷 Back to Camera Scanner
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Loading State */}
+          {cameraPermission === null && !showManualEntry && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">📱 Initializing camera scanner...</p>
             </div>
           )}
 
