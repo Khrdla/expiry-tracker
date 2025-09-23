@@ -14,6 +14,7 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
