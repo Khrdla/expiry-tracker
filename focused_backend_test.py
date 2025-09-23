@@ -8,7 +8,7 @@ import json
 import time
 
 class FocusedBackendTester:
-    def __init__(self, base_url="https://geant-inventory-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://smart-inventory-69.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
