@@ -18,7 +18,10 @@ const EnhancedProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  // Separate search states for different behaviors
+  const [productNameSearch, setProductNameSearch] = useState('');
+  const [barcodeSearch, setBarcodeSearch] = useState('');
+  const [activeSearchTerm, setActiveSearchTerm] = useState(''); // This drives the actual filtering
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSection, setSelectedSection] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
