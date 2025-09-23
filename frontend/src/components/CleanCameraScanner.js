@@ -3,6 +3,8 @@ import { X, Camera, Keyboard, AlertCircle, CheckCircle, RotateCcw } from 'lucide
 import jsQR from 'jsqr';
 
 const CleanCameraScanner = ({ isOpen, onClose, onProductFound }) => {
+  console.log('🎯 CleanCameraScanner rendering, isOpen:', isOpen);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
