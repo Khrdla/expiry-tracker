@@ -202,6 +202,55 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
+  // Alternative canvas-based barcode detection
+  const startCanvasScanning = () => {
+    if (!cameraActive || !videoRef.current) return;
+    
+    setAutoScanEnabled(true);
+    setError('🔍 Canvas scanning active - point at barcode');
+    
+    // Use canvas to capture frames and detect with ZXing
+    scanIntervalRef.current = setInterval(async () => {
+      if (!mountedRef.current || !autoScanEnabled || !videoRef.current) {
+        return;
+      }
+      
+      try {
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        // Try to decode from canvas using ZXing
+        if (codeReaderRef.current) {
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          
+          try {
+            const result = await codeReaderRef.current.decodeFromImageData(imageData);
+            if (result) {
+              const barcode = result.getText();
+              console.log('🎯 Canvas detected barcode:', barcode);
+              setAutoScanEnabled(false);
+              clearInterval(scanIntervalRef.current);
+              setSuccess(`📱 Detected: ${barcode}`);
+              lookupProduct(barcode);
+            }
+          } catch (decodeErr) {
+            // Normal when no barcode visible
+            if (decodeErr.name !== 'NotFoundException') {
+              console.warn('Canvas decode error:', decodeErr);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Canvas scanning error:', err);
+      }
+    }, 500); // Scan every 500ms
+  };
+
   const lookupProduct = async (barcodeValue) => {
     if (!mountedRef.current) return;
     
