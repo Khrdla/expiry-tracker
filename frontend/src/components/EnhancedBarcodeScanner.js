@@ -68,27 +68,29 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     };
   }, []);
 
-  // Enhanced modal lifecycle management
+  // Enhanced modal lifecycle management - Fixed dependencies to prevent infinite loop
   useEffect(() => {
     if (!componentMountedRef.current) return;
 
     if (isOpen) {
-      logScannerActivity('MODAL_OPENED');
+      console.log(`[BarcodeScanner] ${new Date().toISOString()} - MODAL_OPENED`);
       resetScannerState();
-      setTimeout(() => {
+      
+      // Use timeout to allow modal to render before starting camera
+      const timeoutId = setTimeout(() => {
         if (componentMountedRef.current && isOpen) {
           startCamera();
         }
       }, 300);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     } else {
-      logScannerActivity('MODAL_CLOSED');
+      console.log(`[BarcodeScanner] ${new Date().toISOString()} - MODAL_CLOSED`);
       cleanup();
     }
-
-    return () => {
-      if (!isOpen) cleanup();
-    };
-  }, [isOpen, logScannerActivity]);
+  }, [isOpen]); // Removed logScannerActivity dependency to prevent loop
 
   // Reset scanner state to prevent issues from previous sessions
   const resetScannerState = useCallback(() => {
