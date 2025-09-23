@@ -146,12 +146,12 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     logScannerActivity('CLEANUP_COMPLETED');
   }, [logScannerActivity]);
 
-  // Enhanced camera initialization with better error handling
+  // Enhanced camera initialization with better error handling - Fixed dependencies
   const startCamera = useCallback(async () => {
     if (!componentMountedRef.current || scanningStateRef.current) return;
     
     try {
-      logScannerActivity('CAMERA_START_REQUESTED');
+      console.log(`[BarcodeScanner] ${new Date().toISOString()} - CAMERA_START_REQUESTED`);
       setError('📱 Initializing camera...');
       
       // Enhanced camera constraints for better barcode detection
@@ -175,10 +175,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       }
 
       streamRef.current = stream;
-      logScannerActivity('CAMERA_STREAM_OBTAINED', { 
-        tracks: stream.getTracks().length,
-        videoTrack: stream.getVideoTracks()[0]?.getSettings()
-      });
+      console.log(`[BarcodeScanner] ${new Date().toISOString()} - CAMERA_STREAM_OBTAINED`);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -194,10 +191,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
             await videoRef.current.play();
             setCameraActive(true);
             setError('');
-            logScannerActivity('CAMERA_ACTIVE', {
-              videoWidth: videoRef.current.videoWidth,
-              videoHeight: videoRef.current.videoHeight
-            });
+            console.log(`[BarcodeScanner] ${new Date().toISOString()} - CAMERA_ACTIVE`);
             
             // Start detection after camera is stable
             setTimeout(() => {
@@ -206,22 +200,19 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
               }
             }, 1000);
           } catch (playErr) {
-            logScannerActivity('VIDEO_PLAY_ERROR', { error: playErr.message });
+            console.error(`[BarcodeScanner] VIDEO_PLAY_ERROR:`, playErr.message);
             setError('❌ Failed to start camera video');
           }
         };
         
         videoRef.current.onerror = (err) => {
-          logScannerActivity('VIDEO_ERROR', { error: err.message || 'Unknown video error' });
+          console.error(`[BarcodeScanner] VIDEO_ERROR:`, err.message || 'Unknown video error');
           setError('❌ Camera video error');
         };
       }
       
     } catch (err) {
-      logScannerActivity('CAMERA_START_ERROR', { 
-        error: err.message,
-        name: err.name 
-      });
+      console.error(`[BarcodeScanner] CAMERA_START_ERROR:`, err.message);
       
       let errorMessage = '❌ Camera access failed';
       if (err.name === 'NotAllowedError') {
@@ -235,7 +226,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setError(errorMessage);
       setCameraActive(false);
     }
-  }, [logScannerActivity]);
+  }, []); // Removed all dependencies to prevent infinite loop
 
   // Enhanced barcode detection with multiple format support
   const startDetection = useCallback(() => {
