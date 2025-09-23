@@ -651,47 +651,55 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           {/* Enhanced Manual Entry Mode */}
           {manualMode && (
             <div className="space-y-4">
-              <div className="text-center bg-gray-50 p-3 rounded-lg">
-                <h3 className="font-semibold text-gray-800">⌨️ Manual Barcode Entry</h3>
-                <p className="text-sm text-gray-600">Enter any barcode format (EAN, UPC, QR, etc.)</p>
+              <div className="text-center bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-800">⌨️ Manual Barcode Verification</h3>
+                <p className="text-sm text-blue-600">Enter barcode manually if camera detection is inaccurate</p>
               </div>
               
               <form onSubmit={handleManualSubmit} className="space-y-3">
-                <input
-                  type="text"
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  placeholder="Enter barcode (e.g. 3222471081716)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center font-mono focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  autoFocus
-                />
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Barcode Number:
+                  </label>
+                  <input
+                    type="text"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    placeholder="Enter the full barcode number"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center font-mono text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 text-center">
+                    Double-check the barcode matches what you see on the product
+                  </p>
+                </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="submit"
                     disabled={!barcode.trim() || loading}
-                    className="bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    className="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Finding...
+                        Searching...
                       </>
                     ) : (
                       <>
                         <Zap size={16} />
-                        🔍 Lookup
+                        🔍 Find Product
                       </>
                     )}
                   </button>
                   
                   <button
                     type="button"
-                    onClick={() => setBarcode('3222471081716')}
-                    className="bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                    onClick={() => setBarcode('')}
+                    className="bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors"
                     disabled={loading}
                   >
-                    📦 Sample
+                    🗑️ Clear
                   </button>
                 </div>
               </form>
@@ -705,11 +713,11 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                     }
                   }, 300);
                 }}
-                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 text-sm flex items-center justify-center gap-2"
+                className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 text-sm flex items-center justify-center gap-2"
                 disabled={loading}
               >
                 <Camera size={14} />
-                📷 Back to Camera
+                📷 Try Camera Again
               </button>
             </div>
           )}
