@@ -252,7 +252,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }, 100); // More frequent scanning for better detection
   }, []);
 
-  // Fixed ZXing implementation for proper barcode detection
+  // Enhanced ZXing implementation with improved accuracy
   const detectBarcodeMultiFormat = useCallback(async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -265,23 +265,45 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       // Update scan attempts
       setScanAttempts(prev => prev + 1);
       
-      // Draw current video frame to canvas
+      // Draw current video frame to canvas with improved quality
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
+      
+      // Improve image quality for better barcode detection
+      context.imageSmoothingEnabled = false;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      // Use ZXing to decode from canvas
+      // Apply image enhancements for better detection
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const enhancedImageData = enhanceImageForBarcode(imageData, context);
+      
+      // Use ZXing to decode from enhanced canvas
       const codeReader = new BrowserMultiFormatReader();
       
       try {
-        // Decode from canvas image data
-        const result = await codeReader.decodeFromCanvas(canvas);
+        // Try multiple detection attempts with different processing
+        let result = null;
+        
+        // First attempt: Original image
+        try {
+          result = await codeReader.decodeFromCanvas(canvas);
+        } catch (e) {
+          // Second attempt: Enhanced image
+          context.putImageData(enhancedImageData, 0, 0);
+          result = await codeReader.decodeFromCanvas(canvas);
+        }
         
         if (result && result.text) {
-          console.log(`[BarcodeScanner] BARCODE_DETECTED: ${result.text}, format: ${result.format}`);
-          handleBarcodeDetected(result.text, result.format.toString());
-          return;
+          // Validate barcode format (basic validation)
+          const barcodeText = result.text.trim();
+          if (barcodeText.length >= 8 && /^[0-9]+$/.test(barcodeText)) {
+            console.log(`[BarcodeScanner] VALID_BARCODE_DETECTED: ${barcodeText}, format: ${result.format}`);
+            handleBarcodeDetected(barcodeText, result.format.toString());
+            return;
+          } else {
+            console.warn(`[BarcodeScanner] INVALID_BARCODE_FORMAT: ${barcodeText}`);
+          }
         }
       } catch (decodeErr) {
         // No barcode found in this frame - this is normal, continue scanning
@@ -296,6 +318,28 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     } catch (err) {
       console.error('Barcode detection error:', err);
     }
+  }, []);
+
+  // Image enhancement function for better barcode detection
+  const enhanceImageForBarcode = useCallback((imageData, context) => {
+    const data = imageData.data;
+    const enhancedData = new ImageData(imageData.width, imageData.height);
+    
+    // Apply contrast enhancement and noise reduction
+    for (let i = 0; i < data.length; i += 4) {
+      // Convert to grayscale
+      const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      
+      // Apply high contrast threshold for better barcode detection
+      const enhanced = gray > 128 ? 255 : 0;
+      
+      enhancedData.data[i] = enhanced;     // Red
+      enhancedData.data[i + 1] = enhanced; // Green
+      enhancedData.data[i + 2] = enhanced; // Blue
+      enhancedData.data[i + 3] = 255;      // Alpha
+    }
+    
+    return enhancedData;
   }, []);
 
   // ZXing handles all barcode formats in the main detection function
