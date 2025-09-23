@@ -376,7 +376,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     setError(randomMessage);
   }, []);
 
-  // Stop detection with proper cleanup
+  // Stop detection with proper cleanup - Fixed dependencies
   const stopDetection = useCallback(() => {
     scanningStateRef.current = false;
     setScanning(false);
@@ -387,8 +387,8 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
     
     setError('');
-    logScannerActivity('DETECTION_STOPPED');
-  }, [logScannerActivity]);
+    console.log(`[BarcodeScanner] ${new Date().toISOString()} - DETECTION_STOPPED`);
+  }, []); // Removed logScannerActivity dependency
 
   // Enhanced product lookup with better error handling
   const lookupProduct = useCallback(async (barcodeValue) => {
