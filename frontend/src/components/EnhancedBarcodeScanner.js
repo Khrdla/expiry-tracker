@@ -249,49 +249,40 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }, 200); // Increased frequency for better detection
   }, []); // Removed logScannerActivity dependency
 
-  // Multi-format barcode detection with enhanced algorithms - Fixed dependencies
+  // ZXing-based camera barcode detection for all formats
   const detectBarcodeMultiFormat = useCallback(async () => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
     
-    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
       return;
     }
     
     try {
-      // Update canvas dimensions to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      
-      // Update scan attempts without depending on state
+      // Update scan attempts
       setScanAttempts(prev => prev + 1);
       
-      // Primary detection: jsQR (supports QR codes and some linear formats)
-      const qrResult = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'attemptBoth', // Try both normal and inverted
-      });
+      // Use ZXing for comprehensive barcode detection
+      const codeReader = new BrowserMultiFormatReader();
       
-      if (qrResult) {
-        handleBarcodeDetected(qrResult.data, 'QR/DataMatrix');
+      // Decode from video element directly
+      const result = await codeReader.decodeOnceFromVideoDevice(undefined, video.srcObject);
+      
+      if (result) {
+        console.log(`[BarcodeScanner] CAMERA_BARCODE_DETECTED: ${result.text}, format: ${result.format}`);
+        handleBarcodeDetected(result.text, result.format);
         return;
       }
-      
-      // Linear barcode detection disabled for stability
-      // Users should use Manual Entry mode for EAN/UPC barcodes
-      detectLinearBarcode(); // Log message only
       
       // Update scanning feedback
       updateScanningFeedback();
       
     } catch (err) {
-      console.error('Barcode detection error:', err);
+      // ZXing throws errors when no barcode found, this is normal
+      if (err.name !== 'NotFoundException') {
+        console.error('Barcode detection error:', err);
+      }
     }
-  }, []); // Removed all dependencies to prevent infinite loop
+  }, []);
 
   // Simplified detection - focus on QR codes and manual entry for reliability
   const detectLinearBarcode = useCallback(() => {
