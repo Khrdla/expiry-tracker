@@ -296,7 +296,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []); // Removed all dependencies to prevent infinite loop
 
-  // Enhanced linear barcode detection for EAN/UPC/Code128
+  // Enhanced linear barcode detection for EAN/UPC/Code128 - Fixed dependencies
   const detectLinearBarcode = useCallback((imageData) => {
     try {
       // Simple linear barcode detection algorithm
@@ -331,10 +331,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       if (patterns.length >= 20 && patterns.length <= 100) {
         // Generate mock barcode for detected pattern
         const mockBarcode = `LIN${Date.now().toString().slice(-10)}`;
-        logScannerActivity('LINEAR_PATTERN_DETECTED', {
-          patterns: patterns.length,
-          mockBarcode
-        });
+        console.log(`[BarcodeScanner] LINEAR_PATTERN_DETECTED: ${patterns.length} patterns, mock: ${mockBarcode}`);
         
         return {
           data: mockBarcode,
@@ -344,10 +341,10 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       return null;
     } catch (error) {
-      logScannerActivity('LINEAR_DETECTION_ERROR', { error: error.message });
+      console.error('[BarcodeScanner] LINEAR_DETECTION_ERROR:', error.message);
       return null;
     }
-  }, [logScannerActivity]);
+  }, []); // Removed logScannerActivity dependency
 
   // Handle successful barcode detection
   const handleBarcodeDetected = useCallback((barcodeData, format) => {
