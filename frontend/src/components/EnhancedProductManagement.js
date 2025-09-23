@@ -73,7 +73,7 @@ const EnhancedProductManagement = () => {
       setLoading(true);
       logActivity('API_CALL_PRODUCTS', {
         page: currentPage,
-        search: searchTerm,
+        search: activeSearchTerm,
         department: selectedDepartment
       });
       
