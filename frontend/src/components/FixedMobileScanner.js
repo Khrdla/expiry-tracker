@@ -481,7 +481,6 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
               </button>
             </div>
           )}
-          )}
 
           {/* Status Messages */}
           {loading && (
