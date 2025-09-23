@@ -1089,7 +1089,7 @@ async def upload_product_image(
             {"$set": {"image_url": image_url, "updated_at": datetime.utcnow()}}
         )
         
-        return {"message": "Image uploaded successfully", "image_url": image_url}
+        return {"success": True, "message": "Image uploaded successfully", "image_url": image_url}
         
     except Exception as e:
         logger.error(f"Error uploading image: {str(e)}")
