@@ -405,97 +405,18 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Camera Option (Secondary) */}
-          {!manualMode && (
-            <div className="space-y-3 border-t pt-4">
-              <div className="text-center">
-                <h4 className="font-medium text-gray-800">📷 Camera Scanner (Optional)</h4>
-                <p className="text-xs text-gray-600">For hands-free scanning</p>
-              </div>
-              
-              {!cameraActive ? (
-                <button
-                  onClick={startCamera}
-                  className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Camera size={16} />
-                  <span>Start Camera</span>
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  {/* Video Display */}
-                  <div className="relative bg-black rounded-lg overflow-hidden" style={{ height: '200px' }}>
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Simple scanning overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-48 h-16 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-20">
-                        <div className="absolute -top-6 left-0 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                          Point at barcode
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {autoScanEnabled && (
-                      <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                        📷 Scanning
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Camera Controls */}
-                  <div className="flex space-x-2">
-                    {!autoScanEnabled ? (
-                      <button
-                        onClick={startSimpleScanning}
-                        className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors text-sm"
-                      >
-                        Start Auto-Scan
-                      </button>
-                    ) : (
-                      <button
-                        onClick={stopScanning}
-                        className="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors text-sm"
-                      >
-                        Stop Scanning
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={() => {
-                        cleanup();
-                        setManualMode(true);
-                      }}
-                      className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                    >
-                      Manual Only
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Show camera option button when in manual mode */}
-          {manualMode && (
+            
+            {/* Switch to Camera Option */}
             <div className="border-t pt-4">
               <button
                 onClick={() => {
                   setManualMode(false);
                   startCamera();
                 }}
-                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center justify-center space-x-2"
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
               >
                 <Camera size={16} />
-                <span>Try Camera Scanner</span>
+                <span>📷 Switch to Camera Scanner</span>
               </button>
             </div>
           )}
