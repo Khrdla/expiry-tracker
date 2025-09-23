@@ -228,14 +228,14 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []); // Removed all dependencies to prevent infinite loop
 
-  // Enhanced barcode detection with multiple format support
+  // Enhanced barcode detection with multiple format support - Fixed dependencies
   const startDetection = useCallback(() => {
     if (!componentMountedRef.current || scanningStateRef.current || !videoRef.current) return;
     
     scanningStateRef.current = true;
     setScanning(true);
     setError('🎯 Scanning for barcodes...');
-    logScannerActivity('DETECTION_STARTED');
+    console.log(`[BarcodeScanner] ${new Date().toISOString()} - DETECTION_STARTED`);
     
     if (!canvasRef.current) {
       canvasRef.current = document.createElement('canvas');
@@ -247,7 +247,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         detectBarcodeMultiFormat();
       }
     }, 200); // Increased frequency for better detection
-  }, [logScannerActivity]);
+  }, []); // Removed logScannerActivity dependency
 
   // Multi-format barcode detection with enhanced algorithms
   const detectBarcodeMultiFormat = useCallback(() => {
