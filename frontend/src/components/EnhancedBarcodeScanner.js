@@ -528,7 +528,12 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       )}
                       
                       <button
-                        onClick={detectBarcodeMultiFormat}
+                        onClick={() => {
+                          // Force multiple rapid scans
+                          for (let i = 0; i < 5; i++) {
+                            setTimeout(() => detectBarcodeMultiFormat(), i * 50);
+                          }
+                        }}
                         className="bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition-colors font-medium flex items-center justify-center gap-2"
                         disabled={!cameraActive}
                       >
