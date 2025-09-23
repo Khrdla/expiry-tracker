@@ -451,15 +451,6 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
             </p>
           </div>
         </div>
-        
-        {/* CSS Animations */}
-        <style jsx>{`
-          @keyframes scanning {
-            0% { top: 0; opacity: 1; }
-            50% { top: 50%; opacity: 0.7; }
-            100% { top: 100%; opacity: 1; }
-          }
-        `}</style>
       </div>
     </div>
   );
