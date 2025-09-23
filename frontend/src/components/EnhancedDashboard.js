@@ -346,73 +346,80 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header with Department Filter */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 md:p-6 rounded-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 flex items-center justify-center bg-white bg-opacity-20 rounded-xl">
-              <img 
-                src="/geant_logo.jpeg" 
-                alt="Geant Logo" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="text-center lg:text-left">
-              <h1 className="text-2xl md:text-3xl font-bold">Geant Hypermarket</h1>
-              <p className="text-green-100 text-sm md:text-base">Inventory Management Dashboard</p>
-              <p className="text-xs md:text-sm text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
-            </div>
+      {/* Header - Mobile Optimized */}
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-3 md:p-6 rounded-xl">
+        {/* Logo and Title Section */}
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-white bg-opacity-20 rounded-xl flex-shrink-0">
+            <img 
+              src="/geant_logo.jpeg" 
+              alt="Geant Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-4">
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="w-full sm:w-auto bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium text-sm md:text-base"
-            >
-              <option value="all">All Departments</option>
-              {dashboardData.accessible_departments.map(dept => (
-                <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
-              ))}
-            </select>
-
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full sm:w-auto bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium text-sm md:text-base"
-            >
-              <option value="all">All Sections</option>
-              {dashboardData.sections?.map(section => (
-                <option key={section} value={section}>{section}</option>
-              ))}
-            </select>
-            
+          <div>
+            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold">📊 Geant Hypermarket</h1>
+            <p className="text-green-100 text-xs md:text-sm">Inventory Management Dashboard</p>
+            <p className="text-xs text-green-200">Role: {user?.role?.toUpperCase()} | Auto-refresh: ON</p>
+          </div>
+        </div>
+        
+        {/* Controls - Mobile First Layout */}
+        <div className="space-y-3">
+          {/* Primary Actions Row */}
+          <div className="flex space-x-2">
             <button
               onClick={() => setShowScanner(true)}
-              className="w-full sm:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
-              title="Scan Barcode for Quick Item Lookup"
+              className="flex-1 bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-3 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
+              title="Quick Barcode Scanner"
             >
-              <Camera size={16} />
-              <span className="hidden sm:inline">Scan Item</span>
-              <span className="sm:hidden">Scan</span>
+              <Camera size={18} />
+              <span>📱 Scan</span>
             </button>
             
             <button
               onClick={() => setShowAdvancedFeatures(true)}
-              className="w-full sm:w-auto bg-purple-500 bg-opacity-80 hover:bg-opacity-100 text-white px-3 md:px-4 py-2 rounded-lg transition-all flex items-center justify-center space-x-2 text-sm md:text-base"
-              title="Advanced Barcode Features - Bulk Scan, History, Analytics"
+              className="flex-1 bg-purple-500 bg-opacity-80 hover:bg-opacity-100 text-white py-3 rounded-lg transition-all flex items-center justify-center space-x-2 font-medium"
+              title="Advanced Features"
             >
-              <span className="text-lg">🚀</span>
-              <span className="hidden sm:inline">Advanced</span>
-              <span className="sm:hidden">Pro</span>
+              <span>🚀</span>
+              <span>Pro</span>
             </button>
             
             <button
               onClick={fetchDashboardData}
-              className="w-full sm:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 md:px-4 py-2 rounded-lg transition-all text-sm md:text-base"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-3 rounded-lg transition-all"
+              title="Refresh Data"
             >
-              🔄 <span className="hidden sm:inline ml-1">Refresh</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </button>
+          </div>
+          
+          {/* Filters Row */}
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              className="bg-white text-gray-800 px-3 py-2 rounded-lg font-medium text-sm"
+            >
+              <option value="all">🏢 All Departments</option>
+              {dashboardData.accessible_departments.map(dept => (
+                <option key={dept} value={dept}>{getDepartmentName(dept)}</option>
+              ))}
+            </select>
+            
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className="bg-white text-gray-800 px-3 py-2 rounded-lg font-medium text-sm"
+            >
+              <option value="all">📍 All Sections</option>
+              {dashboardData.sections?.map(section => (
+                <option key={section} value={section}>{section}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
