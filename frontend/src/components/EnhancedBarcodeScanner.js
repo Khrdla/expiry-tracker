@@ -282,11 +282,15 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         return;
       }
       
-      // Secondary detection: Enhanced linear barcode scanning with QuaggaJS
-      const linearResult = await detectLinearBarcode(canvas);
-      if (linearResult) {
-        handleBarcodeDetected(linearResult.data, linearResult.format);
-        return;
+      // Secondary detection: Enhanced linear barcode scanning with QuaggaJS (with fallback)
+      try {
+        const linearResult = await detectLinearBarcode(canvas);
+        if (linearResult) {
+          handleBarcodeDetected(linearResult.data, linearResult.format);
+          return;
+        }
+      } catch (quaggaError) {
+        console.warn('[BarcodeScanner] QuaggaJS detection failed, continuing without linear detection:', quaggaError);
       }
       
       // Update scanning feedback
