@@ -416,71 +416,71 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
             </div>
           )}
 
-          {/* Manual Entry Mode (SECONDARY) */}
+          {/* Full Manual Entry Mode (Only if explicitly requested) */}
           {manualMode && (
             <div className="space-y-4">
               <div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-800">⌨️ Manual Entry</h3>
+                <h3 className="text-lg font-semibold text-gray-800">⌨️ Manual Entry Only</h3>
                 <p className="text-sm text-gray-600">Type or paste barcode for instant lookup</p>
               </div>
-            
-            <form onSubmit={handleManualSubmit} className="space-y-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  placeholder="Enter barcode (e.g. 3222471081716)"
-                  className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg text-center font-mono text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  autoFocus
-                  disabled={loading}
-                />
-                {barcode && (
+              
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    placeholder="Enter barcode (e.g. 3222471081716)"
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg text-center font-mono text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    autoFocus
+                    disabled={loading}
+                  />
+                  {barcode && (
+                    <button
+                      type="button"
+                      onClick={() => setBarcode('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={20} />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="submit"
+                    disabled={!barcode.trim() || loading}
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg"
+                  >
+                    {loading ? '⚡ Finding...' : '🔍 Find Product'}
+                  </button>
+                  
                   <button
                     type="button"
-                    onClick={() => setBarcode('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setBarcode('3222471081716')}
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all font-medium shadow-lg flex items-center justify-center space-x-2"
+                    title="Test with sample barcode"
                   >
-                    <X size={20} />
+                    <Package size={16} />
+                    <span>Test</span>
                   </button>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="submit"
-                  disabled={!barcode.trim() || loading}
-                  className="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg"
-                >
-                  {loading ? '⚡ Finding...' : '🔍 Find Product'}
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setBarcode('3222471081716')}
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all font-medium shadow-lg flex items-center justify-center space-x-2"
-                  title="Test with sample barcode"
-                >
-                  <Package size={16} />
-                  <span>Test</span>
-                </button>
-              </div>
-            </form>
+                </div>
+              </form>
             
-            {/* Switch to Camera Option */}
+            {/* Switch back to Camera Mode */}
             <div className="border-t pt-4">
               <button
                 onClick={() => {
                   setManualMode(false);
-                  startCamera();
+                  setTimeout(() => startCamera(), 200);
                 }}
                 className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
               >
                 <Camera size={16} />
-                <span>📷 Switch to Camera Scanner</span>
+                <span>📷 Back to Camera Scanner</span>
               </button>
             </div>
-            </div>
+          )}
           )}
 
           {/* Status Messages */}
