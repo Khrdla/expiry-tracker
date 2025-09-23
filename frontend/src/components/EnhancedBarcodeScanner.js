@@ -418,55 +418,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         {/* Content */}
         <div className="p-4">
           
-          {/* Quick Start Manual Entry */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Keyboard size={16} className="text-blue-600" />
-              <h3 className="font-semibold text-blue-800">Quick Barcode Entry</h3>
-            </div>
-            <input
-              type="text"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              placeholder="Enter barcode (e.g. 3222471081716)"
-              className="w-full px-3 py-2 border border-blue-300 rounded-md text-center font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && barcode.trim()) {
-                  lookupProduct(barcode.trim());
-                }
-              }}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  if (barcode.trim()) {
-                    lookupProduct(barcode.trim());
-                  }
-                }}
-                disabled={!barcode.trim() || loading}
-                className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Looking up...
-                  </>
-                ) : (
-                  <>
-                    <Zap size={14} />
-                    Lookup Product
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setBarcode('3222471081716')}
-                className="bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 text-sm"
-                disabled={loading}
-              >
-                📦 Sample Barcode
-              </button>
-            </div>
-          </div>
+
 
           {/* Camera Mode */}
           {!manualMode && (
