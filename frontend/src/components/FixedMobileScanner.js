@@ -445,13 +445,22 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
 
           {/* Instructions */}
           <div className="bg-gray-50 p-3 rounded-lg text-center">
-            <h4 className="font-medium text-gray-800 text-sm">💡 Quick Tips</h4>
+            <h4 className="font-medium text-gray-800 text-sm">💡 Scanner Tips</h4>
             <p className="text-xs text-gray-600 mt-1">
-              Manual entry is fastest • Camera is optional • Works with all barcode formats
+              Camera scanner is primary • Hold steady at barcode • Manual entry available as backup
             </p>
           </div>
         </div>
       </div>
+      
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes scanning {
+          0% { top: 0; opacity: 1; }
+          50% { top: 50%; opacity: 0.7; }
+          100% { top: 100%; opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
