@@ -407,35 +407,35 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
                       🎯 Force Detect
                     </button>
                   </div>
-                
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      cleanup();
-                      setTimeout(startCamera, 500);
-                    }}
-                    className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
-                  >
-                    <RotateCcw size={14} className="inline mr-1" />
-                    Restart Camera
-                  </button>
                   
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
                     <button
-                      onClick={() => lookupProduct('3222471081716')}
-                      className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      onClick={() => {
+                        cleanup();
+                        setTimeout(startCamera, 500);
+                      }}
+                      className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
                     >
-                      📦 Test Lookup
+                      <RotateCcw size={14} className="inline mr-1" />
+                      Restart Camera
                     </button>
                     
-                    <button
-                      onClick={() => lookupProduct('3222474131326')}
-                      className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      🥤 Test Energy
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => lookupProduct('3222471081716')}
+                        className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        📦 Test Lookup
+                      </button>
+                      
+                      <button
+                        onClick={() => lookupProduct('3222474131326')}
+                        className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        🥤 Test Energy
+                      </button>
+                    </div>
                   </div>
-                </div>
                 )}
                 
                 <button
