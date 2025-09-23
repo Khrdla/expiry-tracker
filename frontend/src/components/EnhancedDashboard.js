@@ -32,6 +32,7 @@ import EnhancedVisualCharts from './EnhancedVisualCharts';
  * - Stable state management
  */
 const EnhancedDashboard = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [kpis, setKpis] = useState({});
   const [chartData, setChartData] = useState([]);
