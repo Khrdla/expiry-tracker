@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Keyboard, Zap, AlertCircle, CheckCircle, Package } from 'lucide-react';
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
   const [error, setError] = useState('');
