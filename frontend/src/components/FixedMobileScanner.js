@@ -365,6 +365,54 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                   </div>
                 </div>
               )}
+              
+              {/* Manual Entry Option within Camera Mode (Secondary) */}
+              <div className="border-t pt-4">
+                <div className="text-center mb-3">
+                  <p className="text-sm text-gray-600">📱 Or enter barcode manually:</p>
+                </div>
+                
+                <form onSubmit={handleManualSubmit} className="space-y-3">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={barcode}
+                      onChange={(e) => setBarcode(e.target.value)}
+                      placeholder="Type barcode (e.g. 3222471081716)"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center font-mono focus:ring-2 focus:ring-green-500"
+                      disabled={loading}
+                    />
+                    {barcode && (
+                      <button
+                        type="button"
+                        onClick={() => setBarcode('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="submit"
+                      disabled={!barcode.trim() || loading}
+                      className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                    >
+                      {loading ? '⚡ Finding...' : '🔍 Find'}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setBarcode('3222471081716')}
+                      className="bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                      title="Test barcode"
+                    >
+                      📦 Test
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
