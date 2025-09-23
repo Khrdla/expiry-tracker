@@ -19,7 +19,6 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-  // Cleanup and mount management
   // Initialize on open - CAMERA FIRST (PRIMARY)
   useEffect(() => {
     mountedRef.current = true;
@@ -289,7 +288,7 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                     <video
                       ref={videoRef}
                       className="w-full h-full object-cover"
-                      style={{ transform: 'scaleX(-1)' }} // Mirror for better UX
+                      style={{ transform: 'scaleX(-1)' }}
                     />
                     
                     {/* Enhanced scanning overlay */}
