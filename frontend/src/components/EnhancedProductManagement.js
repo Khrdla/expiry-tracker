@@ -414,7 +414,14 @@ const EnhancedProductManagement = () => {
     };
 
     const handleImageLoad = () => {
-      logActivity('IMAGE_LOADED', { productId: product?.id });
+      const fullImageUrl = `${BACKEND_URL}/api${product?.image_url}`;
+      console.log('✅ ProductImage Loaded:', {
+        productId: product?.id,
+        productName: product?.product_name,
+        imageUrl: product?.image_url,
+        fullUrl: fullImageUrl
+      });
+      logActivity('IMAGE_LOADED', { productId: product?.id, imageUrl: product?.image_url });
       setImageLoading(false);
     };
 
