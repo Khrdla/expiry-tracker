@@ -18,13 +18,18 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   // Cleanup and mount management
+  // Initialize on open - CAMERA FIRST (PRIMARY)
   useEffect(() => {
     mountedRef.current = true;
     if (isOpen) {
-      // Start with manual mode for reliability
-      setManualMode(true);
+      // Start with CAMERA mode as PRIMARY option
+      setManualMode(false);
       setError('');
       setSuccess('');
+      // Auto-start camera when modal opens
+      setTimeout(() => {
+        startCamera();
+      }, 500);
     } else {
       cleanup();
     }
