@@ -600,20 +600,36 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
                       🔄 Restart Camera
                     </button>
                     
-                    {/* Test buttons for verification */}
+                    {/* Test buttons for verification - Real database barcodes */}
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => lookupProduct('3222471081716')}
                         className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
                       >
-                        📦 Test Apple Juice
+                        📦 Apple Juice (EUR)
+                      </button>
+                      
+                      <button
+                        onClick={() => lookupProduct('012000800030')}
+                        className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        🥤 Pepsi (SAR)
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => lookupProduct('9501101237667')}
+                        className="bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                      >
+                        🧃 Guava (YER)
                       </button>
                       
                       <button
                         onClick={() => lookupProduct('3222471052747')}
-                        className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        className="bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm"
                       >
-                        🥤 Test Lemonade
+                        🍋 Lemonade (EUR)
                       </button>
                     </div>
                   </div>
