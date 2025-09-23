@@ -70,6 +70,69 @@ const EnhancedProductManagement = () => {
     loadFilterOptions();
   }, [activeSearchTerm, selectedDepartment, selectedSection, selectedSupplier, currentPage]);
 
+  // Main search function that both search types call
+  const runSearch = useCallback((searchValue) => {
+    console.log('🔍 Running search with value:', searchValue);
+    setActiveSearchTerm(searchValue);
+    setCurrentPage(1); // Reset to first page when searching
+  }, []);
+
+  // Debounced search for product name (triggers after user stops typing)
+  const handleProductNameSearch = useCallback((value) => {
+    setProductNameSearch(value);
+    
+    // Clear existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set new debounce timer (500ms delay)
+    debounceTimerRef.current = setTimeout(() => {
+      console.log('📝 Product name search triggered after debounce:', value);
+      runSearch(value);
+    }, 500);
+  }, [runSearch]);
+
+  // Immediate search for barcode (only on Enter key)
+  const handleBarcodeSearch = useCallback((value, isEnterKey = false) => {
+    setBarcodeSearch(value);
+    
+    // Only trigger search on Enter key press
+    if (isEnterKey) {
+      console.log('🏷️ Barcode search triggered on Enter:', value);
+      runSearch(value);
+    }
+  }, [runSearch]);
+
+  // Handle Enter key press for barcode search
+  const handleBarcodeKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBarcodeSearch(barcodeSearch, true);
+    }
+  }, [barcodeSearch, handleBarcodeSearch]);
+
+  // Clear search function
+  const clearSearch = useCallback(() => {
+    setProductNameSearch('');
+    setBarcodeSearch('');
+    setActiveSearchTerm('');
+    
+    // Clear any pending debounce
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // Enhanced product loading with comprehensive error handling
   const loadProducts = async () => {
     try {
