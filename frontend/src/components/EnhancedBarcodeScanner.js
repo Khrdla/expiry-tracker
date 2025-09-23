@@ -251,7 +251,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   }, []); // Removed logScannerActivity dependency
 
   // Multi-format barcode detection with enhanced algorithms - Fixed dependencies
-  const detectBarcodeMultiFormat = useCallback(() => {
+  const detectBarcodeMultiFormat = useCallback(async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
