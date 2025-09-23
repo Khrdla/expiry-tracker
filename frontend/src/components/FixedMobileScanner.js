@@ -449,23 +449,44 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                   </div>
                   
                   {/* Camera Controls */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={stopScanning}
-                      className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Stop Camera
-                    </button>
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      {!autoScanEnabled ? (
+                        <button
+                          onClick={startCanvasScanning}
+                          className="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                          🔍 Start Scanning
+                        </button>
+                      ) : (
+                        <button
+                          onClick={stopScanning}
+                          className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          ⏹️ Stop Scanning
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => {
+                          cleanup();
+                          setManualMode(true);
+                        }}
+                        className="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                        title="Manual entry only"
+                      >
+                        <Keyboard size={16} />
+                      </button>
+                    </div>
                     
                     <button
                       onClick={() => {
-                        cleanup();
-                        setManualMode(true);
+                        stopScanning();
+                        setTimeout(startCamera, 500);
                       }}
-                      className="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-                      title="Switch to manual entry"
+                      className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
                     >
-                      <Keyboard size={16} />
+                      🔄 Restart Camera
                     </button>
                   </div>
                 </div>
