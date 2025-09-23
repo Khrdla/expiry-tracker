@@ -15,7 +15,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { Camera, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Camera, AlertTriangle, TrendingUp, Grid3X3 } from 'lucide-react';
 import EnhancedBarcodeScanner from './EnhancedBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import Dashboard3DCharts from './Dashboard3DCharts';
