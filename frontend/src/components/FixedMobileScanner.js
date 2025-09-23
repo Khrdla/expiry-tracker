@@ -308,8 +308,7 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                             <div className="absolute inset-0 overflow-hidden rounded-lg">
                               <div className="w-full h-0.5 bg-green-400 absolute animate-pulse" 
                                    style={{
-                                     top: '50%',
-                                     animation: 'scanning 2s infinite'
+                                     top: '50%'
                                    }}></div>
                             </div>
                           )}
