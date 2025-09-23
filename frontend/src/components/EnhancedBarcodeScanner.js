@@ -346,15 +346,11 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []); // Removed logScannerActivity dependency
 
-  // Handle successful barcode detection
+  // Handle successful barcode detection - Fixed dependencies
   const handleBarcodeDetected = useCallback((barcodeData, format) => {
     if (!componentMountedRef.current) return;
     
-    logScannerActivity('BARCODE_DETECTED', {
-      barcode: barcodeData,
-      format,
-      attempt: scanAttempts + 1
-    });
+    console.log(`[BarcodeScanner] BARCODE_DETECTED: ${barcodeData}, format: ${format}`);
     
     stopDetection();
     setSuccess(`📱 ${format} Detected: ${barcodeData}`);
@@ -365,7 +361,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
     
     lookupProduct(barcodeData);
-  }, [scanAttempts, logScannerActivity]);
+  }, []); // Removed all dependencies to prevent infinite loop
 
   // Update scanning feedback messages
   const updateScanningFeedback = useCallback(() => {
