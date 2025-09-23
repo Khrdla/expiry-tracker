@@ -671,7 +671,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           <div className="mt-4 space-y-2">
             <div className="bg-gray-50 p-3 rounded-lg text-center">
               <p className="text-gray-600 text-xs">
-                💡 RECOMMENDED: Use Manual Entry mode for all barcode types • Camera detects QR codes only • Test buttons verify database connection
+                📷 Point camera at barcode • Supports EAN, UPC, Code128, QR codes • Good lighting helps detection
               </p>
             </div>
             
