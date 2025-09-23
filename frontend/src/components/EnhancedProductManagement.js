@@ -427,7 +427,7 @@ const EnhancedProductManagement = () => {
           </div>
         )}
         <img
-          src={`${BACKEND_URL}${product.image_url}`}
+          src={`${BACKEND_URL}/api${product.image_url}`}
           alt={product.product_name}
           className={`${className} object-cover transition-opacity duration-200`}
           onError={handleImageError}
