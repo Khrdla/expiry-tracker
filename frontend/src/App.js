@@ -5,6 +5,7 @@ import "./App.css";
 
 // Enhanced Components
 import EnhancedDashboard from "./components/EnhancedDashboard";
+import EnhancedDashboardGrid from "./components/EnhancedDashboardGrid";
 import EnhancedProductManagement from "./components/EnhancedProductManagement";
 import SettingsPanel from "./components/SettingsPanel";
 import ExpiryTracker from "./components/ExpiryTracker";
