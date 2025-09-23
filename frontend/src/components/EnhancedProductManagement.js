@@ -629,19 +629,60 @@ const EnhancedProductManagement = () => {
 
         {/* Enhanced Search and Filters */}
         <div className="mb-6 bg-white p-6 rounded-lg shadow">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Search */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Product Name Search - Debounced */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔍 Product Name Search
+                <span className="text-xs text-gray-500 ml-1">(Live search - 500ms delay)</span>
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  value={activeSearchTerm}
-                  onChange={(e) => setActiveSearchTerm(e.target.value)}
-                  placeholder="Search by name, barcode, or item number..."
+                  value={productNameSearch}
+                  onChange={(e) => handleProductNameSearch(e.target.value)}
+                  placeholder="Type product name..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+            </div>
+
+            {/* Barcode Search - Enter Key Only */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏷️ Barcode Search
+                <span className="text-xs text-gray-500 ml-1">(Press Enter to search)</span>
+              </label>
+              <div className="relative">
+                <Barcode className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  value={barcodeSearch}
+                  onChange={(e) => handleBarcodeSearch(e.target.value, false)}
+                  onKeyPress={handleBarcodeKeyPress}
+                  placeholder="Scan or type barcode, then press Enter..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+            </div>
+
+            {/* Search Actions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Actions</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearSearch}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <RotateCcw size={16} />
+                  Clear
+                </button>
+                {activeSearchTerm && (
+                  <div className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+                    Searching: "{activeSearchTerm}"
+                  </div>
+                )}
               </div>
             </div>
 
