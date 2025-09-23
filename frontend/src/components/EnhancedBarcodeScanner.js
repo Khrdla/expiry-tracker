@@ -740,7 +740,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           <div className="mt-4 space-y-2">
             <div className="bg-gray-50 p-3 rounded-lg text-center">
               <p className="text-gray-600 text-xs">
-                💡 Multi-Format Support: EAN, UPC, Code128, QR codes • Good lighting • 6-8 inches distance
+                💡 For reliable scanning: Use Manual Entry mode below • Camera detection is experimental • Test buttons show real database products
               </p>
             </div>
             
