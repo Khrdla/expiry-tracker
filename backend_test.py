@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://stock-genius-24.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-inventory-1.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 

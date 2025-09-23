@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import time
 
 class WasteManagementTester:
-    def __init__(self, base_url="https://stock-genius-24.preview.emergentagent.com"):
+    def __init__(self, base_url="https://geant-inventory-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
