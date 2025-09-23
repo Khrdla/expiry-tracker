@@ -403,8 +403,8 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           <div className="flex items-center space-x-2">
             <Camera size={20} className="text-white" />
             <div>
-              <h2 className="text-lg font-bold text-white">📱 Reliable Barcode Scanner</h2>
-              <p className="text-xs text-green-100">QR Detection • Manual Entry • Database Lookup</p>
+              <h2 className="text-lg font-bold text-white">📷 Camera Barcode Scanner</h2>
+              <p className="text-xs text-green-100">EAN • UPC • QR • Code128 • All Formats</p>
             </div>
           </div>
           <button 
