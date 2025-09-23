@@ -582,35 +582,33 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
       {/* Enhanced Visual Analytics Charts */}
       <EnhancedVisualCharts />
 
-      {/* Top Suppliers Section */}
-      <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Top Suppliers</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {/* Top Suppliers Section - Mobile Optimized */}
+      <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
+        <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+          🏪 <span className="ml-2">Top Suppliers</span>
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 md:gap-4">
           {dashboardData.top_suppliers.map((supplier, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+            <div key={index} className="border border-gray-200 rounded-lg p-2 md:p-3 lg:p-4 hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md">
               <div className="flex items-center mb-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 md:w-3 md:h-3 bg-blue-500 rounded-full mr-2 flex-shrink-0"></div>
                 <h4 className="font-medium text-gray-800 text-xs md:text-sm leading-tight break-words">{supplier.supplier_name}</h4>
               </div>
               
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Items:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">📦 Items:</span>
                   <span className="font-medium">{supplier.total_items}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Out of Stock:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">❌ Out:</span>
                   <span className="font-medium text-red-600">{supplier.out_of_stock_items}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Value:</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">💰 Value:</span>
                   <span className="font-medium text-green-600 text-xs break-all">
                     {supplier.stock_value.toLocaleString()} {supplier.purchase_currency}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Currency:</span>
-                  <span className="font-medium">{supplier.purchase_currency}</span>
                 </div>
               </div>
             </div>
