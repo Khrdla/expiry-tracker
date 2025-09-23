@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Filter, Plus, Download, Camera, Edit, Eye, Package, AlertTriangle, Barcode } from 'lucide-react';
+import { Search, Filter, Plus, Download, Camera, Edit, Eye, Package, AlertTriangle, Barcode, RotateCcw } from 'lucide-react';
 import EnhancedBarcodeScanner from './EnhancedBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import EditProductModal from './EditProductModal';
