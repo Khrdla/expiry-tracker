@@ -390,11 +390,11 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     console.log(`[BarcodeScanner] ${new Date().toISOString()} - DETECTION_STOPPED`);
   }, []); // Removed logScannerActivity dependency
 
-  // Enhanced product lookup with better error handling
+  // Enhanced product lookup with better error handling - Fixed dependencies
   const lookupProduct = useCallback(async (barcodeValue) => {
     setLoading(true);
     setError('⚡ Looking up product...');
-    logScannerActivity('PRODUCT_LOOKUP_STARTED', { barcode: barcodeValue });
+    console.log(`[BarcodeScanner] PRODUCT_LOOKUP_STARTED: ${barcodeValue}`);
     
     try {
       const token = localStorage.getItem('token');
@@ -404,10 +404,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       if (response.ok) {
         const product = await response.json();
-        logScannerActivity('PRODUCT_FOUND', { 
-          productName: product.product_name,
-          barcode: barcodeValue 
-        });
+        console.log(`[BarcodeScanner] PRODUCT_FOUND: ${product.product_name}`);
         
         setSuccess(`✅ Found: ${product.product_name}`);
         
@@ -418,23 +415,17 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
           }
         }, 1500);
       } else {
-        logScannerActivity('PRODUCT_NOT_FOUND', { 
-          barcode: barcodeValue,
-          status: response.status 
-        });
+        console.log(`[BarcodeScanner] PRODUCT_NOT_FOUND: ${barcodeValue}, status: ${response.status}`);
         setError('❌ Product not found in database');
       }
       
     } catch (err) {
-      logScannerActivity('LOOKUP_ERROR', { 
-        error: err.message,
-        barcode: barcodeValue 
-      });
+      console.error(`[BarcodeScanner] LOOKUP_ERROR:`, err.message);
       setError('❌ Network error during lookup');
     } finally {
       setLoading(false);
     }
-  }, [BACKEND_URL, onProductFound, onClose, logScannerActivity]);
+  }, [BACKEND_URL, onProductFound, onClose]); // Only keep essential dependencies
 
   // Handle manual barcode submission
   const handleManualSubmit = useCallback(async (e) => {
