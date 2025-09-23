@@ -345,7 +345,7 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 md:space-y-6 p-3 md:p-6">
       {/* Header - Mobile Optimized */}
       <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-3 md:p-6 rounded-xl">
         {/* Logo and Title Section */}
