@@ -256,6 +256,16 @@ const EnhancedDashboard = () => {
           suppliers: processFilterArray(data?.suppliers, 'Supplier')
         };
         
+        // Debug logging to understand filter data
+        console.log('🏢 Dashboard Filter Options Debug:', {
+          rawData: {
+            departments: data?.departments,
+            sections: data?.sections,
+            suppliers: data?.suppliers
+          },
+          processedData: processedOptions
+        });
+        
         setFilterOptions(processedOptions);
       } else {
         logDashboardActivity('FILTER_OPTIONS_ERROR', { status: response.status });
