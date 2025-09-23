@@ -417,12 +417,28 @@ const EnhancedProductManagement = () => {
     if (!Array.isArray(array)) return [];
     
     return array.map((item, index) => {
+      // Handle string values
       if (typeof item === 'string' && item.trim()) {
         return item.trim();
       }
+      
+      // Handle object with 'label' property (backend format: {value: "01-FMG", label: "01-FMG"})
+      if (typeof item === 'object' && item?.label) {
+        return item.label;
+      }
+      
+      // Handle object with 'name' property
       if (typeof item === 'object' && item?.name) {
         return item.name;
       }
+      
+      // Handle object with 'value' property
+      if (typeof item === 'object' && item?.value) {
+        return item.value;
+      }
+      
+      // Log when fallback is used to debug
+      console.warn(`Filter fallback used for ${prefix}:`, item);
       return `${prefix}_${index + 1}`;
     }).filter(Boolean);
   };
