@@ -399,13 +399,39 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
                     
                     <button
                       onClick={() => {
-                        cleanup();
-                        setTimeout(startCamera, 500);
+                        // Force detect barcode immediately
+                        detectBarcode();
                       }}
-                      className="bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                      className="bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition-colors font-medium"
                     >
-                      <RotateCcw size={16} className="inline mr-1" />
-                      Restart
+                      🎯 Force Detect
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      cleanup();
+                      setTimeout(startCamera, 500);
+                    }}
+                    className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
+                  >
+                    <RotateCcw size={14} className="inline mr-1" />
+                    Restart Camera
+                  </button>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => lookupProduct('3222471081716')}
+                      className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    >
+                      📦 Test Lookup
+                    </button>
+                    
+                    <button
+                      onClick={() => lookupProduct('3222474131326')}
+                      className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      🥤 Test Energy
                     </button>
                   </div>
                 )}
