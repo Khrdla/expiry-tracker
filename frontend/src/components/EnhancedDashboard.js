@@ -424,8 +424,8 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* KPI Cards - Mobile Optimized */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {getFilteredKPIs().map((kpi, index) => (
           <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div 
@@ -433,49 +433,49 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
               style={{ backgroundColor: DEPARTMENT_COLORS[kpi.department] }}
             ></div>
             
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-800">{getDepartmentName(kpi.department)}</h3>
-                <div className="text-2xl">📦</div>
+            <div className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="font-semibold text-gray-800 text-sm md:text-base">{getDepartmentName(kpi.department)}</h3>
+                <div className="text-xl md:text-2xl">📦</div>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 <div 
-                  className="flex justify-between items-center cursor-pointer hover:bg-green-50 p-2 rounded"
+                  className="flex justify-between items-center cursor-pointer hover:bg-green-50 p-1 md:p-2 rounded transition-colors"
                   onClick={() => onProductClick && onProductClick('total', kpi.department)}
                 >
-                  <span className="text-sm text-gray-600">Total Items</span>
-                  <span className="font-bold text-green-600">{kpi.total_items.toLocaleString()}</span>
+                  <span className="text-xs md:text-sm text-gray-600">✅ Total</span>
+                  <span className="font-bold text-green-600 text-sm md:text-base">{kpi.total_items.toLocaleString()}</span>
                 </div>
                 
                 <div 
-                  className="flex justify-between items-center cursor-pointer hover:bg-red-50 p-2 rounded"
+                  className="flex justify-between items-center cursor-pointer hover:bg-red-50 p-1 md:p-2 rounded transition-colors"
                   onClick={() => onProductClick && onProductClick('out_of_stock', kpi.department)}
                 >
-                  <span className="text-sm text-gray-600">Out of Stock</span>
-                  <span className="font-bold text-red-600">{kpi.out_of_stock_items.toLocaleString()}</span>
+                  <span className="text-xs md:text-sm text-gray-600">❌ Out Stock</span>
+                  <span className="font-bold text-red-600 text-sm md:text-base">{kpi.out_of_stock_items.toLocaleString()}</span>
                 </div>
                 
                 <div 
-                  className="flex justify-between items-center cursor-pointer hover:bg-yellow-50 p-2 rounded"
+                  className="flex justify-between items-center cursor-pointer hover:bg-yellow-50 p-1 md:p-2 rounded transition-colors"
                   onClick={() => onProductClick && onProductClick('low_stock', kpi.department)}
                 >
-                  <span className="text-sm text-gray-600">Low Stock</span>
-                  <span className="font-bold text-yellow-600">{kpi.low_stock_items.toLocaleString()}</span>
+                  <span className="text-xs md:text-sm text-gray-600">⚠️ Low Stock</span>
+                  <span className="font-bold text-yellow-600 text-sm md:text-base">{kpi.low_stock_items.toLocaleString()}</span>
                 </div>
                 
                 <div 
-                  className="flex justify-between items-center cursor-pointer hover:bg-orange-50 p-2 rounded"
+                  className="flex justify-between items-center cursor-pointer hover:bg-orange-50 p-1 md:p-2 rounded transition-colors"
                   onClick={() => onProductClick && onProductClick('near_expiry', kpi.department)}
                 >
-                  <span className="text-sm text-gray-600">Near Expiry</span>
-                  <span className="font-bold text-orange-600">{kpi.near_expiry_items.toLocaleString()}</span>
+                  <span className="text-xs md:text-sm text-gray-600">⏰ Near Expiry</span>
+                  <span className="font-bold text-orange-600 text-sm md:text-base">{kpi.near_expiry_items.toLocaleString()}</span>
                 </div>
                 
                 <div className="pt-2 border-t border-gray-200">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Stock Value</span>
-                    <span className="font-bold text-blue-600">{formatCurrency(kpi.total_stock_value)}</span>
+                    <span className="text-xs md:text-sm text-gray-600">💰 Value</span>
+                    <span className="font-bold text-blue-600 text-xs md:text-sm break-all">{formatCurrency(kpi.total_stock_value)}</span>
                   </div>
                 </div>
               </div>
