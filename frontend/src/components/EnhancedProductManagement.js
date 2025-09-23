@@ -329,7 +329,9 @@ const EnhancedProductManagement = () => {
                 >
                   <option value="all">All Departments</option>
                   {filterOptions.departments?.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
+                    <option key={dept.value || dept} value={dept.value || dept}>
+                      {dept.label || dept}
+                    </option>
                   ))}
                 </select>
               </div>
