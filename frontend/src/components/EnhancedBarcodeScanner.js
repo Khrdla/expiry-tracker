@@ -284,11 +284,9 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []);
 
-  // Simplified detection - focus on QR codes and manual entry for reliability
+  // ZXing handles all barcode formats in the main detection function
   const detectLinearBarcode = useCallback(() => {
-    // Linear barcode detection disabled to prevent errors
-    // Users should use Manual Entry mode for EAN/UPC barcodes
-    console.log('[BarcodeScanner] Linear detection skipped - use Manual Entry for reliable barcode input');
+    // This function is no longer needed as ZXing handles all formats
     return null;
   }, []);
 
