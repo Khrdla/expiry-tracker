@@ -301,7 +301,23 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
   const detectLinearBarcode = useCallback(async (canvas) => {
     return new Promise((resolve) => {
       try {
-        // Use QuaggaJS for proper linear barcode detection
+        // Ensure canvas is valid before processing
+        if (!canvas || !canvas.getContext || canvas.width === 0 || canvas.height === 0) {
+          resolve(null);
+          return;
+        }
+
+        // Get image data URL with proper error handling
+        let imageDataUrl;
+        try {
+          imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        } catch (canvasError) {
+          console.error('[BarcodeScanner] Canvas toDataURL error:', canvasError);
+          resolve(null);
+          return;
+        }
+
+        // Use QuaggaJS with proper configuration for linear barcode detection
         Quagga.decodeSingle({
           decoder: {
             readers: [
@@ -309,22 +325,28 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
               "ean_reader", 
               "ean_8_reader",
               "code_39_reader",
-              "code_39_vin_reader",
-              "codabar_reader",
               "upc_reader",
               "upc_e_reader"
             ]
           },
           locate: true,
-          src: canvas.toDataURL(),
+          src: imageDataUrl,
+          inputStream: {
+            size: Math.min(canvas.width, canvas.height, 800) // Limit size to prevent errors
+          }
         }, (result) => {
-          if (result && result.codeResult) {
-            console.log(`[BarcodeScanner] REAL_BARCODE_DETECTED: ${result.codeResult.code}, format: ${result.codeResult.format}`);
-            resolve({
-              data: result.codeResult.code,
-              format: result.codeResult.format || 'Linear'
-            });
-          } else {
+          try {
+            if (result && result.codeResult && result.codeResult.code) {
+              console.log(`[BarcodeScanner] REAL_BARCODE_DETECTED: ${result.codeResult.code}, format: ${result.codeResult.format}`);
+              resolve({
+                data: result.codeResult.code,
+                format: result.codeResult.format || 'Linear'
+              });
+            } else {
+              resolve(null);
+            }
+          } catch (resultError) {
+            console.error('[BarcodeScanner] QuaggaJS result processing error:', resultError);
             resolve(null);
           }
         });
