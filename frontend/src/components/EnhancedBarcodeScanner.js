@@ -249,11 +249,12 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }, 200); // Increased frequency for better detection
   }, []); // Removed logScannerActivity dependency
 
-  // ZXing-based camera barcode detection for all formats
+  // Fixed ZXing implementation for proper barcode detection
   const detectBarcodeMultiFormat = useCallback(async () => {
     const video = videoRef.current;
+    const canvas = canvasRef.current;
     
-    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
       return;
     }
     
@@ -261,26 +262,36 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       // Update scan attempts
       setScanAttempts(prev => prev + 1);
       
-      // Use ZXing for comprehensive barcode detection
+      // Draw current video frame to canvas
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Use ZXing to decode from canvas
       const codeReader = new BrowserMultiFormatReader();
       
-      // Decode from video element directly
-      const result = await codeReader.decodeOnceFromVideoDevice(undefined, video.srcObject);
-      
-      if (result) {
-        console.log(`[BarcodeScanner] CAMERA_BARCODE_DETECTED: ${result.text}, format: ${result.format}`);
-        handleBarcodeDetected(result.text, result.format);
-        return;
+      try {
+        // Decode from canvas image data
+        const result = await codeReader.decodeFromCanvas(canvas);
+        
+        if (result && result.text) {
+          console.log(`[BarcodeScanner] BARCODE_DETECTED: ${result.text}, format: ${result.format}`);
+          handleBarcodeDetected(result.text, result.format.toString());
+          return;
+        }
+      } catch (decodeErr) {
+        // No barcode found in this frame - this is normal, continue scanning
+        if (decodeErr.name !== 'NotFoundException') {
+          console.warn('ZXing decode error:', decodeErr.message);
+        }
       }
       
       // Update scanning feedback
       updateScanningFeedback();
       
     } catch (err) {
-      // ZXing throws errors when no barcode found, this is normal
-      if (err.name !== 'NotFoundException') {
-        console.error('Barcode detection error:', err);
-      }
+      console.error('Barcode detection error:', err);
     }
   }, []);
 
