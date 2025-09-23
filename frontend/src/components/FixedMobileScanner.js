@@ -15,6 +15,7 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
   const mountedRef = useRef(true);
+  const codeReaderRef = useRef(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
