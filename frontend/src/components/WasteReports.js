@@ -29,10 +29,20 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import CleanCameraScanner from './CleanCameraScanner';
+import EnhancedBarcodeScanner from './EnhancedBarcodeScanner';
 import AddWasteEntryModal from './AddWasteEntryModal';
 
-const WasteReports = () => {
+/**
+ * Enhanced Waste Reports with Improved Data Handling
+ * 
+ * Fixes:
+ * - Proper null/undefined handling for all data fields
+ * - Fallback values to prevent displaying indices
+ * - Enhanced error boundaries and logging
+ * - Stable state management for product selection
+ * - Improved chart data processing
+ */
+const EnhancedWasteReports = () => {
   const [wasteData, setWasteData] = useState([]);
   const [wasteEntries, setWasteEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +66,29 @@ const WasteReports = () => {
     suppliers: []
   });
 
+  // Enhanced debug info
+  const [debugInfo, setDebugInfo] = useState({
+    lastLoad: null,
+    dataCount: 0,
+    apiCalls: 0,
+    errors: 0
+  });
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'];
+
+  // Enhanced logging system
+  const logActivity = (action, details = {}) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[WasteReports] ${timestamp} - ${action}:`, details);
+    
+    setDebugInfo(prev => ({
+      ...prev,
+      lastActivity: timestamp,
+      apiCalls: action.includes('API') ? prev.apiCalls + 1 : prev.apiCalls,
+      errors: action.includes('ERROR') ? prev.errors + 1 : prev.errors
+    }));
+  };
 
   useEffect(() => {
     loadWasteReports();
@@ -65,10 +96,23 @@ const WasteReports = () => {
     loadFilterOptions();
   }, [selectedPeriod, selectedCurrency, selectedDepartment, selectedSection]);
 
+  // Enhanced waste reports loading
   const loadWasteReports = async () => {
     try {
       setLoading(true);
+      logActivity('API_CALL_WASTE_REPORTS', {
+        period: selectedPeriod,
+        currency: selectedCurrency,
+        department: selectedDepartment
+      });
+      
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN');
+        setError('Authentication token not found');
+        return;
+      }
       
       const queryParams = new URLSearchParams({
         period: selectedPeriod,
@@ -83,23 +127,83 @@ const WasteReports = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setWasteData(data);
+        const processedData = processWasteData(data);
+        
+        logActivity('WASTE_REPORTS_SUCCESS', {
+          summaryExists: !!processedData.summary,
+          breakdownCount: processedData.department_breakdown?.length || 0
+        });
+        
+        setWasteData(processedData);
         setError('');
+        
+        setDebugInfo(prev => ({
+          ...prev,
+          lastLoad: new Date().toISOString(),
+          dataCount: processedData.department_breakdown?.length || 0
+        }));
       } else {
-        throw new Error('Failed to load waste reports');
+        const errorText = await response.text();
+        logActivity('WASTE_REPORTS_ERROR', {
+          status: response.status,
+          error: errorText
+        });
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
+      logActivity('WASTE_REPORTS_EXCEPTION', { error: error.message });
       console.error('Waste reports error:', error);
-      setError('Failed to load waste reports');
+      setError(`Failed to load waste reports: ${error.message}`);
       setWasteData([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Enhanced waste data processing
+  const processWasteData = (rawData) => {
+    const processedData = {
+      summary: {
+        total_waste_value: safeNumber(rawData?.summary?.total_waste_value, 0),
+        total_items_wasted: safeNumber(rawData?.summary?.total_items_wasted, 0),
+        total_entries: safeNumber(rawData?.summary?.total_entries, 0)
+      },
+      currency_breakdown: processArray(rawData?.currency_breakdown, (item, index) => ({
+        currency: safeString(item?.currency) || `Currency_${index + 1}`,
+        total_value: safeNumber(item?.total_value, 0),
+        total_items: safeNumber(item?.total_items, 0)
+      })),
+      department_breakdown: processArray(rawData?.department_breakdown, (item, index) => ({
+        department: safeName(item?.department) || `Department_${index + 1}`,
+        total_waste_value: safeNumber(item?.total_waste_value, 0),
+        total_items: safeNumber(item?.total_items, 0)
+      })),
+      reason_breakdown: processArray(rawData?.reason_breakdown, (item, index) => ({
+        reason: safeString(item?.reason) || `Reason_${index + 1}`,
+        total_waste_value: safeNumber(item?.total_waste_value, 0),
+        percentage: safeNumber(item?.percentage, 0)
+      }))
+    };
+    
+    logActivity('WASTE_DATA_PROCESSED', {
+      summaryValue: processedData.summary.total_waste_value,
+      currencyCount: processedData.currency_breakdown.length,
+      departmentCount: processedData.department_breakdown.length
+    });
+    
+    return processedData;
+  };
+
+  // Enhanced waste entries loading
   const loadWasteEntries = async () => {
     try {
+      logActivity('API_CALL_WASTE_ENTRIES');
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN_ENTRIES');
+        return;
+      }
       
       const queryParams = new URLSearchParams({
         ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
@@ -113,29 +217,74 @@ const WasteReports = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setWasteEntries(data.entries || []);
+        const processedEntries = processWasteEntries(data.entries || []);
+        
+        logActivity('WASTE_ENTRIES_SUCCESS', { count: processedEntries.length });
+        setWasteEntries(processedEntries);
+      } else {
+        logActivity('WASTE_ENTRIES_ERROR', { status: response.status });
       }
     } catch (error) {
+      logActivity('WASTE_ENTRIES_EXCEPTION', { error: error.message });
       console.error('Failed to load waste entries:', error);
     }
   };
 
+  // Enhanced waste entries processing
+  const processWasteEntries = (rawEntries) => {
+    if (!Array.isArray(rawEntries)) return [];
+    
+    return rawEntries.map((entry, index) => ({
+      id: entry?.id || `entry_${index}_${Date.now()}`,
+      date: entry?.date || new Date().toISOString(),
+      product_name: safeName(entry?.product_name) || `Product ${index + 1}`,
+      department: safeString(entry?.department) || 'Unknown Department',
+      quantity_wasted: safeNumber(entry?.quantity_wasted, 0),
+      waste_reason: safeString(entry?.waste_reason) || 'unknown',
+      total_waste_value: safeNumber(entry?.total_waste_value, 0),
+      purchase_currency: safeString(entry?.purchase_currency) || 'USD'
+    }));
+  };
+
+  // Enhanced filter options loading
   const loadFilterOptions = async () => {
     try {
+      logActivity('API_CALL_FILTER_OPTIONS');
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN_FILTERS');
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/filters`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
         const data = await response.json();
-        setFilterOptions(data);
+        logActivity('FILTER_OPTIONS_SUCCESS', {
+          departments: data?.departments?.length || 0,
+          sections: data?.sections?.length || 0
+        });
+        
+        const processedOptions = {
+          departments: processFilterArray(data?.departments, 'Department'),
+          sections: processFilterArray(data?.sections, 'Section'),
+          suppliers: processFilterArray(data?.suppliers, 'Supplier')
+        };
+        
+        setFilterOptions(processedOptions);
+      } else {
+        logActivity('FILTER_OPTIONS_ERROR', { status: response.status });
       }
     } catch (error) {
+      logActivity('FILTER_OPTIONS_EXCEPTION', { error: error.message });
       console.error('Failed to load filter options:', error);
     }
   };
 
+  // Enhanced product search
   const searchProducts = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -143,41 +292,85 @@ const WasteReports = () => {
     }
     
     try {
+      logActivity('PRODUCT_SEARCH', { query: query.trim() });
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN_SEARCH');
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/products/search?q=${encodeURIComponent(query)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.products || []);
+        const processedResults = processSearchResults(data.products || []);
+        
+        logActivity('SEARCH_SUCCESS', { results: processedResults.length });
+        setSearchResults(processedResults);
+      } else {
+        logActivity('SEARCH_ERROR', { status: response.status });
       }
     } catch (error) {
+      logActivity('SEARCH_EXCEPTION', { error: error.message });
       console.error('Search error:', error);
     }
   };
 
+  // Enhanced search results processing
+  const processSearchResults = (results) => {
+    if (!Array.isArray(results)) return [];
+    
+    return results.map((product, index) => ({
+      id: product?.id || `search_${index}_${Date.now()}`,
+      product_name: safeName(product?.product_name) || `Product ${index + 1}`,
+      item_number: safeString(product?.item_number) || `ITM-${index + 1}`,
+      department: safeString(product?.department) || 'Unknown Department',
+      purchase_price: safeNumber(product?.purchase_price, 0),
+      purchase_currency: safeString(product?.purchase_currency) || 'USD'
+    }));
+  };
+
+  // Enhanced product selection
   const handleProductSelect = (product) => {
+    logActivity('PRODUCT_SELECTED', { productId: product?.id });
     setSelectedProduct(product);
-    setSearchTerm(product.product_name);
+    setSearchTerm(product?.product_name || '');
     setSearchResults([]);
   };
 
+  // Enhanced waste value calculation
   const calculateWasteValue = () => {
     if (!selectedProduct || !wasteQuantity) return 0;
-    return parseFloat(wasteQuantity) * (selectedProduct.purchase_price || 0);
+    
+    const quantity = safeNumber(wasteQuantity, 0);
+    const price = safeNumber(selectedProduct.purchase_price, 0);
+    
+    return quantity * price;
   };
 
+  // Enhanced pending entries management
   const addToPendingEntries = () => {
-    if (!selectedProduct || !wasteQuantity) return;
+    if (!selectedProduct || !wasteQuantity) {
+      logActivity('ERROR_INVALID_ENTRY_DATA');
+      return;
+    }
     
     const entry = {
       id: Date.now(),
       product: selectedProduct,
-      quantity: parseFloat(wasteQuantity),
+      quantity: safeNumber(wasteQuantity, 0),
       reason: wasteReason,
       wasteValue: calculateWasteValue()
     };
+    
+    logActivity('PENDING_ENTRY_ADDED', {
+      productId: selectedProduct.id,
+      quantity: entry.quantity,
+      value: entry.wasteValue
+    });
     
     setPendingEntries(prev => [...prev, entry]);
     
@@ -188,15 +381,19 @@ const WasteReports = () => {
     setWasteReason('damaged');
   };
 
-  const removePendingEntry = (entryId) => {
-    setPendingEntries(prev => prev.filter(entry => entry.id !== entryId));
-  };
-
+  // Enhanced entries submission
   const submitAllEntries = async () => {
     if (pendingEntries.length === 0) return;
     
     try {
+      logActivity('SUBMIT_ENTRIES_STARTED', { count: pendingEntries.length });
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN_SUBMIT');
+        setError('Authentication token not found');
+        return;
+      }
       
       for (const entry of pendingEntries) {
         const wasteEntry = {
@@ -216,20 +413,30 @@ const WasteReports = () => {
         });
       }
       
+      logActivity('SUBMIT_ENTRIES_SUCCESS');
       setPendingEntries([]);
       loadWasteReports();
       loadWasteEntries();
       setError('');
       
     } catch (error) {
+      logActivity('SUBMIT_ENTRIES_ERROR', { error: error.message });
       console.error('Submit entries error:', error);
-      setError('Failed to submit waste entries');
+      setError(`Failed to submit waste entries: ${error.message}`);
     }
   };
 
+  // Enhanced export functionality
   const handleExport = async (format) => {
     try {
+      logActivity('EXPORT_REQUESTED', { format });
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logActivity('ERROR_NO_TOKEN_EXPORT');
+        setError('Authentication token not found');
+        return;
+      }
       
       const queryParams = new URLSearchParams({
         period: selectedPeriod,
@@ -248,32 +455,89 @@ const WasteReports = () => {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `waste-report-${selectedPeriod}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+        a.download = `waste-report-${selectedPeriod}-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        logActivity('EXPORT_SUCCESS', { format });
+      } else {
+        throw new Error(`Export failed with status ${response.status}`);
       }
     } catch (error) {
+      logActivity('EXPORT_ERROR', { format, error: error.message });
       console.error('Export error:', error);
-      setError(`Failed to export ${format}`);
+      setError(`Failed to export ${format}: ${error.message}`);
     }
   };
 
+  // Utility functions for data safety
+  const safeNumber = (value, fallback = 0) => {
+    const num = Number(value);
+    return isNaN(num) ? fallback : num;
+  };
+
+  const safeString = (value) => {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    return '';
+  };
+
+  const safeName = (value) => {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    if (typeof value === 'number') {
+      return `Item_${value}`;
+    }
+    return '';
+  };
+
+  const processArray = (array, processor) => {
+    if (!Array.isArray(array)) return [];
+    return array.map(processor).filter(Boolean);
+  };
+
+  const processFilterArray = (array, prefix) => {
+    if (!Array.isArray(array)) return [];
+    
+    return array.map((item, index) => {
+      if (typeof item === 'string' && item.trim()) {
+        return item.trim();
+      }
+      if (typeof item === 'object' && item?.name) {
+        return item.name;
+      }
+      return `${prefix}_${index + 1}`;
+    }).filter(Boolean);
+  };
+
+  // Enhanced currency formatting
   const formatCurrency = (amount, currency = 'USD') => {
+    const safeAmount = safeNumber(amount, 0);
+    
     if (currency && ['YER', 'SAR', 'EUR'].includes(currency)) {
-      return `${amount.toFixed(2)} ${currency}`;
+      return `${safeAmount.toFixed(2)} ${currency}`;
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD'
-    }).format(amount || 0);
+    
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency || 'USD'
+      }).format(safeAmount);
+    } catch (error) {
+      return `${safeAmount} ${currency}`;
+    }
   };
 
+  // Enhanced total pending value calculation
   const totalPendingValue = useMemo(() => {
     const totals = { YER: 0, SAR: 0, EUR: 0 };
     pendingEntries.forEach(entry => {
-      const currency = entry.product.purchase_currency || 'YER';
-      totals[currency] += entry.wasteValue;
+      const currency = entry.product?.purchase_currency || 'YER';
+      totals[currency] += safeNumber(entry.wasteValue, 0);
     });
     return totals;
   }, [pendingEntries]);
@@ -281,7 +545,13 @@ const WasteReports = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading waste reports...</p>
+          {debugInfo.apiCalls > 0 && (
+            <p className="text-sm text-gray-400 mt-2">API calls: {debugInfo.apiCalls}</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -289,16 +559,21 @@ const WasteReports = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Enhanced Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                 <Trash2 className="text-red-600" />
-                Waste Reports
+                Enhanced Waste Reports
               </h1>
               <p className="text-gray-600 mt-1">
                 Track and analyze product waste across departments
+                {debugInfo.lastLoad && (
+                  <span className="text-sm text-gray-400 ml-2">
+                    • Updated {new Date(debugInfo.lastLoad).toLocaleTimeString()}
+                  </span>
+                )}
               </p>
             </div>
             
@@ -308,7 +583,7 @@ const WasteReports = () => {
                 className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
               >
                 <Plus size={18} />
-                Add Waste Entry
+                Add Entry
               </button>
               
               <button
@@ -316,7 +591,7 @@ const WasteReports = () => {
                 className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Camera size={18} />
-                Scan Item
+                Multi-Scan
               </button>
               
               <div className="relative group">
@@ -343,14 +618,21 @@ const WasteReports = () => {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Enhanced Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3">
+            <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Waste Reports Error</p>
+              <p className="text-sm">{error}</p>
+              {debugInfo.errors > 0 && (
+                <p className="text-xs mt-1">Total errors: {debugInfo.errors}</p>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Filters */}
+        {/* Enhanced Filters */}
         <div className="mb-6 bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4">Filters & Settings</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -390,9 +672,9 @@ const WasteReports = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Departments</option>
-                {filterOptions.departments?.map(dept => (
-                  <option key={dept.value || dept} value={dept.value || dept}>
-                    {dept.label || dept}
+                {filterOptions.departments?.map((dept, index) => (
+                  <option key={`dept-${index}`} value={dept}>
+                    {safeName(dept) || `Department ${index + 1}`}
                   </option>
                 ))}
               </select>
@@ -406,9 +688,9 @@ const WasteReports = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Sections</option>
-                {filterOptions.sections?.map(section => (
-                  <option key={section.value || section} value={section.value || section}>
-                    {section.label || section}
+                {filterOptions.sections?.map((section, index) => (
+                  <option key={`section-${index}`} value={section}>
+                    {safeName(section) || `Section ${index + 1}`}
                   </option>
                 ))}
               </select>
@@ -416,7 +698,7 @@ const WasteReports = () => {
           </div>
         </div>
 
-        {/* Quick Add Waste Entry */}
+        {/* Enhanced Quick Add Waste Entry */}
         <div className="mb-6 bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Plus className="text-green-600" />
@@ -424,7 +706,7 @@ const WasteReports = () => {
           </h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Product Search */}
+            {/* Enhanced Product Search */}
             <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Search Product (Barcode or Name)
@@ -442,12 +724,12 @@ const WasteReports = () => {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
                 
-                {/* Search Results Dropdown */}
+                {/* Enhanced Search Results Dropdown */}
                 {searchResults.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {searchResults.map(product => (
+                    {searchResults.map((product, index) => (
                       <button
-                        key={product.id}
+                        key={`search-${index}`}
                         onClick={() => handleProductSelect(product)}
                         className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
                       >
@@ -462,7 +744,7 @@ const WasteReports = () => {
                 )}
               </div>
               
-              {/* Selected Product Info */}
+              {/* Enhanced Selected Product Info */}
               {selectedProduct && (
                 <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <h4 className="font-medium text-green-800">{selectedProduct.product_name}</h4>
@@ -474,7 +756,7 @@ const WasteReports = () => {
               )}
             </div>
 
-            {/* Entry Form */}
+            {/* Enhanced Entry Form */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Wasted</label>
@@ -504,7 +786,7 @@ const WasteReports = () => {
                 </select>
               </div>
 
-              {/* Calculated Value */}
+              {/* Enhanced Calculated Value */}
               {selectedProduct && wasteQuantity && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-600">Waste Value:</p>
@@ -524,7 +806,7 @@ const WasteReports = () => {
             </div>
           </div>
 
-          {/* Pending Entries */}
+          {/* Enhanced Pending Entries */}
           {pendingEntries.length > 0 && (
             <div className="mt-6 border-t border-gray-200 pt-6">
               <div className="flex justify-between items-center mb-4">
@@ -551,15 +833,15 @@ const WasteReports = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {pendingEntries.map(entry => (
                       <tr key={entry.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-sm">{entry.product.product_name}</td>
+                        <td className="px-4 py-2 text-sm">{entry.product?.product_name || 'Unknown Product'}</td>
                         <td className="px-4 py-2 text-sm">{entry.quantity}</td>
                         <td className="px-4 py-2 text-sm capitalize">{entry.reason}</td>
                         <td className="px-4 py-2 text-sm font-medium">
-                          {formatCurrency(entry.wasteValue, entry.product.purchase_currency)}
+                          {formatCurrency(entry.wasteValue, entry.product?.purchase_currency)}
                         </td>
                         <td className="px-4 py-2 text-sm">
                           <button
-                            onClick={() => removePendingEntry(entry.id)}
+                            onClick={() => setPendingEntries(prev => prev.filter(e => e.id !== entry.id))}
                             className="text-red-600 hover:text-red-800"
                           >
                             <X size={16} />
@@ -571,7 +853,7 @@ const WasteReports = () => {
                 </table>
               </div>
 
-              {/* Totals by Currency */}
+              {/* Enhanced Totals by Currency */}
               <div className="mt-4 grid grid-cols-3 gap-4">
                 {Object.entries(totalPendingValue).map(([currency, value]) => (
                   <div key={currency} className="bg-gray-50 p-3 rounded-lg text-center">
@@ -586,9 +868,9 @@ const WasteReports = () => {
           )}
         </div>
 
-        {/* Summary Cards */}
+        {/* Enhanced Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">Total Waste Value</p>
@@ -600,7 +882,7 @@ const WasteReports = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">Items Wasted</p>
@@ -612,7 +894,7 @@ const WasteReports = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">Waste Entries</p>
@@ -624,7 +906,7 @@ const WasteReports = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">Avg Per Entry</p>
@@ -640,19 +922,19 @@ const WasteReports = () => {
           </div>
         </div>
 
-        {/* Currency Breakdown */}
+        {/* Enhanced Currency Breakdown */}
         {wasteData.currency_breakdown && wasteData.currency_breakdown.length > 0 && (
           <div className="mb-6 bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Waste by Currency</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {wasteData.currency_breakdown.map(item => (
-                <div key={item.currency} className="bg-gray-50 p-4 rounded-lg text-center">
+              {wasteData.currency_breakdown.map((item, index) => (
+                <div key={`currency-${index}`} className="bg-gray-50 p-4 rounded-lg text-center hover:bg-gray-100 transition-colors">
                   <p className="text-sm text-gray-600">{item.currency}</p>
                   <p className="text-xl font-bold text-gray-900">
                     {formatCurrency(item.total_value, item.currency)}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {item.total_items} items
+                    {item.total_items.toLocaleString()} items
                   </p>
                 </div>
               ))}
@@ -660,53 +942,55 @@ const WasteReports = () => {
           </div>
         )}
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Waste by Department */}
-          {wasteData.department_breakdown && wasteData.department_breakdown.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Waste by Department</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={wasteData.department_breakdown}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="department" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                  <Legend />
-                  <Bar dataKey="total_waste_value" fill="#8884d8" name="Waste Value" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+        {/* Enhanced Charts */}
+        {(wasteData.department_breakdown?.length > 0 || wasteData.reason_breakdown?.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Waste by Department */}
+            {wasteData.department_breakdown && wasteData.department_breakdown.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Waste by Department</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={wasteData.department_breakdown}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="department" />
+                    <YAxis />
+                    <Tooltip formatter={(value, name) => [formatCurrency(value), name]} />
+                    <Legend />
+                    <Bar dataKey="total_waste_value" fill="#8884d8" name="Waste Value" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
 
-          {/* Waste by Reason */}
-          {wasteData.reason_breakdown && wasteData.reason_breakdown.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Waste by Reason</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={wasteData.reason_breakdown}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ reason, percentage }) => `${reason}: ${percentage}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="total_waste_value"
-                  >
-                    {wasteData.reason_breakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
+            {/* Waste by Reason */}
+            {wasteData.reason_breakdown && wasteData.reason_breakdown.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Waste by Reason</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={wasteData.reason_breakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ reason, percentage }) => `${reason}: ${percentage}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="total_waste_value"
+                    >
+                      {wasteData.reason_breakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [formatCurrency(value), 'Waste Value']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Recent Waste Entries */}
+        {/* Enhanced Recent Waste Entries */}
         {wasteEntries.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Recent Waste Entries</h3>
@@ -724,7 +1008,7 @@ const WasteReports = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {wasteEntries.slice(0, 10).map((entry, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={`entry-${index}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(entry.date).toLocaleDateString()}
                       </td>
@@ -735,7 +1019,7 @@ const WasteReports = () => {
                         {entry.department}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {entry.quantity_wasted}
+                        {entry.quantity_wasted.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                         {entry.waste_reason}
@@ -752,8 +1036,8 @@ const WasteReports = () => {
         )}
       </div>
 
-      {/* Barcode Scanner Modal */}
-      <CleanCameraScanner
+      {/* Enhanced Barcode Scanner Modal */}
+      <EnhancedBarcodeScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onProductFound={(product) => {
@@ -775,4 +1059,4 @@ const WasteReports = () => {
   );
 };
 
-export default WasteReports;
+export default EnhancedWasteReports;
