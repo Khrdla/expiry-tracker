@@ -106,12 +106,12 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                       filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))'
                     }}
                     onError={(e) => {
-                      console.error('❌ Image failed to load:', `${BACKEND_URL}${product.image_url}`);
+                      console.error('❌ Image failed to load:', `${BACKEND_URL}/api${product.image_url}`);
                       setImageLoading(false);
                       setImageError(true);
                     }}
                     onLoad={() => {
-                      console.log('✅ Product image loaded successfully:', `${BACKEND_URL}${product.image_url}`);
+                      console.log('✅ Product image loaded successfully:', `${BACKEND_URL}/api${product.image_url}`);
                       setImageLoading(false);
                       setImageError(false);
                     }}
