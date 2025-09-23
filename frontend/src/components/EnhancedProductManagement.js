@@ -284,6 +284,16 @@ const EnhancedProductManagement = () => {
           suppliers: processFilterArray(data?.suppliers, 'Supplier')
         };
         
+        // Debug logging to understand filter data
+        console.log('🔍 Filter Options Debug:', {
+          rawData: {
+            departments: data?.departments,
+            sections: data?.sections,
+            suppliers: data?.suppliers
+          },
+          processedData: processedOptions
+        });
+        
         setFilterOptions(processedOptions);
       } else {
         logActivity('FILTER_OPTIONS_ERROR', { status: response.status });
