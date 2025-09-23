@@ -1057,15 +1057,20 @@ async def upload_product_image(
     current_user: User = Depends(get_current_user)
 ):
     """Upload product image"""
+    # Validate file type
+    if not image.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Validate file size (5MB max)
+    if image.size and image.size > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+    
+    # Check if product exists
+    product = await db.products.find_one({"id": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
     try:
-        # Validate file type
-        if not image.content_type.startswith('image/'):
-            raise HTTPException(status_code=400, detail="File must be an image")
-        
-        # Validate file size (5MB max)
-        if image.size > 5 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
-        
         # Create uploads directory if it doesn't exist
         import os
         uploads_dir = "/app/uploads"
@@ -1091,6 +1096,9 @@ async def upload_product_image(
         
         return {"success": True, "message": "Image uploaded successfully", "image_url": image_url}
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400, 404) without converting to 500
+        raise
     except Exception as e:
         logger.error(f"Error uploading image: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to upload image")
