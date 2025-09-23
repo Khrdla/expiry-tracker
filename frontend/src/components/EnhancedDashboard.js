@@ -14,13 +14,22 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { Camera } from 'lucide-react';
-import CleanCameraScanner from './CleanCameraScanner';
+import { Camera, AlertTriangle, TrendingUp } from 'lucide-react';
+import EnhancedBarcodeScanner from './EnhancedBarcodeScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import Dashboard3DCharts from './Dashboard3DCharts';
 import AdvancedBarcodeFeatures from './AdvancedBarcodeFeatures';
 import EnhancedVisualCharts from './EnhancedVisualCharts';
 
+/**
+ * Enhanced Dashboard with Improved Data Handling
+ * 
+ * Fixes:
+ * - Proper handling of null/undefined data
+ * - Fallback values to prevent displaying indices
+ * - Enhanced error boundaries and logging
+ * - Stable state management
+ */
 const EnhancedDashboard = () => {
   const [user, setUser] = useState(null);
   const [kpis, setKpis] = useState({});
@@ -42,7 +51,27 @@ const EnhancedDashboard = () => {
     suppliers: []
   });
 
+  // Add debug logging for data issues
+  const [debugInfo, setDebugInfo] = useState({
+    lastDataLoad: null,
+    apiCallCount: 0,
+    errorCount: 0
+  });
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+  // Enhanced logging system
+  const logDashboardActivity = (action, details = {}) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[Dashboard] ${timestamp} - ${action}:`, details);
+    
+    setDebugInfo(prev => ({
+      ...prev,
+      lastActivity: timestamp,
+      apiCallCount: action.includes('API') ? prev.apiCallCount + 1 : prev.apiCallCount,
+      errorCount: action.includes('ERROR') ? prev.errorCount + 1 : prev.errorCount
+    }));
+  };
 
   useEffect(() => {
     loadUserData();
@@ -50,26 +79,52 @@ const EnhancedDashboard = () => {
     loadFilterOptions();
   }, [selectedDepartment, selectedSection, selectedSupplier]);
 
+  // Enhanced user data loading with error handling
   const loadUserData = async () => {
     try {
+      logDashboardActivity('API_CALL_USER_DATA');
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logDashboardActivity('ERROR_NO_TOKEN');
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
       if (response.ok) {
         const userData = await response.json();
+        logDashboardActivity('USER_DATA_SUCCESS', { username: userData?.username });
         setUser(userData);
+      } else {
+        logDashboardActivity('USER_DATA_ERROR', { status: response.status });
       }
     } catch (error) {
+      logDashboardActivity('USER_DATA_EXCEPTION', { error: error.message });
       console.error('Failed to load user data:', error);
     }
   };
 
+  // Enhanced dashboard data loading with comprehensive error handling
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      logDashboardActivity('API_CALL_DASHBOARD_DATA', {
+        department: selectedDepartment,
+        section: selectedSection,
+        supplier: selectedSupplier
+      });
+      
       const token = localStorage.getItem('token');
       
+      if (!token) {
+        logDashboardActivity('ERROR_NO_TOKEN_DASHBOARD');
+        setError('Authentication token not found');
+        return;
+      }
+
       const queryParams = new URLSearchParams({
         ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
         ...(selectedSection !== 'all' && { section: selectedSection }),
@@ -84,57 +139,183 @@ const EnhancedDashboard = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setKpis(data.kpis || {});
+        logDashboardActivity('DASHBOARD_DATA_SUCCESS', {
+          kpisCount: Object.keys(data.kpis || {}).length,
+          dataStructure: Object.keys(data)
+        });
         
-        const departments = Object.entries(data.kpis || {}).map(([key, value]) => ({
-          name: key,
-          value: value.total_items || 0,
-          expired: value.expired_items || 0,
-          stock_value: value.stock_value || 0
-        }));
-        setChartData(departments);
+        // Enhanced data processing with null checks
+        const processedKpis = processKpisData(data.kpis || {});
+        setKpis(processedKpis);
+        
+        // Enhanced chart data processing
+        const processedChartData = processChartData(processedKpis);
+        setChartData(processedChartData);
+        
         setError('');
+        setDebugInfo(prev => ({
+          ...prev,
+          lastDataLoad: new Date().toISOString()
+        }));
       } else {
-        throw new Error('Failed to load dashboard data');
+        const errorText = await response.text();
+        logDashboardActivity('DASHBOARD_DATA_ERROR', {
+          status: response.status,
+          error: errorText
+        });
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
+      logDashboardActivity('DASHBOARD_DATA_EXCEPTION', { error: error.message });
       console.error('Dashboard error:', error);
-      setError('Failed to load dashboard data');
+      setError(`Failed to load dashboard data: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // Enhanced KPI data processing with fallbacks
+  const processKpisData = (rawKpis) => {
+    const processedKpis = {};
+    
+    Object.entries(rawKpis).forEach(([key, value]) => {
+      // Ensure we have a proper object with fallbacks
+      const processedValue = {
+        total_items: safeNumber(value?.total_items, 0),
+        expired_items: safeNumber(value?.expired_items, 0),
+        low_stock_items: safeNumber(value?.low_stock_items, 0),
+        stock_value: value?.stock_value || 0,
+        // Preserve other properties with safety checks
+        ...Object.fromEntries(
+          Object.entries(value || {}).map(([k, v]) => [
+            k,
+            typeof v === 'string' && v.trim() === '' ? `Unknown ${k}` : v
+          ])
+        )
+      };
+      
+      // Ensure the key is a proper string, not an index
+      const processedKey = typeof key === 'string' && key.trim() ? key : `Department_${key}`;
+      processedKpis[processedKey] = processedValue;
+    });
+    
+    logDashboardActivity('KPIS_PROCESSED', {
+      originalKeys: Object.keys(rawKpis),
+      processedKeys: Object.keys(processedKpis)
+    });
+    
+    return processedKpis;
+  };
+
+  // Enhanced chart data processing
+  const processChartData = (kpis) => {
+    const chartData = Object.entries(kpis).map(([key, value]) => ({
+      name: safeName(key),
+      value: safeNumber(value?.total_items, 0),
+      expired: safeNumber(value?.expired_items, 0),
+      stock_value: safeNumber(value?.stock_value, 0)
+    }));
+    
+    logDashboardActivity('CHART_DATA_PROCESSED', {
+      itemCount: chartData.length,
+      names: chartData.map(item => item.name)
+    });
+    
+    return chartData;
+  };
+
+  // Enhanced filter options loading
   const loadFilterOptions = async () => {
     try {
+      logDashboardActivity('API_CALL_FILTER_OPTIONS');
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        logDashboardActivity('ERROR_NO_TOKEN_FILTERS');
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/filters`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
         const data = await response.json();
-        setFilterOptions(data);
+        logDashboardActivity('FILTER_OPTIONS_SUCCESS', {
+          departments: data?.departments?.length || 0,
+          sections: data?.sections?.length || 0,
+          suppliers: data?.suppliers?.length || 0
+        });
+        
+        // Process filter options with safety checks
+        const processedOptions = {
+          departments: processFilterArray(data?.departments, 'Department'),
+          sections: processFilterArray(data?.sections, 'Section'),
+          suppliers: processFilterArray(data?.suppliers, 'Supplier')
+        };
+        
+        setFilterOptions(processedOptions);
+      } else {
+        logDashboardActivity('FILTER_OPTIONS_ERROR', { status: response.status });
       }
     } catch (error) {
+      logDashboardActivity('FILTER_OPTIONS_EXCEPTION', { error: error.message });
       console.error('Failed to load filter options:', error);
     }
   };
 
-  const formatCurrency = (amount, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount || 0);
+  // Utility functions for data safety
+  const safeNumber = (value, fallback = 0) => {
+    const num = Number(value);
+    return isNaN(num) ? fallback : num;
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'in_stock': return 'text-green-600 bg-green-100';
-      case 'low_stock': return 'text-yellow-600 bg-yellow-100';
-      case 'out_of_stock': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const safeName = (value) => {
+    if (typeof value === 'string' && value.trim()) {
+      return value;
     }
+    if (typeof value === 'number') {
+      return `Item_${value}`;
+    }
+    return `Unknown_${Date.now()}`;
+  };
+
+  const processFilterArray = (array, prefix) => {
+    if (!Array.isArray(array)) return [];
+    
+    return array.map((item, index) => {
+      if (typeof item === 'string' && item.trim()) {
+        return item;
+      }
+      if (typeof item === 'object' && item?.name) {
+        return item.name;
+      }
+      return `${prefix}_${index + 1}`;
+    }).filter(Boolean);
+  };
+
+  // Enhanced currency formatting
+  const formatCurrency = (amount, currency = 'USD') => {
+    const safeAmount = safeNumber(amount, 0);
+    
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency
+      }).format(safeAmount);
+    } catch (error) {
+      return `${safeAmount} ${currency}`;
+    }
+  };
+
+  // Enhanced status color function
+  const getStatusColor = (status) => {
+    const statusMap = {
+      'in_stock': 'text-green-600 bg-green-100',
+      'low_stock': 'text-yellow-600 bg-yellow-100',
+      'out_of_stock': 'text-red-600 bg-red-100'
+    };
+    return statusMap[status] || 'text-gray-600 bg-gray-100';
   };
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'];
@@ -142,7 +323,13 @@ const EnhancedDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+          {debugInfo.apiCallCount > 0 && (
+            <p className="text-sm text-gray-400 mt-2">API calls: {debugInfo.apiCallCount}</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -150,19 +337,24 @@ const EnhancedDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Enhanced Header with Debug Info */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Dashboard
+                Enhanced Dashboard
               </h1>
               <p className="text-gray-600 mt-1">
                 Welcome back, {user?.username || 'User'}
               </p>
+              {process.env.NODE_ENV === 'development' && debugInfo.lastDataLoad && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Last updated: {new Date(debugInfo.lastDataLoad).toLocaleTimeString()}
+                </p>
+              )}
             </div>
             
-            {/* Mobile-optimized action buttons */}
+            {/* Enhanced Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="flex gap-2">
                 <button
@@ -170,28 +362,35 @@ const EnhancedDashboard = () => {
                   className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
                 >
                   <Camera size={18} />
-                  📱 Scan
+                  📱 Multi-Scan
                 </button>
                 
                 <button
                   onClick={() => setShowAdvancedBarcodeFeatures(true)}
                   className="flex-1 sm:flex-initial bg-gradient-to-r from-green-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
                 >
-                  🚀 Pro
+                  🚀 Advanced
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Enhanced Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3">
+            <AlertTriangle size={20} className="flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Dashboard Error</p>
+              <p className="text-sm">{error}</p>
+              {debugInfo.errorCount > 0 && (
+                <p className="text-xs mt-1">Total errors: {debugInfo.errorCount}</p>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Filters - Mobile-friendly grid layout */}
+        {/* Enhanced Filters */}
         <div className="mb-6 bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-3">Filters</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -203,9 +402,9 @@ const EnhancedDashboard = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Departments</option>
-                {filterOptions.departments?.map(dept => (
-                  <option key={dept.value || dept} value={dept.value || dept}>
-                    {dept.label || dept}
+                {filterOptions.departments?.map((dept, index) => (
+                  <option key={`dept-${index}`} value={dept}>
+                    {safeName(dept)}
                   </option>
                 ))}
               </select>
@@ -219,9 +418,9 @@ const EnhancedDashboard = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Sections</option>
-                {filterOptions.sections?.map(section => (
-                  <option key={section.value || section} value={section.value || section}>
-                    {section.label || section}
+                {filterOptions.sections?.map((section, index) => (
+                  <option key={`section-${index}`} value={section}>
+                    {safeName(section)}
                   </option>
                 ))}
               </select>
@@ -235,9 +434,9 @@ const EnhancedDashboard = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Suppliers</option>
-                {filterOptions.suppliers?.map(supplier => (
-                  <option key={supplier.value || supplier} value={supplier.value || supplier}>
-                    {supplier.label || supplier}
+                {filterOptions.suppliers?.map((supplier, index) => (
+                  <option key={`supplier-${index}`} value={supplier}>
+                    {safeName(supplier)}
                   </option>
                 ))}
               </select>
@@ -245,83 +444,93 @@ const EnhancedDashboard = () => {
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* Enhanced KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {Object.entries(kpis).map(([key, value]) => (
-            <div key={key} className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{key}</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {value.total_items?.toLocaleString() || 0}
-                  </p>
+          {Object.entries(kpis).length > 0 ? (
+            Object.entries(kpis).map(([key, value]) => (
+              <div key={key} className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{safeName(key)}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {safeNumber(value?.total_items, 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Stock Value</p>
+                    <p className="text-sm font-semibold text-green-600">
+                      {typeof value?.stock_value === 'number' 
+                        ? formatCurrency(value.stock_value) 
+                        : (value?.stock_value || '$0')}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Stock Value</p>
-                  <p className="text-sm font-semibold text-green-600">
-                    {typeof value.stock_value === 'number' 
-                      ? formatCurrency(value.stock_value) 
-                      : value.stock_value || '$0'}
-                  </p>
+                
+                <div className="mt-4 flex justify-between text-sm">
+                  <span className="text-red-600">
+                    Expired: {safeNumber(value?.expired_items, 0)}
+                  </span>
+                  <span className="text-yellow-600">
+                    Low Stock: {safeNumber(value?.low_stock_items, 0)}
+                  </span>
                 </div>
               </div>
-              
-              <div className="mt-4 flex justify-between text-sm">
-                <span className="text-red-600">
-                  Expired: {value.expired_items || 0}
-                </span>
-                <span className="text-yellow-600">
-                  Low Stock: {value.low_stock_items || 0}
-                </span>
-              </div>
+            ))
+          ) : (
+            <div className="col-span-full bg-white rounded-lg shadow p-8 text-center">
+              <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 text-lg">No KPI data available</p>
+              <p className="text-gray-400 text-sm">Check your filters or try refreshing the page</p>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Department Distribution Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Items by Department</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#8884d8" name="Total Items" />
-                <Bar dataKey="expired" fill="#ff7c7c" name="Expired Items" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Enhanced Charts Section */}
+        {chartData.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Department Distribution Chart */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Items by Department</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value, name) => [value.toLocaleString(), name]} />
+                  <Legend />
+                  <Bar dataKey="value" fill="#8884d8" name="Total Items" />
+                  <Bar dataKey="expired" fill="#ff7c7c" name="Expired Items" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-          {/* Stock Value Distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Stock Value Distribution</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="stock_value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {/* Stock Value Distribution */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Stock Value Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${safeName(name)}: ${safeNumber(value, 0)}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="stock_value"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value.toLocaleString(), 'Stock Value']} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Enhanced Visual Charts Integration */}
+        {/* Advanced Analytics Section */}
         <div className="mb-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -349,8 +558,8 @@ const EnhancedDashboard = () => {
           </div>
         </div>
 
-        {/* Top Suppliers */}
-        {kpis.top_suppliers && kpis.top_suppliers.length > 0 && (
+        {/* Enhanced Top Suppliers */}
+        {kpis.top_suppliers && Array.isArray(kpis.top_suppliers) && kpis.top_suppliers.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">Top Suppliers</h3>
             <div className="overflow-x-auto">
@@ -370,15 +579,15 @@ const EnhancedDashboard = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {kpis.top_suppliers.map((supplier, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={`supplier-row-${index}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {supplier.supplier}
+                        {safeName(supplier?.supplier)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {supplier.total_items}
+                        {safeNumber(supplier?.total_items, 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {supplier.total_stock_value}
+                        {supplier?.total_stock_value || 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -388,20 +597,20 @@ const EnhancedDashboard = () => {
           </div>
         )}
 
-        {/* Recent Alerts */}
-        {kpis.recent_alerts && kpis.recent_alerts.length > 0 && (
+        {/* Enhanced Recent Alerts */}
+        {kpis.recent_alerts && Array.isArray(kpis.recent_alerts) && kpis.recent_alerts.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Recent Alerts</h3>
             <div className="space-y-3">
               {kpis.recent_alerts.map((alert, index) => (
-                <div key={index} className={`p-3 rounded-lg border ${getStatusColor(alert.type)}`}>
+                <div key={`alert-${index}`} className={`p-3 rounded-lg border ${getStatusColor(alert.type)}`}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium">{alert.message}</p>
-                      <p className="text-sm opacity-75">{alert.product_name}</p>
+                      <p className="font-medium">{alert.message || 'Alert message unavailable'}</p>
+                      <p className="text-sm opacity-75">{safeName(alert.product_name)}</p>
                     </div>
                     <span className="text-xs opacity-75">
-                      {new Date(alert.created_at).toLocaleDateString()}
+                      {alert.created_at ? new Date(alert.created_at).toLocaleDateString() : 'Unknown date'}
                     </span>
                   </div>
                 </div>
@@ -411,18 +620,19 @@ const EnhancedDashboard = () => {
         )}
       </div>
 
-      {/* Floating Action Button - Mobile optimized */}
+      {/* Enhanced Floating Action Button */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setShowScanner(true)}
           className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all duration-300 flex items-center justify-center"
+          title="Multi-Format Barcode Scanner"
         >
           <Camera size={24} />
         </button>
       </div>
 
-      {/* Barcode Scanner Modal */}
-      <CleanCameraScanner
+      {/* Enhanced Barcode Scanner Modal */}
+      <EnhancedBarcodeScanner
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onProductFound={(product) => {
