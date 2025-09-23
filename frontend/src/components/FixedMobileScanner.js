@@ -257,29 +257,43 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
         {/* Content */}
         <div className="p-4 space-y-4">
           
-          {/* Camera Scanner Mode (PRIMARY) */}
+          {/* Camera Scanner Mode (PRIMARY) - Always visible */}
           {!manualMode && (
             <div className="space-y-4">
               <div className="text-center bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-800">📷 Camera Scanner</h3>
+                <h3 className="text-lg font-semibold text-gray-800">📷 Camera Scanner (Primary)</h3>
                 <p className="text-sm text-gray-600">Point camera at barcode for instant detection</p>
               </div>
               
               {!cameraActive ? (
                 <div className="space-y-3">
-                  <div className="bg-black rounded-lg h-64 flex items-center justify-center">
+                  {/* Camera placeholder with scanning frame */}
+                  <div className="relative bg-black rounded-lg h-64 flex items-center justify-center">
                     <div className="text-center text-white">
                       <Camera size={48} className="mx-auto mb-4 text-gray-400" />
-                      <p className="text-sm">Camera starting...</p>
+                      <p className="text-sm">
+                        {error.includes('Camera') ? 'Camera unavailable' : 'Camera ready to start'}
+                      </p>
+                    </div>
+                    
+                    {/* Show scanning frame even when camera isn't active */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-64 h-32 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-20 relative">
+                        {/* Corner indicators */}
+                        <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400 rounded-tl-lg"></div>
+                        <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400 rounded-tr-lg"></div>
+                        <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400 rounded-bl-lg"></div>
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400 rounded-br-lg"></div>
+                      </div>
                     </div>
                   </div>
                   
                   <button
                     onClick={startCamera}
-                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2 font-medium"
                   >
                     <Camera size={16} />
-                    <span>Start Camera</span>
+                    <span>🚀 Start Camera Scanning</span>
                   </button>
                 </div>
               ) : (
