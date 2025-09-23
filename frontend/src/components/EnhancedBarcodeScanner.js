@@ -37,7 +37,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-  // Enhanced logging system
+  // Enhanced logging system - Fixed dependency to prevent infinite loops
   const logScannerActivity = useCallback((action, details = {}) => {
     const timestamp = new Date().toISOString();
     console.log(`[BarcodeScanner] ${timestamp} - ${action}:`, details);
@@ -47,11 +47,16 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       setScanAttempts(prev => prev + 1);
     } else if (action === 'BARCODE_DETECTED') {
       setLastScanTime(timestamp);
-      if (details.format && !detectedFormats.includes(details.format)) {
-        setDetectedFormats(prev => [...prev, details.format]);
+      if (details.format) {
+        setDetectedFormats(prev => {
+          if (!prev.includes(details.format)) {
+            return [...prev, details.format];
+          }
+          return prev;
+        });
       }
     }
-  }, [detectedFormats]);
+  }, []); // Removed detectedFormats dependency to prevent infinite loop
 
   // Prevent memory leaks and state issues on unmount
   useEffect(() => {
