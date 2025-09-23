@@ -484,45 +484,51 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
         ))}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+      {/* Charts Section - Mobile Optimized */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Department Overview Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-          <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Department Overview</h3>
-          <ResponsiveContainer width="100%" height={280}>
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
+          <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+            📊 <span className="ml-2">Department Overview</span>
+          </h3>
+          <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 220 : 280}>
             <BarChart data={prepareChartData()}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis 
                 dataKey="department" 
-                tick={{ fontSize: 10 }}
-                angle={-45}
+                tick={{ fontSize: window.innerWidth < 768 ? 8 : 10 }}
+                angle={window.innerWidth < 768 ? -90 : -45}
                 textAnchor="end"
-                height={80}
+                height={window.innerWidth < 768 ? 60 : 80}
+                interval={0}
               />
-              <YAxis tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: window.innerWidth < 768 ? 8 : 10 }} />
               <Tooltip 
                 formatter={(value, name) => [
                   name === 'Stock Value' ? formatCurrency(value) : value.toLocaleString(),
                   name
                 ]}
                 contentStyle={{
-                  fontSize: '12px',
+                  fontSize: window.innerWidth < 768 ? '10px' : '12px',
                   borderRadius: '8px',
-                  border: '1px solid #e5e7eb'
+                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)'
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="Total Items" fill="#22c55e" />
-              <Bar dataKey="Out of Stock" fill="#ef4444" />
-              <Bar dataKey="Low Stock" fill="#f59e0b" />
+              <Legend wrapperStyle={{ fontSize: window.innerWidth < 768 ? '10px' : '12px' }} />
+              <Bar dataKey="Total Items" fill="#22c55e" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Out of Stock" fill="#ef4444" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Low Stock" fill="#f59e0b" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Stock Status Pie Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-          <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Overall Stock Status</h3>
-          <ResponsiveContainer width="100%" height={280}>
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
+          <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+            🥧 <span className="ml-2">Stock Status</span>
+          </h3>
+          <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 220 : 280}>
             <PieChart>
               <Pie
                 data={prepareExpiryData()}
@@ -530,13 +536,14 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                 cy="50%"
                 labelLine={false}
                 label={({ name, value, percent }) => {
-                  const shortName = name.replace('OUT OF STOCK', 'OUT_STOCK').replace('NEAR EXPIRY', 'NEAR_EXP');
-                  return window.innerWidth > 768 && value > 0
-                    ? `${shortName}: ${value}`
-                    : value > 0 ? `${(percent * 100).toFixed(0)}%` : '';
+                  const shortName = name.replace('OUT OF STOCK', 'OUT').replace('NEAR EXPIRY', 'EXPIRY');
+                  if (window.innerWidth < 768) {
+                    return value > 0 ? `${(percent * 100).toFixed(0)}%` : '';
+                  }
+                  return value > 0 ? `${shortName}: ${value}` : '';
                 }}
-                outerRadius={window.innerWidth > 768 ? 100 : 80}
-                innerRadius={window.innerWidth > 768 ? 30 : 20}
+                outerRadius={window.innerWidth < 768 ? 70 : window.innerWidth < 1024 ? 80 : 100}
+                innerRadius={window.innerWidth < 768 ? 20 : window.innerWidth < 1024 ? 25 : 30}
                 fill="#8884d8"
                 dataKey="value"
                 strokeWidth={2}
@@ -553,15 +560,15 @@ const EnhancedDashboard = ({ user, onProductClick, onAlertClick }) => {
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  fontSize: '12px'
+                  fontSize: window.innerWidth < 768 ? '10px' : '12px'
                 }}
               />
               <Legend 
                 verticalAlign="bottom" 
-                height={36}
+                height={window.innerWidth < 768 ? 30 : 36}
                 wrapperStyle={{
-                  paddingTop: '20px',
-                  fontSize: '11px'
+                  paddingTop: '15px',
+                  fontSize: window.innerWidth < 768 ? '9px' : '11px'
                 }}
               />
             </PieChart>
