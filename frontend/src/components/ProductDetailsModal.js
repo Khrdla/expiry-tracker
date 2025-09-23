@@ -127,7 +127,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                       <p className="text-slate-500 text-lg font-medium">Image not available</p>
                       <p className="text-slate-400 text-sm mt-2">Product image failed to load</p>
                       <p className="text-slate-300 text-xs mt-1 text-center px-4 break-all">
-                        URL: {`${BACKEND_URL}${product.image_url}`}
+                        URL: {`${BACKEND_URL}/api${product.image_url}`}
                       </p>
                     </div>
                   )}
