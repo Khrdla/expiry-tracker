@@ -249,6 +249,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
 
   const navItems = [
     { path: "/", icon: Home, label: "Dashboard", color: "text-green-600" },
+    { path: "/grid", icon: BarChart3, label: "Grid View", color: "text-indigo-600" },
     { path: "/products", icon: Package, label: "Products", color: "text-blue-600" },
     { path: "/reports", icon: BarChart3, label: "Reports", color: "text-purple-600" },
     { path: "/waste-reports", icon: Trash2, label: "Waste Reports", color: "text-red-500" },
