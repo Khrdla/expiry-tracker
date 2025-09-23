@@ -106,9 +106,9 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     scanningStateRef.current = false;
   }, []);
 
-  // Enhanced cleanup with comprehensive resource management
+  // Enhanced cleanup with comprehensive resource management - Fixed dependencies
   const cleanup = useCallback(() => {
-    logScannerActivity('CLEANUP_STARTED');
+    console.log(`[BarcodeScanner] ${new Date().toISOString()} - CLEANUP_STARTED`);
     
     // Stop scanning first
     setScanning(false);
@@ -125,10 +125,10 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       try {
         streamRef.current.getTracks().forEach(track => {
           track.stop();
-          logScannerActivity('TRACK_STOPPED', { trackId: track.id });
+          console.log(`[BarcodeScanner] TRACK_STOPPED: ${track.id}`);
         });
       } catch (e) {
-        logScannerActivity('TRACK_STOP_ERROR', { error: e.message });
+        console.error(`[BarcodeScanner] TRACK_STOP_ERROR:`, e.message);
       }
       streamRef.current = null;
     }
@@ -143,8 +143,8 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     setError('');
     setSuccess('');
     
-    logScannerActivity('CLEANUP_COMPLETED');
-  }, [logScannerActivity]);
+    console.log(`[BarcodeScanner] ${new Date().toISOString()} - CLEANUP_COMPLETED`);
+  }, []); // Removed logScannerActivity dependency
 
   // Enhanced camera initialization with better error handling - Fixed dependencies
   const startCamera = useCallback(async () => {
