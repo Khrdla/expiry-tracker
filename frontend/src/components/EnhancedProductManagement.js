@@ -413,8 +413,22 @@ const EnhancedProductManagement = () => {
 
     if (!product?.image_url || imageError) {
       return (
-        <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center`}>
+        <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative`}>
           <Package className="w-8 h-8 text-gray-400" />
+          {product?.image_url && imageError && (
+            <div className="absolute bottom-1 left-1 right-1">
+              <p className="text-xs text-red-500 bg-white bg-opacity-80 px-1 rounded truncate">
+                Image failed
+              </p>
+            </div>
+          )}
+          {!product?.image_url && (
+            <div className="absolute bottom-1 left-1 right-1">
+              <p className="text-xs text-gray-500 bg-white bg-opacity-80 px-1 rounded truncate">
+                No image
+              </p>
+            </div>
+          )}
         </div>
       );
     }
