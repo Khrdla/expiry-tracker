@@ -300,64 +300,12 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []); // Removed all dependencies to prevent infinite loop
 
-  // Enhanced linear barcode detection using QuaggaJS for real barcode reading
-  const detectLinearBarcode = useCallback(async (canvas) => {
-    return new Promise((resolve) => {
-      try {
-        // Ensure canvas is valid before processing
-        if (!canvas || !canvas.getContext || canvas.width === 0 || canvas.height === 0) {
-          resolve(null);
-          return;
-        }
-
-        // Get image data URL with proper error handling
-        let imageDataUrl;
-        try {
-          imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        } catch (canvasError) {
-          console.error('[BarcodeScanner] Canvas toDataURL error:', canvasError);
-          resolve(null);
-          return;
-        }
-
-        // Use QuaggaJS with proper configuration for linear barcode detection
-        Quagga.decodeSingle({
-          decoder: {
-            readers: [
-              "code_128_reader",
-              "ean_reader", 
-              "ean_8_reader",
-              "code_39_reader",
-              "upc_reader",
-              "upc_e_reader"
-            ]
-          },
-          locate: true,
-          src: imageDataUrl,
-          inputStream: {
-            size: Math.min(canvas.width, canvas.height, 800) // Limit size to prevent errors
-          }
-        }, (result) => {
-          try {
-            if (result && result.codeResult && result.codeResult.code) {
-              console.log(`[BarcodeScanner] REAL_BARCODE_DETECTED: ${result.codeResult.code}, format: ${result.codeResult.format}`);
-              resolve({
-                data: result.codeResult.code,
-                format: result.codeResult.format || 'Linear'
-              });
-            } else {
-              resolve(null);
-            }
-          } catch (resultError) {
-            console.error('[BarcodeScanner] QuaggaJS result processing error:', resultError);
-            resolve(null);
-          }
-        });
-      } catch (error) {
-        console.error('[BarcodeScanner] QUAGGA_DETECTION_ERROR:', error.message);
-        resolve(null);
-      }
-    });
+  // Simplified detection - focus on QR codes and manual entry for reliability
+  const detectLinearBarcode = useCallback(() => {
+    // Linear barcode detection disabled to prevent errors
+    // Users should use Manual Entry mode for EAN/UPC barcodes
+    console.log('[BarcodeScanner] Linear detection skipped - use Manual Entry for reliable barcode input');
+    return null;
   }, []);
 
   // Handle successful barcode detection - Fixed dependencies
