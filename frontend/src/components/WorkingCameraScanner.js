@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Keyboard, Zap, AlertCircle, CheckCircle, RotateCcw } from 'lucide-react';
+import jsQR from 'jsqr';
 
 const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
   const [error, setError] = useState('');
