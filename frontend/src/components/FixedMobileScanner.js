@@ -316,13 +316,41 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                     </div>
                   </div>
                   
-                  <button
-                    onClick={startCamera}
-                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2 font-medium"
-                  >
-                    <Camera size={16} />
-                    <span>🚀 Start Camera Scanning</span>
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={startCamera}
+                      className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2 font-medium"
+                    >
+                      <Camera size={16} />
+                      <span>🚀 Start Camera Scanning</span>
+                    </button>
+                    
+                    <button
+                      onClick={async () => {
+                        // Simple fallback camera approach
+                        try {
+                          setError('📱 Trying simple camera access...');
+                          const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: 'environment' }
+                          });
+                          
+                          if (videoRef.current) {
+                            videoRef.current.srcObject = stream;
+                            streamRef.current = stream;
+                            await videoRef.current.play();
+                            setCameraActive(true);
+                            setAutoScanEnabled(true);
+                            setError('📱 Basic camera active - position barcode in view');
+                          }
+                        } catch (err) {
+                          setError('❌ Camera access failed: ' + err.message);
+                        }
+                      }}
+                      className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                    >
+                      📷 Try Basic Camera
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
