@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Package, Plus, Edit, Trash2, Download, Upload, BarChart3, Camera, X } from 'lucide-react';
-import MobileBarcodeScanner from './MobileBarcodeScanner';
+import FixedMobileScanner from './FixedMobileScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 
 // Simple ProductImage component to handle image loading errors safely
