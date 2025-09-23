@@ -101,9 +101,19 @@ const EnhancedProductManagement = () => {
         const data = await response.json();
         const processedProducts = processProductsData(data.products || data || []);
         
+        const productsWithImages = processedProducts.filter(p => p.image_url);
+        console.log('📦 Products Loaded:', {
+          total: processedProducts.length,
+          withImages: productsWithImages.length,
+          sampleImageUrls: productsWithImages.slice(0, 3).map(p => ({ 
+            name: p.product_name, 
+            imageUrl: p.image_url 
+          }))
+        });
+        
         logActivity('PRODUCTS_LOADED_SUCCESS', {
           count: processedProducts.length,
-          hasImages: processedProducts.filter(p => p.image_url).length
+          hasImages: productsWithImages.length
         });
         
         setProducts(processedProducts);
