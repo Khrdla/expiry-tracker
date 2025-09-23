@@ -88,7 +88,7 @@ const EnhancedProductManagement = () => {
       const queryParams = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        ...(searchTerm && { search: searchTerm }),
+        ...(activeSearchTerm && { search: activeSearchTerm }),
         ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
         ...(selectedSection !== 'all' && { section: selectedSection }),
         ...(selectedSupplier !== 'all' && { supplier: selectedSupplier })
