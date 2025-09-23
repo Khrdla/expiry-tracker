@@ -15,7 +15,7 @@ import {
   Line
 } from 'recharts';
 import { Camera } from 'lucide-react';
-import WorkingCameraScanner from './WorkingCameraScanner';
+import CleanCameraScanner from './CleanCameraScanner';
 import ProductDetailsModal from './ProductDetailsModal';
 import Dashboard3DCharts from './Dashboard3DCharts';
 import EnhancedVisualCharts from './EnhancedVisualCharts';
