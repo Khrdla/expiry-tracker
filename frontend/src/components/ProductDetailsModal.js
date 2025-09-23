@@ -99,7 +99,7 @@ const ProductDetailsModal = ({ product, isOpen, onClose }) => {
                   )}
                   
                   <img 
-                    src={`${BACKEND_URL}${product.image_url}`}
+                    src={`${BACKEND_URL}/api${product.image_url}`}
                     alt={product.product_name}
                     className={`w-full h-80 object-cover rounded-3xl shadow-2xl border-8 border-white bg-white hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02] ${imageLoading || imageError ? 'hidden' : ''}`}
                     style={{
