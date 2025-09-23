@@ -89,51 +89,70 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
     try {
       setError('📱 Starting camera...');
       
-      // Simple, reliable camera constraints
-      const constraints = {
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 640, max: 1280 },
-          height: { ideal: 480, max: 720 }
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      if (!mountedRef.current) {
-        // Component unmounted during camera initialization
-        stream.getTracks().forEach(track => track.stop());
-        return;
+      // Initialize ZXing barcode reader
+      if (!codeReaderRef.current) {
+        codeReaderRef.current = new BrowserMultiFormatReader();
       }
       
-      streamRef.current = stream;
+      // Get available video devices
+      const videoDevices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = videoDevices.filter(device => device.kind === 'videoinput');
       
-      if (videoRef.current && mountedRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Wait for video to be ready
-        const videoReady = new Promise((resolve, reject) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => resolve();
-            videoRef.current.onerror = reject;
+      // Try to find back camera (environment)
+      let selectedDeviceId = cameras.find(camera => 
+        camera.label.toLowerCase().includes('back') || 
+        camera.label.toLowerCase().includes('rear') ||
+        camera.label.toLowerCase().includes('environment')
+      )?.deviceId || cameras[0]?.deviceId;
+      
+      if (!selectedDeviceId) {
+        throw new Error('No camera devices found');
+      }
+
+      // Start camera with ZXing
+      await codeReaderRef.current.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current,
+        (result, error) => {
+          if (result && mountedRef.current && cameraActive) {
+            const barcode = result.getText();
+            console.log('🎯 Barcode detected by ZXing:', barcode);
+            
+            // Stop scanning and lookup product
+            setAutoScanEnabled(false);
+            lookupProduct(barcode);
           }
-        });
-        
-        await videoReady;
-        
-        if (mountedRef.current) {
-          await videoRef.current.play();
-          setCameraActive(true);
-          setError('');
-          setManualMode(false);
+          
+          if (error && error.name !== 'NotFoundException') {
+            console.warn('ZXing scan error:', error);
+          }
         }
+      );
+      
+      if (mountedRef.current) {
+        setCameraActive(true);
+        setAutoScanEnabled(true);
+        setError('🎯 Camera ready! Point at barcode');
+        setManualMode(false);
+        console.log('✅ ZXing camera started successfully');
       }
       
     } catch (err) {
-      console.error('Camera error:', err);
+      console.error('Camera/ZXing error:', err);
       if (mountedRef.current) {
-        setError('❌ Camera not available - using manual entry');
+        let errorMsg = '❌ Camera not available';
+        
+        if (err.name === 'NotAllowedError') {
+          errorMsg = '❌ Camera permission denied - please allow camera access';
+        } else if (err.name === 'NotFoundError') {
+          errorMsg = '❌ No camera found - use manual entry';
+        } else if (err.message?.includes('devices')) {
+          errorMsg = '❌ No camera devices available - use manual entry';
+        }
+        
+        setError(errorMsg);
         setManualMode(true);
+        setCameraActive(false);
       }
     }
   };
