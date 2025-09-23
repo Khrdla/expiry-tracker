@@ -257,12 +257,111 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
         {/* Content */}
         <div className="p-4 space-y-4">
           
-          {/* Manual Entry Mode (Primary) */}
-          <div className="space-y-4">
-            <div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800">⚡ Quick Barcode Entry</h3>
-              <p className="text-sm text-gray-600">Type or paste barcode for instant lookup</p>
+          {/* Camera Scanner Mode (PRIMARY) */}
+          {!manualMode && (
+            <div className="space-y-4">
+              <div className="text-center bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-800">📷 Camera Scanner</h3>
+                <p className="text-sm text-gray-600">Point camera at barcode for instant detection</p>
+              </div>
+              
+              {!cameraActive ? (
+                <div className="space-y-3">
+                  <div className="bg-black rounded-lg h-64 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Camera size={48} className="mx-auto mb-4 text-gray-400" />
+                      <p className="text-sm">Camera starting...</p>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={startCamera}
+                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Camera size={16} />
+                    <span>Start Camera</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Video Display */}
+                  <div className="relative bg-black rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                    <video
+                      ref={videoRef}
+                      className="w-full h-full object-cover"
+                      style={{ transform: 'scaleX(-1)' }} // Mirror for better UX
+                    />
+                    
+                    {/* Enhanced scanning overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative">
+                        {/* Main scanning frame */}
+                        <div className="w-64 h-32 border-2 border-green-400 rounded-lg bg-green-400 bg-opacity-20 relative">
+                          {/* Corner indicators */}
+                          <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400 rounded-tl-lg"></div>
+                          <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400 rounded-tr-lg"></div>
+                          <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400 rounded-bl-lg"></div>
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400 rounded-br-lg"></div>
+                          
+                          {/* Scanning animation */}
+                          {autoScanEnabled && (
+                            <div className="absolute inset-0 overflow-hidden rounded-lg">
+                              <div className="w-full h-0.5 bg-green-400 absolute animate-pulse" 
+                                   style={{
+                                     top: '50%',
+                                     animation: 'scanning 2s infinite'
+                                   }}></div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Instructions */}
+                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">
+                          {autoScanEnabled ? '🎯 Scanning active' : '📱 Ready to scan'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Status indicator */}
+                    {autoScanEnabled && (
+                      <div className="absolute top-3 left-3 bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
+                        🔍 ZXing Active
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Camera Controls */}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={stopScanning}
+                      className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      Stop Camera
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        cleanup();
+                        setManualMode(true);
+                      }}
+                      className="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                      title="Switch to manual entry"
+                    >
+                      <Keyboard size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          )}
+
+          {/* Manual Entry Mode (SECONDARY) */}
+          {manualMode && (
+            <div className="space-y-4">
+              <div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-800">⌨️ Manual Entry</h3>
+                <p className="text-sm text-gray-600">Type or paste barcode for instant lookup</p>
+              </div>
             
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="relative">
