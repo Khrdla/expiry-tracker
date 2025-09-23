@@ -281,16 +281,9 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         return;
       }
       
-      // Secondary detection: Enhanced linear barcode scanning with QuaggaJS (with fallback)
-      try {
-        const linearResult = await detectLinearBarcode(canvas);
-        if (linearResult) {
-          handleBarcodeDetected(linearResult.data, linearResult.format);
-          return;
-        }
-      } catch (quaggaError) {
-        console.warn('[BarcodeScanner] QuaggaJS detection failed, continuing without linear detection:', quaggaError);
-      }
+      // Linear barcode detection disabled for stability
+      // Users should use Manual Entry mode for EAN/UPC barcodes
+      detectLinearBarcode(); // Log message only
       
       // Update scanning feedback
       updateScanningFeedback();
