@@ -461,6 +461,8 @@ const AdvancedBarcodeFeatures = ({ isOpen, onClose }) => {
     'analytics': { name: 'Smart Analytics', icon: TrendingUp, component: SmartAnalyticsFeature }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-screen overflow-hidden flex flex-col">
