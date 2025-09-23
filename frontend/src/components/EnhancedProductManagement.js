@@ -401,7 +401,14 @@ const EnhancedProductManagement = () => {
     const [imageLoading, setImageLoading] = useState(true);
 
     const handleImageError = () => {
-      logActivity('IMAGE_ERROR', { productId: product?.id, imageUrl: product?.image_url });
+      const fullImageUrl = `${BACKEND_URL}/api${product?.image_url}`;
+      console.error('🖼️ ProductImage Error:', {
+        productId: product?.id,
+        productName: product?.product_name,
+        imageUrl: product?.image_url,
+        fullUrl: fullImageUrl
+      });
+      logActivity('IMAGE_ERROR', { productId: product?.id, imageUrl: product?.image_url, fullUrl: fullImageUrl });
       setImageError(true);
       setImageLoading(false);
     };
