@@ -1,965 +1,771 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Download, Filter, TrendingUp, TrendingDown, Package, Trash2, AlertTriangle, CheckCircle2, Plus, Search, X, Calculator, Camera, Scan } from 'lucide-react';
-import WorkingCameraScanner from './WorkingCameraScanner';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Trash2, 
+  Plus, 
+  Filter, 
+  Download, 
+  Calendar,
+  TrendingUp,
+  DollarSign,
+  AlertTriangle,
+  Package,
+  Search,
+  Camera,
+  X,
+  CheckCircle
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
+import CleanCameraScanner from './CleanCameraScanner';
+import AddWasteEntryModal from './AddWasteEntryModal';
 
 const WasteReports = () => {
-  const [reportData, setReportData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [period, setPeriod] = useState('weekly');
-  const [department, setDepartment] = useState('');
-  const [section, setSection] = useState('');
-  const [customDateRange, setCustomDateRange] = useState({
-    startDate: '',
-    endDate: ''
-  });
-  const [showCustomRange, setShowCustomRange] = useState(false);
-  
-  // Waste Entry Form States
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [wasteData, setWasteData] = useState([]);
   const [wasteEntries, setWasteEntries] = useState([]);
-  const [currentEntry, setCurrentEntry] = useState({
-    barcode: '',
-    productName: '',
-    product: null,
-    quantity: '',
-    wasteReason: 'damaged',
-    notes: ''
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState('weekly');
+  const [selectedCurrency, setSelectedCurrency] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedSection, setSelectedSection] = useState('all');
+  const [showAddEntry, setShowAddEntry] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [addingWaste, setAddingWaste] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [wasteQuantity, setWasteQuantity] = useState('');
+  const [wasteReason, setWasteReason] = useState('damaged');
+  const [pendingEntries, setPendingEntries] = useState([]);
+  
+  const [filterOptions, setFilterOptions] = useState({
+    departments: [],
+    sections: [],
+    suppliers: []
+  });
 
-  // Department and section options
-  const departments = [
-    { value: '', label: 'All Departments' },
-    { value: '01-FMG', label: '01-FMG (Fresh & Food Grocery)' },
-    { value: '01-CGD', label: '01-CGD (Consumer Goods & Drinks)' },
-    { value: '01-OPSS', label: '01-OPSS (Operations & Special Services)' }
-  ];
-
-  const sections = [
-    { value: '', label: 'All Sections' },
-    { value: 'S010 - Beverage', label: 'S010 - Beverage' },
-    { value: 'S014 - Ultra Fresh', label: 'S014 - Ultra Fresh' },
-    { value: 'S016 - Delicateen', label: 'S016 - Delicateen' },
-    { value: 'S018 - Frozen Food', label: 'S018 - Frozen Food' },
-    { value: 'S015 - Dairy Products', label: 'S015 - Dairy Products' }
-  ];
-
-  const periods = [
-    { value: 'daily', label: 'Daily', icon: '📅' },
-    { value: 'weekly', label: 'Weekly', icon: '📊' },
-    { value: 'yearly', label: 'Yearly', icon: '📈' }
-  ];
-
-  // Colors for currency charts
-  const currencyColors = {
-    YER: '#22c55e', // Green
-    SAR: '#3b82f6', // Blue  
-    EUR: '#f59e0b'  // Orange
-  };
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'];
 
   useEffect(() => {
-    fetchWasteReport();
-  }, [period, department, section]);
+    loadWasteReports();
+    loadWasteEntries();
+    loadFilterOptions();
+  }, [selectedPeriod, selectedCurrency, selectedDepartment, selectedSection]);
 
-  // Enhanced product search with improved name search
-  const searchProduct = async (searchTerm) => {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    console.log('🔍 Searching products with term:', searchTerm);
-    setSearching(true);
-    
+  const loadWasteReports = async () => {
     try {
-      // Check if the search term looks like a barcode (numeric and long)
-      const isNumericBarcode = /^\d{8,}$/.test(searchTerm);
+      setLoading(true);
+      const token = localStorage.getItem('token');
       
-      if (isNumericBarcode) {
-        console.log('📊 Detected numeric barcode pattern, trying barcode lookup first');
-        // Try barcode lookup first for numeric patterns
-        let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/barcode/${searchTerm}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (response.ok) {
-          const product = await response.json();
-          console.log('✅ Barcode lookup successful:', product);
-          setSearchResults([product]);
-          return;
-        } else {
-          console.log('⚠️ Barcode lookup failed, trying product name search');
-        }
-      }
-
-      // Enhanced product name search with multiple search strategies
-      console.log('🔍 Performing enhanced product name search');
-      
-      // Strategy 1: Exact search with the original term
-      let response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(searchTerm)}&limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const queryParams = new URLSearchParams({
+        period: selectedPeriod,
+        ...(selectedCurrency !== 'all' && { currency: selectedCurrency }),
+        ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
+        ...(selectedSection !== 'all' && { section: selectedSection })
       });
-
-      let products = [];
+      
+      const response = await fetch(`${BACKEND_URL}/api/waste/reports?${queryParams.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
       if (response.ok) {
         const data = await response.json();
-        products = data.products || [];
-        console.log('📊 Initial search results:', products.length, 'products found');
-      }
-
-      // Strategy 2: If no results and search term has spaces, try each word separately
-      if (products.length === 0 && searchTerm.includes(' ')) {
-        console.log('🔍 Trying word-by-word search');
-        const words = searchTerm.split(' ').filter(word => word.length > 2);
-        
-        for (const word of words) {
-          response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?search=${encodeURIComponent(word)}&limit=10`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            const wordResults = data.products || [];
-            console.log(`📊 Search for "${word}":`, wordResults.length, 'products');
-            
-            // Filter results that contain the original search term (case insensitive)
-            const relevantResults = wordResults.filter(product => 
-              product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            
-            products = [...products, ...relevantResults];
-          }
-        }
-        
-        // Remove duplicates based on product ID or barcode
-        products = products.filter((product, index, self) => 
-          index === self.findIndex(p => p.barcode === product.barcode || p.item_number === product.item_number)
-        );
-      }
-
-      // Strategy 3: If still no results, try partial matching
-      if (products.length === 0) {
-        console.log('🔍 Trying partial matching search');
-        // Search with less strict parameters
-        response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products?limit=50`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const allProducts = data.products || [];
-          
-          // Filter products that partially match the search term
-          products = allProducts.filter(product => 
-            product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (product.arabic_description && product.arabic_description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (product.barcode && product.barcode.includes(searchTerm)) ||
-            (product.item_number && product.item_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (product.supplier && product.supplier.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-          );
-          
-          console.log('📊 Partial matching results:', products.length, 'products');
-        }
-      }
-
-      console.log('✅ Final search results:', products.length, 'products found');
-      setSearchResults(products.slice(0, 20)); // Limit to top 20 results
-      
-    } catch (error) {
-      console.error('❌ Error searching products:', error);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Handle product selection
-  const selectProduct = (product) => {
-    setCurrentEntry(prev => ({
-      ...prev,
-      product: product,
-      barcode: product.barcode || '',
-      productName: product.product_name || ''
-    }));
-    setSearchResults([]);
-  };
-
-  // Handle barcode scanner result
-  const handleBarcodeFound = (product) => {
-    console.log('📱 Barcode scanner found product:', product);
-    selectProduct(product);
-    setShowBarcodeScanner(false);
-  };
-
-  // Add waste entry to the list
-  const addWasteEntry = () => {
-    if (!currentEntry.product || !currentEntry.quantity) return;
-
-    const wasteValue = parseFloat(currentEntry.quantity) * parseFloat(currentEntry.product.purchase_price || 0);
-    const newEntry = {
-      id: Date.now(),
-      product: currentEntry.product,
-      quantity: parseInt(currentEntry.quantity),
-      wasteValue: wasteValue,
-      wasteReason: currentEntry.wasteReason,
-      notes: currentEntry.notes,
-      addedAt: new Date().toISOString()
-    };
-
-    setWasteEntries(prev => [...prev, newEntry]);
-    
-    // Reset form
-    setCurrentEntry({
-      barcode: '',
-      productName: '',
-      product: null,
-      quantity: '',
-      wasteReason: 'damaged',
-      notes: ''
-    });
-  };
-
-  // Remove waste entry from list
-  const removeWasteEntry = (entryId) => {
-    setWasteEntries(prev => prev.filter(entry => entry.id !== entryId));
-  };
-
-  // Submit all waste entries to backend
-  const submitWasteEntries = async () => {
-    if (wasteEntries.length === 0) return;
-
-    setAddingWaste(true);
-    try {
-      let successCount = 0;
-      for (const entry of wasteEntries) {
-        const wasteData = {
-          product_id: entry.product.id,
-          quantity_wasted: entry.quantity,
-          waste_reason: entry.wasteReason,
-          notes: entry.notes
-        };
-
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/waste/entries`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(wasteData)
-        });
-
-        if (response.ok) {
-          successCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        alert(`Successfully added ${successCount} waste entries!`);
-        setWasteEntries([]);
-        setShowAddForm(false);
-        // Refresh the report
-        fetchWasteReport();
-      }
-    } catch (error) {
-      console.error('Error submitting waste entries:', error);
-      alert('Failed to submit waste entries. Please try again.');
-    } finally {
-      setAddingWaste(false);
-    }
-  };
-
-  // Calculate total waste value
-  const getTotalWasteValue = () => {
-    return wasteEntries.reduce((total, entry) => total + entry.wasteValue, 0);
-  };
-
-  // Group waste entries by currency
-  const getWasteValueByCurrency = () => {
-    const totals = { YER: 0, SAR: 0, EUR: 0 };
-    wasteEntries.forEach(entry => {
-      const currency = entry.product.purchase_currency || 'YER';
-      if (currency in totals) {
-        totals[currency] += entry.wasteValue;
-      }
-    });
-    return totals;
-  };
-
-  const fetchWasteReport = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        period: period,
-        ...(department && { department }),
-        ...(section && { section }),
-        ...(showCustomRange && customDateRange.startDate && { start_date: customDateRange.startDate }),
-        ...(showCustomRange && customDateRange.endDate && { end_date: customDateRange.endDate })
-      });
-
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/waste/reports?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setReportData(data);
+        setWasteData(data);
+        setError('');
       } else {
-        console.error('Failed to fetch waste report');
-        setReportData({
-          currency_totals: { YER: 0, SAR: 0, EUR: 0 },
-          total_entries: 0,
-          total_quantity_wasted: 0
-        });
+        throw new Error('Failed to load waste reports');
       }
     } catch (error) {
-      console.error('Error fetching waste report:', error);
-      setReportData({
-        currency_totals: { YER: 0, SAR: 0, EUR: 0 },
-        total_entries: 0,
-        total_quantity_wasted: 0
-      });
+      console.error('Waste reports error:', error);
+      setError('Failed to load waste reports');
+      setWasteData([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadWasteEntries = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const queryParams = new URLSearchParams({
+        ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
+        ...(selectedSection !== 'all' && { section: selectedSection }),
+        limit: '50'
+      });
+      
+      const response = await fetch(`${BACKEND_URL}/api/waste/entries?${queryParams.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWasteEntries(data.entries || []);
+      }
+    } catch (error) {
+      console.error('Failed to load waste entries:', error);
+    }
+  };
+
+  const loadFilterOptions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/filters`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFilterOptions(data);
+      }
+    } catch (error) {
+      console.error('Failed to load filter options:', error);
+    }
+  };
+
+  const searchProducts = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/products/search?q=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.products || []);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  };
+
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product);
+    setSearchTerm(product.product_name);
+    setSearchResults([]);
+  };
+
+  const calculateWasteValue = () => {
+    if (!selectedProduct || !wasteQuantity) return 0;
+    return parseFloat(wasteQuantity) * (selectedProduct.purchase_price || 0);
+  };
+
+  const addToPendingEntries = () => {
+    if (!selectedProduct || !wasteQuantity) return;
+    
+    const entry = {
+      id: Date.now(),
+      product: selectedProduct,
+      quantity: parseFloat(wasteQuantity),
+      reason: wasteReason,
+      wasteValue: calculateWasteValue()
+    };
+    
+    setPendingEntries(prev => [...prev, entry]);
+    
+    // Reset form
+    setSelectedProduct(null);
+    setSearchTerm('');
+    setWasteQuantity('');
+    setWasteReason('damaged');
+  };
+
+  const removePendingEntry = (entryId) => {
+    setPendingEntries(prev => prev.filter(entry => entry.id !== entryId));
+  };
+
+  const submitAllEntries = async () => {
+    if (pendingEntries.length === 0) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      for (const entry of pendingEntries) {
+        const wasteEntry = {
+          product_id: entry.product.id,
+          quantity_wasted: entry.quantity,
+          waste_reason: entry.reason,
+          date: new Date().toISOString().split('T')[0]
+        };
+        
+        await fetch(`${BACKEND_URL}/api/waste/entries`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(wasteEntry)
+        });
+      }
+      
+      setPendingEntries([]);
+      loadWasteReports();
+      loadWasteEntries();
+      setError('');
+      
+    } catch (error) {
+      console.error('Submit entries error:', error);
+      setError('Failed to submit waste entries');
+    }
+  };
+
   const handleExport = async (format) => {
     try {
-      const params = new URLSearchParams({
-        format: format,
-        ...(department && { department }),
-        ...(section && { section }),
-        ...(showCustomRange && customDateRange.startDate && { start_date: customDateRange.startDate }),
-        ...(showCustomRange && customDateRange.endDate && { end_date: customDateRange.endDate })
+      const token = localStorage.getItem('token');
+      
+      const queryParams = new URLSearchParams({
+        period: selectedPeriod,
+        ...(selectedCurrency !== 'all' && { currency: selectedCurrency }),
+        ...(selectedDepartment !== 'all' && { department: selectedDepartment }),
+        ...(selectedSection !== 'all' && { section: selectedSection })
       });
-
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/export/waste-report/${period}?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      
+      const response = await fetch(`${BACKEND_URL}/api/export/waste-report/${selectedPeriod}?${queryParams.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
+      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `waste_report_${period}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+        a.download = `waste-report-${selectedPeriod}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-      } else {
-        console.error('Failed to export report');
       }
     } catch (error) {
-      console.error('Error exporting report:', error);
+      console.error('Export error:', error);
+      setError(`Failed to export ${format}`);
     }
   };
 
-  // Prepare chart data
-  const chartData = reportData ? Object.entries(reportData.currency_totals)
-    .filter(([currency, value]) => value > 0)
-    .map(([currency, value]) => ({
-      currency,
-      value,
-      displayValue: `${value.toLocaleString()} ${currency}`
-    })) : [];
-
-  const pieData = chartData.map((item, index) => ({
-    ...item,
-    fill: currencyColors[item.currency] || '#8884d8'
-  }));
-
-  const formatCurrency = (value, currency) => {
-    return `${parseFloat(value).toLocaleString()} ${currency}`;
+  const formatCurrency = (amount, currency = 'USD') => {
+    if (currency && ['YER', 'SAR', 'EUR'].includes(currency)) {
+      return `${amount.toFixed(2)} ${currency}`;
+    }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD'
+    }).format(amount || 0);
   };
 
-  const getReportTotalWasteValue = () => {
-    if (!reportData) return 0;
-    return Object.values(reportData.currency_totals).reduce((sum, value) => sum + value, 0);
-  };
+  const totalPendingValue = useMemo(() => {
+    const totals = { YER: 0, SAR: 0, EUR: 0 };
+    pendingEntries.forEach(entry => {
+      const currency = entry.product.purchase_currency || 'YER';
+      totals[currency] += entry.wasteValue;
+    });
+    return totals;
+  }, [pendingEntries]);
 
-  const formatDateRange = () => {
-    if (!reportData) return '';
-    const start = new Date(reportData.start_date).toLocaleDateString();
-    const end = new Date(reportData.end_date).toLocaleDateString();
-    return `${start} - ${end}`;
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <Trash2 size={32} className="text-red-500" />
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Waste Reports</h1>
-              <p className="text-gray-600">Track damaged and unsellable product waste by currency and time period</p>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                <Trash2 className="text-red-600" />
+                Waste Reports
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Track and analyze product waste across departments
+              </p>
             </div>
-          </div>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              showAddForm 
-                ? 'bg-gray-500 text-white hover:bg-gray-600' 
-                : 'bg-green-500 text-white hover:bg-green-600'
-            }`}
-          >
-            {showAddForm ? <X size={20} /> : <Plus size={20} />}
-            <span>{showAddForm ? 'Close Form' : 'Add Waste Entry'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Add Waste Entry Form */}
-      {showAddForm && (
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="bg-red-100 p-2 rounded-full">
-              <Plus size={20} className="text-red-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Add Waste Entry</h2>
-              <p className="text-sm text-gray-600">Enter barcode or product name, quantity, and reason</p>
-            </div>
-          </div>
-
-          {/* Search Product */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  🔍 Search by Barcode or Product Name
-                </label>
-                <button
-                  onClick={() => setShowBarcodeScanner(true)}
-                  className="flex items-center space-x-1 text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors"
-                  title="Open Barcode Scanner"
-                >
-                  <Camera size={16} />
-                  <span>📱 Scan</span>
+            
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setShowAddEntry(true)}
+                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+              >
+                <Plus size={18} />
+                Add Waste Entry
+              </button>
+              
+              <button
+                onClick={() => setShowScanner(true)}
+                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <Camera size={18} />
+                Scan Item
+              </button>
+              
+              <div className="relative group">
+                <button className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                  <Download size={18} />
+                  Export
                 </button>
+                <div className="hidden group-hover:block absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={() => handleExport('excel')}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Excel
+                  </button>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    PDF
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="mb-6 bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Filters & Settings</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Period</label>
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Currencies</option>
+                <option value="YER">YER</option>
+                <option value="SAR">SAR</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Departments</option>
+                {filterOptions.departments?.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Section</label>
+              <select
+                value={selectedSection}
+                onChange={(e) => setSelectedSection(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Sections</option>
+                {filterOptions.sections?.map(section => (
+                  <option key={section} value={section}>{section}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Add Waste Entry */}
+        <div className="mb-6 bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Plus className="text-green-600" />
+            Quick Add Waste Entry
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Product Search */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search Product (Barcode or Name)
+              </label>
               <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  value={currentEntry.barcode || currentEntry.productName}
+                  value={searchTerm}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setCurrentEntry(prev => ({
-                      ...prev,
-                      barcode: /^\d+$/.test(value) ? value : '',
-                      productName: !/^\d+$/.test(value) ? value : ''
-                    }));
-                    searchProduct(value);
+                    setSearchTerm(e.target.value);
+                    searchProducts(e.target.value);
                   }}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent pr-10"
-                  placeholder="Enter barcode number or product name..."
+                  placeholder="Search by barcode or product name..."
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                <Search size={20} className="absolute right-3 top-3 text-gray-400" />
                 
                 {/* Search Results Dropdown */}
                 {searchResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {searchResults.map((product, index) => (
-                      <div
-                        key={index}
-                        onClick={() => selectProduct(product)}
-                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {searchResults.map(product => (
+                      <button
+                        key={product.id}
+                        onClick={() => handleProductSelect(product)}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
                       >
-                        <div className="font-medium text-gray-900">{product.product_name}</div>
-                        <div className="text-sm text-gray-600">
-                          {product.barcode && `Barcode: ${product.barcode} • `}
-                          {product.purchase_price} {product.purchase_currency} • {product.department}
+                        <div className="font-medium">{product.product_name}</div>
+                        <div className="text-sm text-gray-500">
+                          {product.item_number} | {product.department} | 
+                          {formatCurrency(product.purchase_price, product.purchase_currency)}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
-              {searching && (
-                <p className="text-sm text-gray-500 mt-1">🔍 Searching products...</p>
+              
+              {/* Selected Product Info */}
+              {selectedProduct && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-medium text-green-800">{selectedProduct.product_name}</h4>
+                  <p className="text-sm text-green-600">
+                    {selectedProduct.item_number} | {selectedProduct.department} | 
+                    Price: {formatCurrency(selectedProduct.purchase_price, selectedProduct.purchase_currency)}
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* Selected Product Display */}
-            {currentEntry.product && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Package size={16} className="text-green-600" />
-                  <span className="font-medium text-green-800">Selected Product</span>
-                </div>
-                <p className="font-semibold text-gray-900">{currentEntry.product.product_name}</p>
-                <p className="text-sm text-gray-600">
-                  {currentEntry.product.department} • {currentEntry.product.section}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Purchase Price: <span className="font-medium">{currentEntry.product.purchase_price} {currentEntry.product.purchase_currency}</span>
-                </p>
-                {currentEntry.product.barcode && (
-                  <p className="text-sm text-gray-600">Barcode: {currentEntry.product.barcode}</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Quantity and Details */}
-          {currentEntry.product && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Entry Form */}
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  📦 Quantity Wasted *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Wasted</label>
                 <input
                   type="number"
-                  min="1"
-                  value={currentEntry.quantity}
-                  onChange={(e) => setCurrentEntry(prev => ({ ...prev, quantity: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={wasteQuantity}
+                  onChange={(e) => setWasteQuantity(e.target.value)}
                   placeholder="Enter quantity"
+                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  min="0"
+                  step="0.01"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ⚠️ Waste Reason
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reason</label>
                 <select
-                  value={currentEntry.wasteReason}
-                  onChange={(e) => setCurrentEntry(prev => ({ ...prev, wasteReason: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={wasteReason}
+                  onChange={(e) => setWasteReason(e.target.value)}
+                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
-                  <option value="damaged">💥 Damaged</option>
-                  <option value="expired">⏰ Expired</option>
-                  <option value="unsellable">❌ Unsellable</option>
-                  <option value="contaminated">🦠 Contaminated</option>
-                  <option value="broken_packaging">📦 Broken Packaging</option>
-                  <option value="quality_issue">⚠️ Quality Issue</option>
+                  <option value="damaged">Damaged</option>
+                  <option value="expired">Expired</option>
+                  <option value="unsellable">Unsellable</option>
+                  <option value="contaminated">Contaminated</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  💰 Waste Value
-                </label>
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <span className="text-lg font-bold text-red-900">
-                    {currentEntry.quantity ? 
-                      `${(parseFloat(currentEntry.quantity) * parseFloat(currentEntry.product.purchase_price || 0)).toLocaleString()} ${currentEntry.product.purchase_currency}` 
-                      : '0.00'
-                    }
-                  </span>
+              {/* Calculated Value */}
+              {selectedProduct && wasteQuantity && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-600">Waste Value:</p>
+                  <p className="text-lg font-bold text-blue-800">
+                    {formatCurrency(calculateWasteValue(), selectedProduct.purchase_currency)}
+                  </p>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Notes */}
-          {currentEntry.product && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📝 Notes (Optional)
-              </label>
-              <input
-                type="text"
-                value={currentEntry.notes}
-                onChange={(e) => setCurrentEntry(prev => ({ ...prev, notes: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="Additional details about the waste..."
-              />
-            </div>
-          )}
-
-          {/* Add Button */}
-          {currentEntry.product && currentEntry.quantity && (
-            <div className="flex justify-end">
               <button
-                onClick={addWasteEntry}
-                className="flex items-center space-x-2 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors font-medium"
+                onClick={addToPendingEntries}
+                disabled={!selectedProduct || !wasteQuantity}
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <Plus size={16} />
-                <span>Add to List</span>
+                Add to List
               </button>
             </div>
+          </div>
+
+          {/* Pending Entries */}
+          {pendingEntries.length > 0 && (
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-semibold">Pending Entries ({pendingEntries.length})</h4>
+                <button
+                  onClick={submitAllEntries}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Submit All Entries
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {pendingEntries.map(entry => (
+                      <tr key={entry.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm">{entry.product.product_name}</td>
+                        <td className="px-4 py-2 text-sm">{entry.quantity}</td>
+                        <td className="px-4 py-2 text-sm capitalize">{entry.reason}</td>
+                        <td className="px-4 py-2 text-sm font-medium">
+                          {formatCurrency(entry.wasteValue, entry.product.purchase_currency)}
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          <button
+                            onClick={() => removePendingEntry(entry.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <X size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals by Currency */}
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                {Object.entries(totalPendingValue).map(([currency, value]) => (
+                  <div key={currency} className="bg-gray-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-gray-500">{currency} Total</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {formatCurrency(value, currency)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-      )}
 
-      {/* Current Waste Entries List */}
-      {wasteEntries.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-orange-100 p-2 rounded-full">
-                <Calculator size={20} className="text-orange-600" />
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Total Waste Value</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {wasteData.summary ? formatCurrency(wasteData.summary.total_waste_value) : '$0'}
+                </p>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Added Waste Entries ({wasteEntries.length})</h3>
-                <p className="text-sm text-gray-600">Review and submit waste entries</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Total Waste Value</p>
-              <p className="text-xl font-bold text-red-600">
-                {getTotalWasteValue().toLocaleString()} (Multi-Currency)
-              </p>
+              <DollarSign className="h-8 w-8 text-red-600" />
             </div>
           </div>
 
-          {/* Currency Breakdown */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {Object.entries(getWasteValueByCurrency()).map(([currency, value]) => (
-              <div key={currency} className="bg-gray-50 p-3 rounded-lg text-center">
-                <p className="text-sm font-medium text-gray-600">{currency}</p>
-                <p className="text-lg font-bold text-gray-900">{value.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Items Wasted</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {wasteData.summary ? wasteData.summary.total_items_wasted.toLocaleString() : '0'}
+                </p>
               </div>
-            ))}
+              <Package className="h-8 w-8 text-orange-600" />
+            </div>
           </div>
 
-          {/* Entries Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 font-medium text-gray-700">Product</th>
-                  <th className="text-center py-2 font-medium text-gray-700">Qty</th>
-                  <th className="text-center py-2 font-medium text-gray-700">Price</th>
-                  <th className="text-center py-2 font-medium text-gray-700">Waste Value</th>
-                  <th className="text-center py-2 font-medium text-gray-700">Reason</th>
-                  <th className="text-center py-2 font-medium text-gray-700">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {wasteEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-gray-100">
-                    <td className="py-3">
-                      <div className="font-medium text-gray-900">{entry.product.product_name}</div>
-                      <div className="text-xs text-gray-500">{entry.product.department}</div>
-                    </td>
-                    <td className="text-center py-3 font-medium">{entry.quantity}</td>
-                    <td className="text-center py-3">
-                      {entry.product.purchase_price} {entry.product.purchase_currency}
-                    </td>
-                    <td className="text-center py-3 font-bold text-red-600">
-                      {entry.wasteValue.toLocaleString()} {entry.product.purchase_currency}
-                    </td>
-                    <td className="text-center py-3">
-                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
-                        {entry.wasteReason}
-                      </span>
-                    </td>
-                    <td className="text-center py-3">
-                      <button
-                        onClick={() => removeWasteEntry(entry.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                      >
-                        <X size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Waste Entries</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {wasteData.summary ? wasteData.summary.total_entries.toLocaleString() : '0'}
+                </p>
+              </div>
+              <Trash2 className="h-8 w-8 text-blue-600" />
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={submitWasteEntries}
-              disabled={addingWaste}
-              className="flex items-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors font-medium"
-            >
-              {addingWaste ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={16} />
-                  <span>Submit All Entries ({wasteEntries.length})</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          {/* Period Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {periods.map(p => (
-                <option key={p.value} value={p.value}>
-                  {p.icon} {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Department Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {departments.map(dept => (
-                <option key={dept.value} value={dept.value}>{dept.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Section Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Section</label>
-            <select
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {sections.map(sect => (
-                <option key={sect.value} value={sect.value}>{sect.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Custom Date Range Toggle */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Custom Range</label>
-            <button
-              onClick={() => setShowCustomRange(!showCustomRange)}
-              className={`w-full p-3 rounded-lg font-medium transition-colors ${
-                showCustomRange 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Calendar size={16} className="inline mr-2" />
-              {showCustomRange ? 'Custom Active' : 'Use Custom'}
-            </button>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Avg Per Entry</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {wasteData.summary && wasteData.summary.total_entries > 0 
+                    ? formatCurrency(wasteData.summary.total_waste_value / wasteData.summary.total_entries)
+                    : '$0'
+                  }
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-purple-600" />
+            </div>
           </div>
         </div>
 
-        {/* Custom Date Range Inputs */}
-        {showCustomRange && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-              <input
-                type="date"
-                value={customDateRange.startDate}
-                onChange={(e) => setCustomDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-              <input
-                type="date"
-                value={customDateRange.endDate}
-                onChange={(e) => setCustomDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
+        {/* Currency Breakdown */}
+        {wasteData.currency_breakdown && wasteData.currency_breakdown.length > 0 && (
+          <div className="mb-6 bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Waste by Currency</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {wasteData.currency_breakdown.map(item => (
+                <div key={item.currency} className="bg-gray-50 p-4 rounded-lg text-center">
+                  <p className="text-sm text-gray-600">{item.currency}</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {formatCurrency(item.total_value, item.currency)}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {item.total_items} items
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Export Buttons */}
-        <div className="flex space-x-4 pt-4 border-t">
-          <button
-            onClick={() => handleExport('excel')}
-            className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            <Download size={16} />
-            <span>Export Excel</span>
-          </button>
-          <button
-            onClick={() => handleExport('pdf')}
-            className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-          >
-            <Download size={16} />
-            <span>Export PDF</span>
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="bg-white rounded-lg shadow-sm border p-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-            <span className="ml-3 text-gray-600">Loading waste report...</span>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            {/* YER Total */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">YER Waste Value</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {reportData ? formatCurrency(reportData.currency_totals.YER, 'YER') : '0 YER'}
-                  </p>
-                </div>
-                <div className="bg-green-100 p-3 rounded-full">
-                  <Package size={24} className="text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* SAR Total */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">SAR Waste Value</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {reportData ? formatCurrency(reportData.currency_totals.SAR, 'SAR') : '0 SAR'}
-                  </p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <Package size={24} className="text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* EUR Total */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">EUR Waste Value</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {reportData ? formatCurrency(reportData.currency_totals.EUR, 'EUR') : '0 EUR'}
-                  </p>
-                </div>
-                <div className="bg-orange-100 p-3 rounded-full">
-                  <Package size={24} className="text-orange-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Entries */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Entries</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {reportData ? reportData.total_entries.toLocaleString() : '0'}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {reportData ? `${reportData.total_quantity_wasted.toLocaleString()} items` : '0 items'}
-                  </p>
-                </div>
-                <div className="bg-red-100 p-3 rounded-full">
-                  <AlertTriangle size={24} className="text-red-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Report Period Info */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Calendar size={20} className="text-gray-500" />
-                <div>
-                  <p className="font-medium text-gray-900">Report Period: {period.charAt(0).toUpperCase() + period.slice(1)}</p>
-                  <p className="text-sm text-gray-600">{formatDateRange()}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Generated</p>
-                <p className="font-medium text-gray-900">
-                  {reportData ? new Date(reportData.generated_at).toLocaleString() : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts */}
-          {chartData.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Bar Chart */}
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Waste Value by Currency</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="currency" />
-                    <YAxis />
-                    <Tooltip formatter={(value, name) => [value.toLocaleString(), 'Waste Value']} />
-                    <Bar dataKey="value" fill="#22c55e" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Pie Chart */}
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Waste Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ currency, value }) => `${currency}: ${value.toLocaleString()}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [value.toLocaleString(), 'Waste Value']} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-              <CheckCircle2 size={48} className="text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Waste Data</h3>
-              <p className="text-gray-600">No waste entries found for the selected period and filters.</p>
-              <p className="text-sm text-gray-500 mt-2">This is good news - no damaged or unsellable products reported!</p>
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Waste by Department */}
+          {wasteData.department_breakdown && wasteData.department_breakdown.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Waste by Department</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={wasteData.department_breakdown}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="department" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
+                  <Legend />
+                  <Bar dataKey="total_waste_value" fill="#8884d8" name="Waste Value" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
-        </>
-      )}
+
+          {/* Waste by Reason */}
+          {wasteData.reason_breakdown && wasteData.reason_breakdown.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Waste by Reason</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={wasteData.reason_breakdown}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ reason, percentage }) => `${reason}: ${percentage}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="total_waste_value"
+                  >
+                    {wasteData.reason_breakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Waste Entries */}
+        {wasteEntries.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Recent Waste Entries</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {wasteEntries.slice(0, 10).map((entry, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {entry.product_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {entry.department}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {entry.quantity_wasted}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                        {entry.waste_reason}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        {formatCurrency(entry.total_waste_value, entry.purchase_currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Barcode Scanner Modal */}
-      <WorkingCameraScanner
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onProductFound={handleBarcodeFound}
+      <CleanCameraScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onProductFound={(product) => {
+          handleProductSelect(product);
+          setShowScanner(false);
+        }}
+      />
+
+      {/* Add Waste Entry Modal */}
+      <AddWasteEntryModal
+        isOpen={showAddEntry}
+        onClose={() => setShowAddEntry(false)}
+        onEntryAdded={() => {
+          loadWasteReports();
+          loadWasteEntries();
+        }}
       />
     </div>
   );
