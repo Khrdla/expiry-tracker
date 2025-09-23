@@ -157,36 +157,21 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   };
 
-  const startSimpleScanning = () => {
-    if (!cameraActive || !videoRef.current || scanIntervalRef.current) return;
-    
-    setAutoScanEnabled(true);
-    setError('🔍 Auto-scanning enabled - point at barcode');
-    
-    // Simple interval-based scanning without QuaggaJS
-    scanIntervalRef.current = setInterval(() => {
-      if (!mountedRef.current || !autoScanEnabled) {
-        stopScanning();
-        return;
-      }
-      
-      // Visual feedback that scanning is active
-      const now = Date.now();
-      if (now % 2000 < 1000) {
-        setError('🔍 Scanning... or use manual entry below');
-      } else {
-        setError('📱 Point camera at barcode or enter manually');
-      }
-    }, 1000);
-  };
-
   const stopScanning = () => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
+    try {
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
+      setAutoScanEnabled(false);
+      setCameraActive(false);
+      setError('');
+    } catch (e) {
+      console.warn('Stop scanning error:', e);
     }
-    setAutoScanEnabled(false);
-    setError('');
   };
 
   const lookupProduct = async (barcodeValue) => {
