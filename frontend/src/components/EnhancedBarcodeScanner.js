@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Camera, Keyboard, AlertCircle, CheckCircle, RotateCcw, Zap, Activity } from 'lucide-react';
 import jsQR from 'jsqr';
+import Quagga from 'quagga';
 
 /**
  * Enhanced Barcode Scanner with Multi-Format Support
