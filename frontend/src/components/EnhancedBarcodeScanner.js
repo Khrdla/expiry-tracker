@@ -249,7 +249,7 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }, 200); // Increased frequency for better detection
   }, []); // Removed logScannerActivity dependency
 
-  // Multi-format barcode detection with enhanced algorithms
+  // Multi-format barcode detection with enhanced algorithms - Fixed dependencies
   const detectBarcodeMultiFormat = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -268,10 +268,8 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
-      logScannerActivity('SCAN_ATTEMPT', {
-        canvasSize: `${canvas.width}x${canvas.height}`,
-        attempt: scanAttempts + 1
-      });
+      // Update scan attempts without depending on state
+      setScanAttempts(prev => prev + 1);
       
       // Primary detection: jsQR (supports QR codes and some linear formats)
       const qrResult = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -294,10 +292,9 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
       updateScanningFeedback();
       
     } catch (err) {
-      logScannerActivity('DETECTION_ERROR', { error: err.message });
-      console.warn('Barcode detection error:', err);
+      console.error('Barcode detection error:', err);
     }
-  }, [scanAttempts, logScannerActivity]);
+  }, []); // Removed all dependencies to prevent infinite loop
 
   // Enhanced linear barcode detection for EAN/UPC/Code128
   const detectLinearBarcode = useCallback((imageData) => {
