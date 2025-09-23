@@ -220,7 +220,9 @@ const EnhancedDashboard = () => {
               >
                 <option value="all">All Sections</option>
                 {filterOptions.sections?.map(section => (
-                  <option key={section} value={section}>{section}</option>
+                  <option key={section.value || section} value={section.value || section}>
+                    {section.label || section}
+                  </option>
                 ))}
               </select>
             </div>
