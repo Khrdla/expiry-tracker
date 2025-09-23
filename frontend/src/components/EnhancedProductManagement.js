@@ -65,7 +65,7 @@ const EnhancedProductManagement = () => {
   useEffect(() => {
     loadProducts();
     loadFilterOptions();
-  }, [searchTerm, selectedDepartment, selectedSection, selectedSupplier, currentPage]);
+  }, [activeSearchTerm, selectedDepartment, selectedSection, selectedSupplier, currentPage]);
 
   // Enhanced product loading with comprehensive error handling
   const loadProducts = async () => {
