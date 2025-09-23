@@ -348,22 +348,30 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     return null;
   }, []);
 
-  // Handle successful barcode detection - Fixed dependencies
+  // Handle successful barcode detection with confirmation
   const handleBarcodeDetected = useCallback((barcodeData, format) => {
     if (!componentMountedRef.current) return;
     
     console.log(`[BarcodeScanner] BARCODE_DETECTED: ${barcodeData}, format: ${format}`);
     
     stopDetection();
+    
+    // Show confirmation with detected barcode
     setSuccess(`📱 ${format} Detected: ${barcodeData}`);
+    setError(`✅ Detected barcode: ${barcodeData} - Looking up product...`);
     
     // Add haptic feedback if available
     if (navigator.vibrate) {
       navigator.vibrate([100, 50, 100]);
     }
     
-    lookupProduct(barcodeData);
-  }, []); // Removed all dependencies to prevent infinite loop
+    // Auto-lookup after short delay to show detected barcode
+    setTimeout(() => {
+      if (componentMountedRef.current) {
+        lookupProduct(barcodeData);
+      }
+    }, 1000);
+  }, []);
 
   // Update scanning feedback messages
   const updateScanningFeedback = useCallback(() => {
