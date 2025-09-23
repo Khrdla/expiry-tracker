@@ -526,15 +526,28 @@ const EnhancedProductManagement = () => {
       );
     }
 
+    // Debug logging for image URL construction
+    const fullImageUrl = `${BACKEND_URL}/api${product.image_url}`;
+    console.log('🖼️ ProductImage Rendering:', {
+      productId: product?.id,
+      productName: product?.product_name,
+      hasImageUrl: !!product?.image_url,
+      imageUrl: product?.image_url,
+      fullUrl: fullImageUrl,
+      imageError,
+      imageLoading
+    });
+
     return (
       <div className={`${className} relative overflow-hidden`}>
         {imageLoading && (
           <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+            <div className="absolute bottom-1 text-xs text-gray-500 px-1">Loading...</div>
           </div>
         )}
         <img
-          src={`${BACKEND_URL}/api${product.image_url}`}
+          src={fullImageUrl}
           alt={product.product_name}
           className={`${className} object-cover transition-opacity duration-200`}
           onError={handleImageError}
