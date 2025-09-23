@@ -407,7 +407,8 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
                       🎯 Force Detect
                     </button>
                   </div>
-                  
+                
+                <div className="space-y-2">
                   <button
                     onClick={() => {
                       cleanup();
@@ -434,6 +435,7 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
                       🥤 Test Energy
                     </button>
                   </div>
+                </div>
                 )}
                 
                 <button
