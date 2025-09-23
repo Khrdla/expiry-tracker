@@ -22,6 +22,9 @@ const EnhancedProductManagement = () => {
   const [productNameSearch, setProductNameSearch] = useState('');
   const [barcodeSearch, setBarcodeSearch] = useState('');
   const [activeSearchTerm, setActiveSearchTerm] = useState(''); // This drives the actual filtering
+  
+  // Debounce timer refs
+  const debounceTimerRef = useRef(null);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSection, setSelectedSection] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
