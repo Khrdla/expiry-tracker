@@ -288,10 +288,14 @@ const EnhancedProductManagement = () => {
       return response.json();
     })
     .then(data => {
-      if (data.success) {
-        logActivity('IMAGE_UPLOAD_SUCCESS', { productId });
+      if (data.message && data.message.includes('successfully')) {
+        logActivity('IMAGE_UPLOAD_SUCCESS', { productId, imageUrl: data.image_url });
         loadProducts(); // Reload to show updated image
-        setError('');
+        setError(''); // Clear any previous errors
+        
+        // Show success message briefly
+        setError('✅ Image uploaded successfully!');
+        setTimeout(() => setError(''), 3000);
       } else {
         throw new Error(data.message || 'Upload failed');
       }
