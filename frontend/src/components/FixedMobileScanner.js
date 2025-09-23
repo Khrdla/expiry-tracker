@@ -49,6 +49,16 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
         scanIntervalRef.current = null;
       }
       
+      // Stop ZXing reader
+      if (codeReaderRef.current) {
+        try {
+          codeReaderRef.current.reset();
+        } catch (e) {
+          console.warn('ZXing reader reset error:', e);
+        }
+        codeReaderRef.current = null;
+      }
+      
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => {
           try {
