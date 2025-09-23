@@ -759,7 +759,7 @@ const EnhancedProductManagement = () => {
                   <option value="all">All Suppliers</option>
                   {filterOptions.suppliers?.map((supplier, index) => (
                     <option key={`supplier-${index}`} value={supplier}>
-                      {safeName(supplier) || `Supplier ${index + 1}`}
+                      {supplier || `Supplier ${index + 1}`}
                     </option>
                   ))}
                 </select>
