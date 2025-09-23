@@ -297,55 +297,43 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     }
   }, []); // Removed all dependencies to prevent infinite loop
 
-  // Enhanced linear barcode detection for EAN/UPC/Code128 - Fixed dependencies
-  const detectLinearBarcode = useCallback((imageData) => {
-    try {
-      // Simple linear barcode detection algorithm
-      // This is a basic implementation - for production, consider using a dedicated library
-      const { data, width, height } = imageData;
-      
-      // Look for alternating black/white patterns typical in linear barcodes
-      const middleY = Math.floor(height / 2);
-      const rowStart = middleY * width * 4;
-      
-      let patterns = [];
-      let currentColor = null;
-      let currentLength = 0;
-      
-      for (let x = 0; x < width; x++) {
-        const pixelIndex = rowStart + (x * 4);
-        const brightness = (data[pixelIndex] + data[pixelIndex + 1] + data[pixelIndex + 2]) / 3;
-        const isBlack = brightness < 128;
-        
-        if (currentColor !== isBlack) {
-          if (currentLength > 0) {
-            patterns.push(currentLength);
+  // Enhanced linear barcode detection using QuaggaJS for real barcode reading
+  const detectLinearBarcode = useCallback(async (canvas) => {
+    return new Promise((resolve) => {
+      try {
+        // Use QuaggaJS for proper linear barcode detection
+        Quagga.decodeSingle({
+          decoder: {
+            readers: [
+              "code_128_reader",
+              "ean_reader", 
+              "ean_8_reader",
+              "code_39_reader",
+              "code_39_vin_reader",
+              "codabar_reader",
+              "upc_reader",
+              "upc_e_reader"
+            ]
+          },
+          locate: true,
+          src: canvas.toDataURL(),
+        }, (result) => {
+          if (result && result.codeResult) {
+            console.log(`[BarcodeScanner] REAL_BARCODE_DETECTED: ${result.codeResult.code}, format: ${result.codeResult.format}`);
+            resolve({
+              data: result.codeResult.code,
+              format: result.codeResult.format || 'Linear'
+            });
+          } else {
+            resolve(null);
           }
-          currentColor = isBlack;
-          currentLength = 1;
-        } else {
-          currentLength++;
-        }
+        });
+      } catch (error) {
+        console.error('[BarcodeScanner] QUAGGA_DETECTION_ERROR:', error.message);
+        resolve(null);
       }
-      
-      // Basic validation for barcode-like patterns
-      if (patterns.length >= 20 && patterns.length <= 100) {
-        // Generate mock barcode for detected pattern
-        const mockBarcode = `LIN${Date.now().toString().slice(-10)}`;
-        console.log(`[BarcodeScanner] LINEAR_PATTERN_DETECTED: ${patterns.length} patterns, mock: ${mockBarcode}`);
-        
-        return {
-          data: mockBarcode,
-          format: 'Linear'
-        };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('[BarcodeScanner] LINEAR_DETECTION_ERROR:', error.message);
-      return null;
-    }
-  }, []); // Removed logScannerActivity dependency
+    });
+  }, []);
 
   // Handle successful barcode detection - Fixed dependencies
   const handleBarcodeDetected = useCallback((barcodeData, format) => {
