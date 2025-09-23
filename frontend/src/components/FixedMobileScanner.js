@@ -142,15 +142,16 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
         let errorMsg = '❌ Camera not available';
         
         if (err.name === 'NotAllowedError') {
-          errorMsg = '❌ Camera permission denied - please allow camera access';
+          errorMsg = '❌ Camera permission denied - click "Allow" when prompted';
         } else if (err.name === 'NotFoundError') {
-          errorMsg = '❌ No camera found - use manual entry';
+          errorMsg = '❌ No camera found - manual entry available below';
         } else if (err.message?.includes('devices')) {
-          errorMsg = '❌ No camera devices available - use manual entry';
+          errorMsg = '❌ No camera devices available - manual entry available below';
         }
         
         setError(errorMsg);
-        setManualMode(true);
+        // KEEP CAMERA MODE AS PRIMARY - Don't switch to manual mode
+        setManualMode(false);
         setCameraActive(false);
       }
     }
