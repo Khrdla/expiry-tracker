@@ -480,6 +480,7 @@ const FixedMobileScanner = ({ isOpen, onClose, onProductFound }) => {
                 <span>📷 Back to Camera Scanner</span>
               </button>
             </div>
+            </div>
           )}
 
           {/* Status Messages */}
