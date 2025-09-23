@@ -93,8 +93,10 @@ const WorkingCameraScanner = ({ isOpen, onClose, onProductFound }) => {
             setError('');
             console.log('✅ Camera started successfully');
             
-            // Auto-start simple barcode detection
-            startSimpleDetection();
+            // Auto-start barcode detection after camera is ready
+            setTimeout(() => {
+              startSimpleDetection();
+            }, 1000);
             
           } catch (playErr) {
             console.error('Video play error:', playErr);
