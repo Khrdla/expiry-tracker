@@ -361,7 +361,9 @@ const EnhancedProductManagement = () => {
                 >
                   <option value="all">All Suppliers</option>
                   {filterOptions.suppliers?.map(supplier => (
-                    <option key={supplier} value={supplier}>{supplier}</option>
+                    <option key={supplier.value || supplier} value={supplier.value || supplier}>
+                      {supplier.label || supplier}
+                    </option>
                   ))}
                 </select>
               </div>
