@@ -437,16 +437,16 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
     setBarcode('');
   }, [barcode, loading, stopDetection, lookupProduct]);
 
-  // Force restart camera for troubleshooting
+  // Force restart camera for troubleshooting - Fixed dependencies
   const restartCamera = useCallback(() => {
-    logScannerActivity('CAMERA_RESTART_REQUESTED');
+    console.log(`[BarcodeScanner] ${new Date().toISOString()} - CAMERA_RESTART_REQUESTED`);
     cleanup();
     setTimeout(() => {
       if (componentMountedRef.current) {
         startCamera();
       }
     }, 500);
-  }, [cleanup, startCamera, logScannerActivity]);
+  }, [cleanup, startCamera]); // Keep only essential dependencies
 
   if (!isOpen) return null;
 
