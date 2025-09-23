@@ -119,6 +119,7 @@ function App() {
           <main className="p-6">
             <Routes>
               <Route path="/" element={<EnhancedDashboard user={user} />} />
+              <Route path="/grid" element={<EnhancedDashboardGrid user={user} />} />
               <Route path="/products" element={<EnhancedProductManagement user={user} />} />
               <Route path="/waste-reports" element={<WasteReports user={user} />} />
               <Route path="/expiry-tracker" element={<ExpiryTracker user={user} />} />
