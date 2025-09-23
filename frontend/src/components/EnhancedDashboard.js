@@ -462,7 +462,7 @@ const EnhancedDashboard = () => {
                 <option value="all">All Suppliers</option>
                 {filterOptions.suppliers?.map((supplier, index) => (
                   <option key={`supplier-${index}`} value={supplier}>
-                    {safeName(supplier)}
+                    {supplier || `Supplier ${index + 1}`}
                   </option>
                 ))}
               </select>
