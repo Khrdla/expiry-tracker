@@ -5,7 +5,7 @@ import {
   Camera, Smartphone, Zap, Target, Activity
 } from 'lucide-react';
 
-const AdvancedBarcodeFeatures = ({ onClose }) => {
+const AdvancedBarcodeFeatures = ({ isOpen, onClose }) => {
   const [activeFeature, setActiveFeature] = useState('bulk-scan');
   const [scanHistory, setScanHistory] = useState([]);
   const [favorites, setFavorites] = useState([]);
