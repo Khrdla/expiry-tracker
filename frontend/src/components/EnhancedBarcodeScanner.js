@@ -282,8 +282,8 @@ const EnhancedBarcodeScanner = ({ isOpen, onClose, onProductFound }) => {
         return;
       }
       
-      // Secondary detection: Enhanced linear barcode scanning
-      const linearResult = detectLinearBarcode(imageData);
+      // Secondary detection: Enhanced linear barcode scanning with QuaggaJS
+      const linearResult = await detectLinearBarcode(canvas);
       if (linearResult) {
         handleBarcodeDetected(linearResult.data, linearResult.format);
         return;
