@@ -209,14 +209,26 @@ const EnhancedDashboard = () => {
     return processedKpis;
   };
 
-  // Enhanced chart data processing
+  // Enhanced chart data processing with debug logging
   const processChartData = (kpis) => {
+    console.log('📊 Processing Chart Data:', {
+      rawKpis: kpis,
+      kpisKeys: Object.keys(kpis),
+      kpisEntries: Object.entries(kpis)
+    });
+
     const chartData = Object.entries(kpis).map(([key, value]) => ({
       name: safeName(key),
       value: safeNumber(value?.total_items, 0),
       expired: safeNumber(value?.expired_items, 0),
       stock_value: safeNumber(value?.stock_value, 0)
     }));
+    
+    console.log('📈 Chart Data Result:', {
+      chartData,
+      itemCount: chartData.length,
+      hasValidData: chartData.some(item => item.value > 0 || item.stock_value > 0)
+    });
     
     logDashboardActivity('CHART_DATA_PROCESSED', {
       itemCount: chartData.length,
