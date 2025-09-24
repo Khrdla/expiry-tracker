@@ -345,7 +345,7 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
         
         return current_row
     
-    def _add_waste_entries_table(self, ws, start_row: int, entries: List[Dict]) -> int:
+    async def _add_waste_entries_table(self, ws, start_row: int, entries: List[Dict]) -> int:
         """Add detailed waste entries table"""
         headers = [
             "Product Name", "Department", "Quantity", 
@@ -356,7 +356,7 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
         for entry in entries:
             original_value = entry.get('waste_value', 0)
             currency = entry.get('currency', 'USD')
-            usd_value = self.converter.convert_to_usd(original_value, currency)
+            usd_value = await self.converter.convert_to_usd(original_value, currency)
             
             data.append([
                 entry.get('product_name', 'Unknown'),
