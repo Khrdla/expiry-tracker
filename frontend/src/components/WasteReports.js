@@ -486,13 +486,25 @@ const EnhancedWasteReports = () => {
   };
 
   const safeName = (value) => {
+    // Handle string values (should be most common)
     if (typeof value === 'string' && value.trim()) {
       return value.trim();
     }
-    if (typeof value === 'number') {
-      return `Item_${value}`;
+    
+    // Handle objects with different name properties
+    if (typeof value === 'object' && value !== null) {
+      if (value.label) return value.label;
+      if (value.name) return value.name;
+      if (value.value) return value.value;
     }
-    return '';
+    
+    // Handle numeric values that might represent department codes
+    if (typeof value === 'number') {
+      // Don't create fallback names for numbers, return as string
+      return value.toString();
+    }
+    
+    return value || 'Unknown';
   };
 
   const processArray = (array, processor) => {
