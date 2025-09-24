@@ -493,9 +493,9 @@ class EnhancedOtherReportsExporter(EnhancedExcelExporter):
         return output.getvalue()
 
 # Export factory function
-def get_exporter(report_type: str):
+def get_exporter(report_type: str, db=None):
     """Factory function to get appropriate exporter"""
     if report_type.lower() == 'waste':
-        return EnhancedWasteReportExporter()
+        return EnhancedWasteReportExporter(db)
     else:
-        return EnhancedOtherReportsExporter()
+        return EnhancedOtherReportsExporter(db)
