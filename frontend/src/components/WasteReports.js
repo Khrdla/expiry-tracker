@@ -881,21 +881,33 @@ const EnhancedWasteReports = () => {
                 />
                 
                 {/* Enhanced Search Results Dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {searchResults.length > 0 && !selectedProduct && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border-2 border-blue-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                    <div className="px-3 py-2 bg-blue-50 text-sm text-blue-700 font-medium border-b">
+                      Click to select a product ({searchResults.length} found)
+                    </div>
                     {searchResults.map((product, index) => (
                       <button
                         key={`search-${index}`}
                         onClick={() => handleProductSelect(product)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                        className="w-full text-left px-4 py-3 hover:bg-blue-100 border-b border-gray-100 last:border-b-0 transition-colors"
                       >
-                        <div className="font-medium">{product.product_name}</div>
-                        <div className="text-sm text-gray-500">
-                          {product.item_number} | {product.department} | 
-                          {formatCurrency(product.purchase_price, product.purchase_currency)}
+                        <div className="font-medium text-gray-900">{product.product_name}</div>
+                        <div className="text-sm text-gray-600">
+                          📦 {product.item_number} | 🏢 {product.department} | 
+                          💰 {formatCurrency(product.purchase_price, product.purchase_currency)}
                         </div>
                       </button>
                     ))}
+                  </div>
+                )}
+                
+                {/* No Results Message */}
+                {searchTerm && searchResults.length === 0 && !selectedProduct && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-red-300 rounded-lg shadow-lg p-3">
+                    <div className="text-red-600 text-sm">
+                      ❌ No products found for "{searchTerm}"
+                    </div>
                   </div>
                 )}
               </div>
