@@ -4267,6 +4267,207 @@ async def get_supplier_performance(
         
     except Exception as e:
         logger.error(f"Failed to get supplier performance: {str(e)}")
+# =============================================================================
+# CURRENCY MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@api_router.get("/currency/settings")
+async def get_currency_settings(current_user: User = Depends(get_current_user)):
+    """Get current currency settings and exchange rates"""
+    try:
+        # Get the latest currency settings
+        settings = await db.currency_settings.find_one(
+            {"is_active": True}, 
+            sort=[("last_updated", -1)]
+        )
+        
+        if not settings:
+            # Create default settings if none exist
+            default_settings = {
+                "id": str(uuid.uuid4()),
+                "base_currency": "USD",
+                "exchange_rates": {
+                    "YER": 0.004,
+                    "SAR": 0.267,
+                    "EUR": 1.10,
+                    "USD": 1.0
+                },
+                "last_updated": datetime.now(),
+                "updated_by": current_user.id,
+                "created_at": datetime.now(),
+                "is_active": True
+            }
+            
+            await db.currency_settings.insert_one(default_settings)
+            settings = default_settings
+        
+        # Remove MongoDB ObjectId for JSON serialization
+        if "_id" in settings:
+            del settings["_id"]
+        
+        return {
+            "settings": settings,
+            "supported_currencies": ["YER", "SAR", "EUR", "USD"],
+            "base_currency": settings["base_currency"]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get currency settings: {str(e)}")
+
+@api_router.put("/currency/settings")
+async def update_currency_settings(
+    settings_update: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+):
+    """Update currency settings and exchange rates"""
+    try:
+        # Validate user permissions (managers and admins only)
+        if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+            raise HTTPException(status_code=403, detail="Only managers and admins can update currency settings")
+        
+        # Validate exchange rates
+        exchange_rates = settings_update.get("exchange_rates", {})
+        base_currency = settings_update.get("base_currency", "USD")
+        
+        # Ensure base currency has rate 1.0
+        if base_currency in exchange_rates:
+            exchange_rates[base_currency] = 1.0
+        
+        # Validate all rates are positive numbers
+        for currency, rate in exchange_rates.items():
+            if not isinstance(rate, (int, float)) or rate <= 0:
+                raise HTTPException(status_code=400, detail=f"Invalid exchange rate for {currency}: {rate}")
+        
+        # Deactivate old settings
+        await db.currency_settings.update_many(
+            {"is_active": True},
+            {"$set": {"is_active": False}}
+        )
+        
+        # Create new settings entry
+        new_settings = {
+            "id": str(uuid.uuid4()),
+            "base_currency": base_currency,
+            "exchange_rates": exchange_rates,
+            "last_updated": datetime.now(),
+            "updated_by": current_user.id,
+            "created_at": datetime.now(),
+            "is_active": True
+        }
+        
+        await db.currency_settings.insert_one(new_settings)
+        
+        # Log the update
+        print(f"Currency settings updated by {current_user.username}: {exchange_rates}")
+        
+        return {
+            "success": True,
+            "message": "Currency settings updated successfully",
+            "settings": {k: v for k, v in new_settings.items() if k != "_id"},
+            "updated_by": current_user.username
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update currency settings: {str(e)}")
+
+@api_router.get("/currency/rates")
+async def get_current_exchange_rates():
+    """Get current exchange rates for public use"""
+    try:
+        settings = await db.currency_settings.find_one(
+            {"is_active": True}, 
+            sort=[("last_updated", -1)]
+        )
+        
+        if not settings:
+            # Return default rates if no settings exist
+            return {
+                "base_currency": "USD",
+                "exchange_rates": {
+                    "YER": 0.004,
+                    "SAR": 0.267,
+                    "EUR": 1.10,
+                    "USD": 1.0
+                },
+                "last_updated": datetime.now().isoformat()
+            }
+        
+        return {
+            "base_currency": settings["base_currency"],
+            "exchange_rates": settings["exchange_rates"],
+            "last_updated": settings["last_updated"].isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get exchange rates: {str(e)}")
+
+@api_router.post("/currency/rates/quick-update")
+async def quick_update_rate(
+    rate_update: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+):
+    """Quick update for a single currency rate"""
+    try:
+        # Validate user permissions
+        if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+            raise HTTPException(status_code=403, detail="Only managers and admins can update exchange rates")
+        
+        currency = rate_update.get("currency")
+        rate = rate_update.get("rate")
+        
+        if not currency or not rate:
+            raise HTTPException(status_code=400, detail="Currency and rate are required")
+        
+        if not isinstance(rate, (int, float)) or rate <= 0:
+            raise HTTPException(status_code=400, detail=f"Invalid rate value: {rate}")
+        
+        # Get current settings
+        current_settings = await db.currency_settings.find_one(
+            {"is_active": True}, 
+            sort=[("last_updated", -1)]
+        )
+        
+        if not current_settings:
+            raise HTTPException(status_code=404, detail="No currency settings found")
+        
+        # Update the specific rate
+        exchange_rates = current_settings["exchange_rates"].copy()
+        exchange_rates[currency] = float(rate)
+        
+        # Deactivate old settings
+        await db.currency_settings.update_many(
+            {"is_active": True},
+            {"$set": {"is_active": False}}
+        )
+        
+        # Create new settings with updated rate
+        new_settings = {
+            "id": str(uuid.uuid4()),
+            "base_currency": current_settings["base_currency"],
+            "exchange_rates": exchange_rates,
+            "last_updated": datetime.now(),
+            "updated_by": current_user.id,
+            "created_at": datetime.now(),
+            "is_active": True
+        }
+        
+        await db.currency_settings.insert_one(new_settings)
+        
+        return {
+            "success": True,
+            "message": f"Exchange rate for {currency} updated to {rate}",
+            "currency": currency,
+            "new_rate": rate,
+            "updated_by": current_user.username
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update exchange rate: {str(e)}")
+
         raise HTTPException(status_code=500, detail="Failed to get supplier performance")
 
 # Include router after all endpoints are defined
