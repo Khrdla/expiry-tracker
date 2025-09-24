@@ -975,6 +975,172 @@ const SettingsPanel = ({ user }) => {
             </div>
           )}
 
+          {/* Currency Settings Tab */}
+          {activeTab === 'currency' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">Currency & Exchange Rate Settings</h3>
+                <div className="text-sm text-gray-500">
+                  {currencySettings.last_updated && (
+                    <span>Last updated: {new Date(currencySettings.last_updated).toLocaleString()}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <DollarSign className="text-blue-600" size={20} />
+                  <h4 className="font-semibold text-blue-800">Exchange Rate Management</h4>
+                </div>
+                <p className="text-blue-700 text-sm">
+                  Manage exchange rates for currency conversions in reports. Waste reports will show both original currency and USD values using these rates.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Base Currency Selection */}
+                <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 mb-4">Base Currency</h4>
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Reference Currency (All rates convert to this)
+                    </label>
+                    <select
+                      value={currencySettings.base_currency}
+                      onChange={(e) => setCurrencySettings(prev => ({...prev, base_currency: e.target.value}))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="SAR">SAR - Saudi Riyal</option>
+                      <option value="YER">YER - Yemeni Rial</option>
+                    </select>
+                    <p className="text-xs text-gray-500">
+                      Currently set to {currencySettings.base_currency}. Waste reports will show conversions to this currency.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Exchange Rates */}
+                <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-gray-800">Exchange Rates</h4>
+                    <button
+                      onClick={updateCurrencySettings}
+                      disabled={currencyLoading}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {currencyLoading ? 'Saving...' : 'Save All'}
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {Object.entries(currencySettings.exchange_rates).map(([currency, rate]) => (
+                      <div key={currency} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-medium text-gray-700 w-12">{currency}</span>
+                          <span className="text-sm text-gray-500">→ {currencySettings.base_currency}</span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          {editingCurrency === currency ? (
+                            <>
+                              <input
+                                type="number"
+                                step="0.0001"
+                                value={tempRate}
+                                onChange={(e) => setTempRate(e.target.value)}
+                                className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                                onKeyPress={(e) => e.key === 'Enter' && confirmRateUpdate()}
+                              />
+                              <button
+                                onClick={confirmRateUpdate}
+                                className="p-1 text-green-600 hover:text-green-800"
+                                title="Save"
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                className="p-1 text-red-600 hover:text-red-800"
+                                title="Cancel"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-mono text-sm w-20 text-right">
+                                {rate.toFixed(4)}
+                              </span>
+                              <button
+                                onClick={() => startEditing(currency)}
+                                className="p-1 text-blue-600 hover:text-blue-800"
+                                title="Edit rate"
+                              >
+                                <Settings size={16} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-800">
+                      💡 <strong>Tip:</strong> Click the settings icon to edit individual rates, or update multiple rates and click "Save All".
+                      These rates will be used for USD conversion in waste reports.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Rate Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800 mb-3">Current Rate Summary</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(currencySettings.exchange_rates).map(([currency, rate]) => (
+                    <div key={currency} className="text-center">
+                      <div className="text-sm text-gray-500">1 {currency}</div>
+                      <div className="font-mono font-semibold">
+                        {rate.toFixed(4)} {currencySettings.base_currency}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {currencySettings.updated_by && (
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    Last updated by: {currencySettings.updated_by}
+                  </div>
+                )}
+              </div>
+
+              {/* Example Conversion */}
+              <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-800 mb-2">Example Waste Report Conversion</h4>
+                <p className="text-green-700 text-sm mb-3">
+                  When generating waste reports, values will be converted as follows:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-semibold">1,000 YER waste</div>
+                    <div className="text-gray-600">= {(1000 * currencySettings.exchange_rates.YER).toFixed(2)} USD</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-semibold">100 SAR waste</div>
+                    <div className="text-gray-600">= {(100 * currencySettings.exchange_rates.SAR).toFixed(2)} USD</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-semibold">50 EUR waste</div>
+                    <div className="text-gray-600">= {(50 * currencySettings.exchange_rates.EUR).toFixed(2)} USD</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Reports Tab */}
           {activeTab === 'reports' && (
             <div className="space-y-6">
