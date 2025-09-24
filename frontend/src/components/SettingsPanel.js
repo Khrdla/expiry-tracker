@@ -413,6 +413,115 @@ const SettingsPanel = ({ user }) => {
     }
   };
 
+  // Currency Settings Functions
+  const fetchCurrencySettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/currency/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCurrencySettings(data.settings);
+      }
+    } catch (error) {
+      console.error('Error fetching currency settings:', error);
+    }
+  };
+
+  const updateCurrencySettings = async () => {
+    setCurrencyLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/currency/settings`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(currencySettings)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setCurrencySettings(result.settings);
+        setMessage(`✅ Currency settings updated successfully by ${result.updated_by}!`);
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        const errorData = await response.json();
+        setMessage(`❌ Failed to update currency settings: ${errorData.detail}`);
+        setTimeout(() => setMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Currency update error:', error);
+      setMessage(`❌ Error updating currency settings: ${error.message}`);
+      setTimeout(() => setMessage(''), 5000);
+    } finally {
+      setCurrencyLoading(false);
+    }
+  };
+
+  const updateSingleRate = async (currency, newRate) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BACKEND_URL}/api/currency/rates/quick-update`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currency: currency,
+          rate: parseFloat(newRate)
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update local state
+        setCurrencySettings(prev => ({
+          ...prev,
+          exchange_rates: {
+            ...prev.exchange_rates,
+            [currency]: parseFloat(newRate)
+          },
+          last_updated: new Date().toISOString(),
+          updated_by: user?.username || 'Current User'
+        }));
+        
+        setMessage(`✅ ${currency} rate updated to ${newRate} successfully!`);
+        setTimeout(() => setMessage(''), 3000);
+        setEditingCurrency(null);
+        setTempRate('');
+      } else {
+        const errorData = await response.json();
+        setMessage(`❌ Failed to update ${currency} rate: ${errorData.detail}`);
+        setTimeout(() => setMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Rate update error:', error);
+      setMessage(`❌ Error updating rate: ${error.message}`);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
+  const startEditing = (currency) => {
+    setEditingCurrency(currency);
+    setTempRate(currencySettings.exchange_rates[currency].toString());
+  };
+
+  const cancelEditing = () => {
+    setEditingCurrency(null);
+    setTempRate('');
+  };
+
+  const confirmRateUpdate = () => {
+    if (tempRate && parseFloat(tempRate) > 0) {
+      updateSingleRate(editingCurrency, tempRate);
+    }
+  };
+
   const tabs = [
     { id: 'email', label: 'Email & Alerts', icon: Mail },
     { id: 'company', label: 'Company Settings', icon: Palette },
