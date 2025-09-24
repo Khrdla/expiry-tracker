@@ -174,7 +174,7 @@ class WasteAuditTester:
                     all_successful = False
                     
             except Exception as e:
-                self.log_test(f"POST /api/waste/entries ({test_data['purchase_currency']})", False, f"Exception: {str(e)}")
+                self.log_test(f"POST /api/waste/entries (Product {test_data['product_id']})", False, f"Exception: {str(e)}")
                 all_successful = False
         
         return all_successful
