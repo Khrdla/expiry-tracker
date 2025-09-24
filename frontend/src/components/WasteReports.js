@@ -433,28 +433,86 @@ const EnhancedWasteReports = () => {
     return quantity * price;
   };
 
-  // Enhanced pending entries management
+  // Enhanced pending entries management with form clearing and feedback
   const addToPendingEntries = () => {
-    if (!selectedProduct || !wasteQuantity) {
-      logActivity('ERROR_INVALID_ENTRY_DATA');
+    console.log('🗑️ Adding to pending entries:', {
+      selectedProduct: selectedProduct?.product_name,
+      wasteQuantity,
+      wasteReason,
+      hasProduct: !!selectedProduct,
+      hasQuantity: !!wasteQuantity
+    });
+    
+    if (!selectedProduct) {
+      setError('Please select a product first');
+      console.warn('❌ No product selected');
+      return;
+    }
+    
+    if (!wasteQuantity || wasteQuantity <= 0) {
+      setError('Please enter a valid quantity');
+      console.warn('❌ Invalid quantity:', wasteQuantity);
+      return;
+    }
+    
+    if (!wasteReason) {
+      setError('Please select a reason for waste');
+      console.warn('❌ No reason selected');
       return;
     }
     
     const entry = {
       id: Date.now(),
-      product: selectedProduct,
+      product: {
+        ...selectedProduct,
+        // Ensure all required fields are present
+        product_name: selectedProduct.product_name || 'Unknown Product',
+        item_number: selectedProduct.item_number || selectedProduct.barcode || 'N/A',
+        supplier: selectedProduct.supplier || 'Unknown',
+        department: selectedProduct.department || 'General',
+        purchase_price: safeNumber(selectedProduct.purchase_price, 0),
+        purchase_currency: selectedProduct.purchase_currency || 'YER'
+      },
       quantity: safeNumber(wasteQuantity, 0),
       reason: wasteReason,
-      wasteValue: calculateWasteValue()
+      wasteValue: calculateWasteValue(),
+      dateAdded: new Date().toISOString()
     };
+    
+    console.log('✅ Creating waste entry:', entry);
     
     logActivity('PENDING_ENTRY_ADDED', {
       productId: selectedProduct.id,
+      productName: selectedProduct.product_name,
       quantity: entry.quantity,
-      value: entry.wasteValue
+      value: entry.wasteValue,
+      reason: entry.reason
     });
     
-    setPendingEntries(prev => [...prev, entry]);
+    // Add to pending entries
+    setPendingEntries(prev => {
+      const newEntries = [...prev, entry];
+      console.log('📋 Updated pending entries:', newEntries.length, 'total');
+      return newEntries;
+    });
+    
+    // Clear form for next entry
+    setWasteQuantity('');
+    setWasteReason('damaged');
+    setSelectedProduct(null);
+    setSearchTerm('');
+    setError('');
+    
+    // Show success message
+    setError(''); // Clear any previous errors
+    console.log('🎉 Entry added successfully, form cleared');
+    
+    // Optional: Show a brief success message
+    const tempError = error;
+    setError('✅ Entry added to list!');
+    setTimeout(() => {
+      setError(tempError);
+    }, 2000);
     
     // Reset form
     setSelectedProduct(null);
