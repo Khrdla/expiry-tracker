@@ -737,7 +737,7 @@ const EnhancedWasteReports = () => {
                 <option value="all">All Sections</option>
                 {filterOptions.sections?.map((section, index) => (
                   <option key={`section-${index}`} value={section}>
-                    {safeName(section) || `Section ${index + 1}`}
+                    {section || `Section ${index + 1}`}
                   </option>
                 ))}
               </select>
