@@ -96,20 +96,53 @@ const ReturnForm = ({ user }) => {
     }
   };
 
-  // Auto-fill form with lookup results
+  // Enhanced auto-fill form with comprehensive master data
   const autoFillForm = () => {
     if (lookupResults && lookupResults.found) {
+      console.log('📦 Auto-filling Return Form with Master Data:', lookupResults);
+      
       const updatedData = {
         ...returnData,
-        product_code: lookupResults.item_number,
-        product_name: lookupResults.product_name,
-        barcode: lookupResults.barcode || '', // Add barcode from lookup results
+        // Basic Product Information
+        product_code: lookupResults.item_number || lookupResults.product_code || '',
+        product_name: lookupResults.product_name || '',
+        barcode: lookupResults.barcode || lookupResults.item_number || '',
+        
+        // Pricing with Auto-detected Currency
         purchase_price: lookupResults.purchase_price ? lookupResults.purchase_price.toString() : '',
-        purchase_currency: lookupResults.purchase_currency,
-        supplier: lookupResults.supplier
+        purchase_currency: lookupResults.purchase_currency || lookupResults.currency || 'YER',
+        
+        // Supplier and Category Information
+        supplier: lookupResults.supplier || 'Unknown Supplier',
+        department: lookupResults.department || 'General',
+        section: lookupResults.section || '',
+        category: lookupResults.category || lookupResults.department || 'General',
+        
+        // Additional Master Data Fields
+        brand: lookupResults.brand || '',
+        unit: lookupResults.unit || 'pcs',
+        expiry_date: lookupResults.expiry_date || '',
+        
+        // Stock Information
+        current_stock: lookupResults.quantity || 0,
+        min_stock_level: lookupResults.min_stock_level || 0,
+        
+        // Calculated Values
+        selling_price: lookupResults.selling_price || 0,
+        margin_percentage: lookupResults.purchase_price && lookupResults.selling_price 
+          ? ((lookupResults.selling_price - lookupResults.purchase_price) / lookupResults.purchase_price * 100).toFixed(2)
+          : 0,
+        
+        // Enhanced Notes with Auto-generated Information
+        notes: `Auto-filled from master data on ${new Date().toLocaleDateString()}. ` +
+               `Department: ${lookupResults.department || 'N/A'}, ` +
+               `Supplier: ${lookupResults.supplier || 'N/A'}, ` +
+               `Currency: ${lookupResults.purchase_currency || 'YER'}` +
+               (lookupResults.expiry_date ? `, Expiry: ${new Date(lookupResults.expiry_date).toLocaleDateString()}` : '') +
+               (returnData.notes ? `. ${returnData.notes}` : '')
       };
       
-      // Calculate total value if quantity is already entered
+      // Auto-calculate total value if quantity is already entered
       if (returnData.quantity) {
         const quantity = parseFloat(returnData.quantity) || 0;
         const price = parseFloat(lookupResults.purchase_price) || 0;
@@ -120,11 +153,29 @@ const ReturnForm = ({ user }) => {
       
       setReturnData(updatedData);
       
+      // Enhanced success message with key auto-filled information
+      const autoFilledInfo = [
+        lookupResults.product_name,
+        lookupResults.supplier ? `Supplier: ${lookupResults.supplier}` : null,
+        lookupResults.purchase_currency ? `Currency: ${lookupResults.purchase_currency}` : null,
+        lookupResults.department ? `Dept: ${lookupResults.department}` : null
+      ].filter(Boolean).join(', ');
+      
       setMessage({ 
         type: 'success', 
-        text: 'Form auto-filled! Please add quantity, reason for return, and approvals.' 
+        text: `✅ Form auto-filled with: ${autoFilledInfo}. Please add quantity and reason for return.` 
       });
+      
       setShowLookupResults(false);
+      
+      console.log('✅ Return Form Auto-filled Successfully:', {
+        productName: updatedData.product_name,
+        supplier: updatedData.supplier,
+        currency: updatedData.purchase_currency,
+        department: updatedData.department,
+        price: updatedData.purchase_price,
+        margin: updatedData.margin_percentage + '%'
+      });
     }
   };
 
