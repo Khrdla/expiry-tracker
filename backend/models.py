@@ -29,6 +29,25 @@ class Currency(str, Enum):
     EUR = "EUR"
     USD = "USD"
 
+class CurrencySettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    base_currency: str = "USD"  # Reference currency for conversions
+    exchange_rates: Dict[str, float] = {
+        "YER": 0.004,  # 1 YER = 0.004 USD
+        "SAR": 0.267,  # 1 SAR = 0.267 USD
+        "EUR": 1.10,   # 1 EUR = 1.10 USD
+        "USD": 1.0     # 1 USD = 1.0 USD
+    }
+    last_updated: datetime = Field(default_factory=datetime.now)
+    updated_by: str  # User ID who updated the rates
+    created_at: datetime = Field(default_factory=datetime.now)
+    is_active: bool = True
+
+class CurrencyRateUpdate(BaseModel):
+    currency: str
+    rate: float
+    updated_by: str
+
 class ProductStatus(str, Enum):
     IN_STOCK = "in_stock"
     LOW_STOCK = "low_stock"
