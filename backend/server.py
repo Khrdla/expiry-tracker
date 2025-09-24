@@ -2457,7 +2457,7 @@ async def export_expiry_tracker_data(
                 products.append(product)
         
         # Use enhanced exporter
-        exporter = EnhancedOtherReportsExporter()
+        exporter = EnhancedOtherReportsExporter(db)
         excel_data = exporter.generate_expiry_tracker_excel(products)
         
         filename = f"expiry_tracker_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
