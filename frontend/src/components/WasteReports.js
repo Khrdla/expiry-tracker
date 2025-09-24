@@ -862,9 +862,22 @@ const EnhancedWasteReports = () => {
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     searchProducts(e.target.value);
+                    
+                    // Clear selected product when search changes
+                    if (selectedProduct) {
+                      setSelectedProduct(null);
+                    }
                   }}
-                  placeholder="Search by barcode or product name..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  onKeyPress={(e) => {
+                    // Auto-select first result on Enter
+                    if (e.key === 'Enter' && searchResults.length > 0) {
+                      handleProductSelect(searchResults[0]);
+                    }
+                  }}
+                  placeholder="Search by barcode or product name, then click result or press Enter..."
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                    selectedProduct ? 'border-green-500 bg-green-50' : 'border-gray-300'
+                  }`}
                 />
                 
                 {/* Enhanced Search Results Dropdown */}
