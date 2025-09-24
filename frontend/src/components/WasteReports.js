@@ -433,60 +433,87 @@ const EnhancedWasteReports = () => {
     return quantity * price;
   };
 
-  // Simple and robust pending entries management 
+  // Enhanced pending entries management with better validation and feedback
   const addToPendingEntries = () => {
-    console.log('🔥 ADD TO LIST CLICKED!');
+    console.log('🗑️ ADD TO LIST CLICKED!');
     console.log('Current state:', {
-      selectedProduct: selectedProduct,
+      selectedProduct: selectedProduct?.product_name,
       wasteQuantity: wasteQuantity,
       wasteReason: wasteReason,
-      pendingEntriesLength: pendingEntries.length
+      pendingEntriesLength: pendingEntries.length,
+      hasSelectedProduct: !!selectedProduct
     });
     
+    // Validation with helpful messages
+    if (!selectedProduct) {
+      setError('⚠️ Please search and select a product first from the dropdown');
+      console.warn('❌ No product selected');
+      return;
+    }
+    
+    if (!wasteQuantity || wasteQuantity <= 0) {
+      setError('⚠️ Please enter a valid quantity greater than 0');
+      console.warn('❌ Invalid quantity:', wasteQuantity);
+      return;
+    }
+    
+    if (!wasteReason) {
+      setError('⚠️ Please select a reason for waste');
+      console.warn('❌ No reason selected');
+      return;
+    }
+    
     try {
-      // Simple validation
-      if (!selectedProduct) {
-        alert('Please select a product first');
-        console.error('No product selected');
-        return;
-      }
-      
-      if (!wasteQuantity) {
-        alert('Please enter a quantity');
-        console.error('No quantity entered');
-        return;
-      }
-      
-      // Create simple entry
-      const newEntry = {
-        id: Date.now() + Math.random(), // Ensure unique ID
-        productName: selectedProduct.product_name || 'Test Product',
-        quantity: parseFloat(wasteQuantity) || 0,
-        reason: wasteReason || 'damaged',
-        value: (parseFloat(wasteQuantity) || 0) * (selectedProduct.purchase_price || 0),
-        timestamp: new Date().toLocaleString()
+      const entry = {
+        id: Date.now() + Math.random(),
+        product: {
+          ...selectedProduct,
+          product_name: selectedProduct.product_name || 'Unknown Product',
+          item_number: selectedProduct.item_number || selectedProduct.barcode || 'N/A',
+          supplier: selectedProduct.supplier || 'Unknown',
+          department: selectedProduct.department || 'General',
+          purchase_price: safeNumber(selectedProduct.purchase_price, 0),
+          purchase_currency: selectedProduct.purchase_currency || 'YER'
+        },
+        quantity: safeNumber(wasteQuantity, 0),
+        reason: wasteReason,
+        wasteValue: calculateWasteValue(),
+        dateAdded: new Date().toISOString()
       };
       
-      console.log('🎯 Creating entry:', newEntry);
+      console.log('✅ Creating waste entry:', entry);
       
-      // Force state update
-      setPendingEntries(currentEntries => {
-        const updatedEntries = [...currentEntries, newEntry];
-        console.log('📦 New pending entries array:', updatedEntries);
-        return updatedEntries;
+      logActivity('PENDING_ENTRY_ADDED', {
+        productId: selectedProduct.id,
+        productName: selectedProduct.product_name,
+        quantity: entry.quantity,
+        value: entry.wasteValue,
+        reason: entry.reason
       });
       
-      // Clear form
+      // Add to pending entries
+      setPendingEntries(prev => {
+        const newEntries = [...prev, entry];
+        console.log('📋 Updated pending entries:', newEntries.length, 'total');
+        return newEntries;
+      });
+      
+      // Clear form for next entry
       setWasteQuantity('');
+      setWasteReason('damaged');
       setSelectedProduct(null);
       setSearchTerm('');
+      setError('');
       
-      alert(`✅ Entry added! Total entries: ${pendingEntries.length + 1}`);
-      console.log('🎉 SUCCESS: Entry added and form cleared');
+      // Show success message
+      setError('✅ Entry added to list successfully!');
+      setTimeout(() => setError(''), 3000);
+      
+      console.log('🎉 Entry added successfully, form cleared');
       
     } catch (error) {
       console.error('❌ Error in addToPendingEntries:', error);
-      alert('Error adding entry: ' + error.message);
+      setError('❌ Error adding entry: ' + error.message);
     }
     
     // Reset form
