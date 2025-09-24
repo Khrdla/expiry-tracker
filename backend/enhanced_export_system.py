@@ -100,9 +100,9 @@ class CompanyBranding:
 class EnhancedExcelExporter:
     """Enhanced Excel export with proper formatting and branding"""
     
-    def __init__(self):
+    def __init__(self, db=None):
         self.branding = CompanyBranding.get_branding()
-        self.converter = CurrencyConverter()
+        self.converter = CurrencyConverter(db)
     
     def create_styled_workbook(self, title: str) -> tuple:
         """Create a workbook with company styling"""
