@@ -176,34 +176,50 @@ const EnhancedDashboard = () => {
     }
   };
 
-  // Enhanced KPI data processing with fallbacks
+  // Enhanced KPI data processing with proper department name handling
   const processKpisData = (rawKpis) => {
+    console.log('🔍 Raw KPIs received:', rawKpis);
+    
     const processedKpis = {};
     
-    Object.entries(rawKpis).forEach(([key, value]) => {
-      // Ensure we have a proper object with fallbacks
-      const processedValue = {
-        total_items: safeNumber(value?.total_items, 0),
-        expired_items: safeNumber(value?.expired_items, 0),
-        low_stock_items: safeNumber(value?.low_stock_items, 0),
-        stock_value: value?.stock_value || 0,
-        // Preserve other properties with safety checks
-        ...Object.fromEntries(
-          Object.entries(value || {}).map(([k, v]) => [
-            k,
-            typeof v === 'string' && v.trim() === '' ? `Unknown ${k}` : v
-          ])
-        )
-      };
-      
-      // Ensure the key is a proper string, not an index
-      const processedKey = typeof key === 'string' && key.trim() ? key : `Department_${key}`;
-      processedKpis[processedKey] = processedValue;
-    });
+    // Handle different possible KPI data structures
+    if (Array.isArray(rawKpis)) {
+      // If KPIs come as an array, extract department names from objects
+      rawKpis.forEach((item, index) => {
+        const departmentName = item?.department || item?.name || `Department_${index}`;
+        const processedValue = {
+          total_items: safeNumber(item?.total_items, 0),
+          expired_items: safeNumber(item?.expired_items, 0),
+          low_stock_items: safeNumber(item?.low_stock_items, 0),
+          stock_value: safeNumber(item?.stock_value, 0),
+          department: departmentName
+        };
+        processedKpis[departmentName] = processedValue;
+      });
+    } else if (typeof rawKpis === 'object' && rawKpis !== null) {
+      // If KPIs come as an object, process each entry
+      Object.entries(rawKpis).forEach(([key, value]) => {
+        // Get department name from value object or use key
+        const departmentName = value?.department || key;
+        
+        const processedValue = {
+          total_items: safeNumber(value?.total_items, 0),
+          expired_items: safeNumber(value?.expired_items, 0),
+          low_stock_items: safeNumber(value?.low_stock_items, 0),
+          stock_value: safeNumber(value?.stock_value, 0),
+          department: departmentName
+        };
+        
+        processedKpis[departmentName] = processedValue;
+      });
+    }
+    
+    console.log('✅ Processed KPIs:', processedKpis);
     
     logDashboardActivity('KPIS_PROCESSED', {
-      originalKeys: Object.keys(rawKpis),
-      processedKeys: Object.keys(processedKpis)
+      originalKeys: Array.isArray(rawKpis) ? rawKpis.map((item, i) => i) : Object.keys(rawKpis),
+      processedKeys: Object.keys(processedKpis),
+      processedData: processedKpis
     });
     
     return processedKpis;
