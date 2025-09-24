@@ -2556,8 +2556,28 @@ async def export_expiry_tracker_data(
 async def export_return_forms(
     current_user: User = Depends(get_current_user)
 ):
-    """Export return forms data"""
+    """Export return forms data with enhanced formatting"""
     try:
+        from enhanced_export_system import EnhancedOtherReportsExporter
+        
+        # Get return forms data
+        return_forms = await db.return_forms.find().to_list(length=None)
+        
+        # Use enhanced exporter
+        exporter = EnhancedOtherReportsExporter()
+        excel_data = exporter.generate_return_forms_excel(return_forms)
+        
+        filename = f"return_forms_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return Response(
+            content=excel_data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Enhanced return forms export failed: {e}")
+        # Fallback to original implementation
         import xlsxwriter
         from io import BytesIO
         
@@ -2592,7 +2612,7 @@ async def export_return_forms(
         # Headers
         headers = [
             'Reference Number', 'Return Date', 'Product Code', 'Product Name', 'Quantity',
-            'Purchase Price', 'Currency', 'Supplier', 'Reason for Return', 'Status',
+            'Value (Original Currency)', 'Reason for Return', 'Status',
             'Prepared By', 'Section Manager', 'Department Head'
         ]
         
@@ -2600,40 +2620,38 @@ async def export_return_forms(
             worksheet.write(3, col, header, header_format)
         
         # Get return forms from database
-        returns = await db.returns.find({}).sort("return_date", -1).to_list(length=None)
+        returns = await db.return_forms.find({}).sort("created_at", -1).to_list(length=None)
         
         # Write data
         for row, return_form in enumerate(returns, start=4):
+            value = return_form.get('purchase_price', 0) * return_form.get('quantity', 0)
+            currency = return_form.get('purchase_currency', 'USD')
+            
             worksheet.write(row, 0, return_form.get('reference_number', ''), cell_format)
-            worksheet.write(row, 1, return_form.get('return_date', ''), cell_format)
-            worksheet.write(row, 2, return_form.get('product_code', ''), cell_format)
+            worksheet.write(row, 1, return_form.get('return_date', return_form.get('created_at', '')[:10] if return_form.get('created_at') else ''), cell_format)
+            worksheet.write(row, 2, return_form.get('product_code', return_form.get('item_number', '')), cell_format)
             worksheet.write(row, 3, return_form.get('product_name', ''), cell_format)
             worksheet.write(row, 4, return_form.get('quantity', 0), cell_format)
-            worksheet.write(row, 5, return_form.get('purchase_price', 0), cell_format)
-            worksheet.write(row, 6, return_form.get('purchase_currency', 'YER'), cell_format)
-            worksheet.write(row, 7, return_form.get('supplier', ''), cell_format)
-            worksheet.write(row, 8, return_form.get('reason_for_return', ''), cell_format)
-            worksheet.write(row, 9, return_form.get('status', 'pending'), cell_format)
-            worksheet.write(row, 10, return_form.get('prepared_by_supervisor', ''), cell_format)
-            worksheet.write(row, 11, return_form.get('section_manager_name', ''), cell_format)
-            worksheet.write(row, 12, return_form.get('department_head_name', ''), cell_format)
+            worksheet.write(row, 5, f"{value:,.2f} {currency}", cell_format)
+            worksheet.write(row, 6, return_form.get('reason_for_return', ''), cell_format)
+            worksheet.write(row, 7, return_form.get('status', 'pending'), cell_format)
+            worksheet.write(row, 8, return_form.get('prepared_by_supervisor', return_form.get('created_by', '')), cell_format)
+            worksheet.write(row, 9, return_form.get('section_manager_name', ''), cell_format)
+            worksheet.write(row, 10, return_form.get('department_head_name', ''), cell_format)
         
         # Auto-adjust columns
-        worksheet.set_column('A:M', 15)
-        worksheet.set_column('H:H', 25)  # Reason wider
+        worksheet.set_column('A:K', 15)
+        worksheet.set_column('F:F', 25)  # Value column wider
         
         workbook.close()
         output.seek(0)
         
         filename = f"return_forms_export_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
         
-        return FileResponse(
-            path=None,
-            headers={
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            },
-            content=output.getvalue()
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
         
     except Exception as e:
