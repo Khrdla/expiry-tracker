@@ -11,7 +11,7 @@ This module provides comprehensive export functionality with:
 
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
