@@ -721,7 +721,7 @@ const EnhancedWasteReports = () => {
                 <option value="all">All Departments</option>
                 {filterOptions.departments?.map((dept, index) => (
                   <option key={`dept-${index}`} value={dept}>
-                    {safeName(dept) || `Department ${index + 1}`}
+                    {dept || `Department ${index + 1}`}
                   </option>
                 ))}
               </select>
