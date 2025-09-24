@@ -517,12 +517,6 @@ const EnhancedWasteReports = () => {
       console.error('❌ Error in addToPendingEntries:', error);
       setError('❌ Error adding entry: ' + error.message);
     }
-    
-    // Reset form
-    setSelectedProduct(null);
-    setSearchTerm('');
-    setWasteQuantity('');
-    setWasteReason('damaged');
   };
 
   // Enhanced entries submission
