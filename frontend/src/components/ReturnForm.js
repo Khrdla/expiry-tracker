@@ -481,26 +481,62 @@ const ReturnForm = ({ user }) => {
             )}
           </div>
 
-          {/* Lookup Results */}
+          {/* Enhanced Lookup Results with Comprehensive Master Data */}
           {showLookupResults && lookupResults && lookupResults.found && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-800">{lookupResults.product_name}</h4>
-                  <div className="text-sm text-green-700 mt-1">
-                    <p>Code: {lookupResults.item_number}</p>
-                    <p>Department: {lookupResults.department}</p>
-                    <p>Section: {lookupResults.section}</p>
-                    <p>Supplier: {lookupResults.supplier}</p>
-                    <p>Price: {lookupResults.purchase_price} {lookupResults.purchase_currency}</p>
-                  </div>
-                </div>
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start justify-between mb-3">
+                <h4 className="font-semibold text-green-800 text-lg">{lookupResults.product_name}</h4>
                 <button
                   onClick={autoFillForm}
-                  className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium flex items-center gap-2"
                 >
+                  <Upload size={16} />
                   Auto-Fill Form
                 </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Basic Product Information */}
+                <div>
+                  <h5 className="font-medium text-green-800 mb-2">📦 Product Details</h5>
+                  <div className="text-sm text-green-700 space-y-1">
+                    <p><span className="font-medium">Item Code:</span> {lookupResults.item_number}</p>
+                    <p><span className="font-medium">Barcode:</span> {lookupResults.barcode || lookupResults.item_number}</p>
+                    <p><span className="font-medium">Department:</span> {lookupResults.department}</p>
+                    <p><span className="font-medium">Section:</span> {lookupResults.section}</p>
+                    <p><span className="font-medium">Supplier:</span> {lookupResults.supplier}</p>
+                    {lookupResults.brand && (
+                      <p><span className="font-medium">Brand:</span> {lookupResults.brand}</p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Pricing and Stock Information */}
+                <div>
+                  <h5 className="font-medium text-green-800 mb-2">💰 Pricing & Stock</h5>
+                  <div className="text-sm text-green-700 space-y-1">
+                    <p><span className="font-medium">Purchase Price:</span> {lookupResults.purchase_price} {lookupResults.purchase_currency}</p>
+                    {lookupResults.selling_price && (
+                      <p><span className="font-medium">Selling Price:</span> {lookupResults.selling_price} {lookupResults.purchase_currency}</p>
+                    )}
+                    <p><span className="font-medium">Currency:</span> {lookupResults.purchase_currency}</p>
+                    {lookupResults.quantity && (
+                      <p><span className="font-medium">Current Stock:</span> {lookupResults.quantity} {lookupResults.unit || 'pcs'}</p>
+                    )}
+                    {lookupResults.expiry_date && (
+                      <p><span className="font-medium">Expiry Date:</span> {new Date(lookupResults.expiry_date).toLocaleDateString()}</p>
+                    )}
+                    {lookupResults.purchase_price && lookupResults.selling_price && (
+                      <p><span className="font-medium">Margin:</span> {
+                        ((lookupResults.selling_price - lookupResults.purchase_price) / lookupResults.purchase_price * 100).toFixed(2)
+                      }%</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3 p-2 bg-green-100 rounded text-sm text-green-600">
+                💡 Click "Auto-Fill Form" to populate all fields with this master data information
               </div>
             </div>
           )}
