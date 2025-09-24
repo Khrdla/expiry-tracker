@@ -160,8 +160,13 @@ const EnhancedWasteReports = () => {
     }
   };
 
-  // Enhanced waste data processing
+  // Enhanced waste data processing with debug logging
   const processWasteData = (rawData) => {
+    console.log('🗑️ Processing Waste Data:', {
+      rawData: rawData,
+      departmentBreakdown: rawData?.department_breakdown
+    });
+
     const processedData = {
       summary: {
         total_waste_value: safeNumber(rawData?.summary?.total_waste_value, 0),
@@ -173,11 +178,19 @@ const EnhancedWasteReports = () => {
         total_value: safeNumber(item?.total_value, 0),
         total_items: safeNumber(item?.total_items, 0)
       })),
-      department_breakdown: processArray(rawData?.department_breakdown, (item, index) => ({
-        department: item?.department || item?.name || `Department_${index + 1}`,
-        total_waste_value: safeNumber(item?.total_waste_value, 0),
-        total_items: safeNumber(item?.total_items, 0)
-      })),
+      department_breakdown: processArray(rawData?.department_breakdown, (item, index) => {
+        const departmentName = item?.department || item?.name || `Department_${index + 1}`;
+        console.log(`🏢 Processing department ${index}:`, {
+          raw: item,
+          extractedName: departmentName
+        });
+        
+        return {
+          department: departmentName,
+          total_waste_value: safeNumber(item?.total_waste_value, 0),
+          total_items: safeNumber(item?.total_items, 0)
+        };
+      }),
       reason_breakdown: processArray(rawData?.reason_breakdown, (item, index) => ({
         reason: safeString(item?.reason) || `Reason_${index + 1}`,
         total_waste_value: safeNumber(item?.total_waste_value, 0),
@@ -185,10 +198,16 @@ const EnhancedWasteReports = () => {
       }))
     };
     
+    console.log('✅ Processed Waste Data:', {
+      processedData: processedData,
+      departmentNames: processedData.department_breakdown.map(d => d.department)
+    });
+    
     logActivity('WASTE_DATA_PROCESSED', {
       summaryValue: processedData.summary.total_waste_value,
       currencyCount: processedData.currency_breakdown.length,
-      departmentCount: processedData.department_breakdown.length
+      departmentCount: processedData.department_breakdown.length,
+      departmentNames: processedData.department_breakdown.map(d => d.department)
     });
     
     return processedData;
