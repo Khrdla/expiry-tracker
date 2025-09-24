@@ -1017,24 +1017,50 @@ const EnhancedWasteReports = () => {
               )}
 
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🚀 Button clicked!');
-                  addToPendingEntries();
-                }}
-                type="button"
-                className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-bold border-2 border-red-700"
+                onClick={addToPendingEntries}
+                disabled={!selectedProduct || !wasteQuantity || wasteQuantity <= 0 || !wasteReason}
+                className={`w-full py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${
+                  !selectedProduct || !wasteQuantity || wasteQuantity <= 0 || !wasteReason
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
               >
-                🔥 ADD TO LIST (DEBUG)
+                <Plus size={16} />
+                Add to List
+                {selectedProduct && wasteQuantity && wasteReason && (
+                  <span className="text-xs bg-green-600 px-2 py-1 rounded-full ml-2">
+                    Ready
+                  </span>
+                )}
               </button>
               
-              {/* Debug Info */}
-              <div className="mt-2 p-2 bg-gray-100 text-xs rounded">
-                <p>Product: {selectedProduct ? '✅ Selected' : '❌ None'}</p>
-                <p>Quantity: {wasteQuantity || '❌ Empty'}</p>
-                <p>Reason: {wasteReason || '❌ None'}</p>
-                <p>Pending: {pendingEntries.length} entries</p>
+              {/* Status Info */}
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <h5 className="text-sm font-medium text-blue-800 mb-2">Entry Status:</h5>
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span>Product Selected:</span>
+                    <span className={selectedProduct ? 'text-green-600' : 'text-red-600'}>
+                      {selectedProduct ? `✅ ${selectedProduct.product_name}` : '❌ None'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Quantity:</span>
+                    <span className={wasteQuantity ? 'text-green-600' : 'text-red-600'}>
+                      {wasteQuantity || '❌ Empty'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Reason:</span>
+                    <span className={wasteReason ? 'text-green-600' : 'text-red-600'}>
+                      {wasteReason ? `✅ ${wasteReason}` : '❌ None'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Pending Entries:</span>
+                    <span className="text-blue-600">{pendingEntries.length}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
