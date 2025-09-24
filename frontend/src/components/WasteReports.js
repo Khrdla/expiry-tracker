@@ -174,7 +174,7 @@ const EnhancedWasteReports = () => {
         total_items: safeNumber(item?.total_items, 0)
       })),
       department_breakdown: processArray(rawData?.department_breakdown, (item, index) => ({
-        department: safeName(item?.department) || `Department_${index + 1}`,
+        department: item?.department || item?.name || `Department_${index + 1}`,
         total_waste_value: safeNumber(item?.total_waste_value, 0),
         total_items: safeNumber(item?.total_items, 0)
       })),
