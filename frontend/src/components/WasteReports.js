@@ -4,8 +4,6 @@ import {
   Plus, 
   Filter, 
   Download, 
-  Upload,
-  Eye,
   Calendar,
   TrendingUp,
   DollarSign,
@@ -13,8 +11,7 @@ import {
   Package,
   Search,
   Camera,
-  X,
-  CheckCircle
+  X
 } from 'lucide-react';
 import {
   BarChart,
