@@ -45,6 +45,24 @@ import AddWasteEntryModal from './AddWasteEntryModal';
  * - Improved chart data processing
  */
 const EnhancedWasteReports = () => {
+  // State for managing timeouts to prevent memory leaks
+  const [successTimeout, setSuccessTimeout] = useState(null);
+
+  // Cleanup function for timeouts
+  const clearSuccessTimeout = () => {
+    if (successTimeout) {
+      clearTimeout(successTimeout);
+      setSuccessTimeout(null);
+    }
+  };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      clearSuccessTimeout();
+    };
+  }, []);
+
   const [wasteData, setWasteData] = useState([]);
   const [wasteEntries, setWasteEntries] = useState([]);
   const [loading, setLoading] = useState(true);
