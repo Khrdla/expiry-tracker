@@ -24,37 +24,25 @@ BACKEND_URL = "https://stockmate-14.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-# Test data for multi-currency validation
+# Test data for multi-currency validation using real products from database
 CURRENCY_TEST_DATA = [
     {
-        "product_name": "Test YER Product",
-        "product_id": "test-yer-001",
+        "product_id": "3d8e7ef1-b728-4cce-a33b-560c4ea16781",  # Al Hanaa Guava Nectar 235 ml (YER)
         "quantity_wasted": 10,
-        "purchase_price": 250.0,
-        "purchase_currency": "YER",
         "waste_reason": "damaged",
-        "department": "01-FMG",
-        "section": "Test Section YER"
+        "notes": "Testing YER currency calculation"
     },
     {
-        "product_name": "Test SAR Product", 
-        "product_id": "test-sar-002",
+        "product_id": "e6bb0e62-2c60-491b-9ac4-1ed22c1e58c3",  # Pepsi cola can 250 ml (SAR)
         "quantity_wasted": 5,
-        "purchase_price": 15.75,
-        "purchase_currency": "SAR",
         "waste_reason": "expired",
-        "department": "01-CGD", 
-        "section": "Test Section SAR"
+        "notes": "Testing SAR currency calculation"
     },
     {
-        "product_name": "Test EUR Product",
-        "product_id": "test-eur-003", 
+        "product_id": "ab7ecf8a-5a9c-44fe-9ff1-eee5f17cc6e1",  # Apple Juice Box 1L (EUR)
         "quantity_wasted": 3,
-        "purchase_price": 8.50,
-        "purchase_currency": "EUR",
         "waste_reason": "unsellable",
-        "department": "01-OPSS",
-        "section": "Test Section EUR"
+        "notes": "Testing EUR currency calculation"
     }
 ]
 
