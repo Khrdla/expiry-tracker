@@ -225,7 +225,7 @@ const EnhancedDashboard = () => {
     return processedKpis;
   };
 
-  // Enhanced chart data processing with debug logging
+  // Enhanced chart data processing with proper department name handling
   const processChartData = (kpis) => {
     console.log('📊 Processing Chart Data:', {
       rawKpis: kpis,
@@ -233,22 +233,29 @@ const EnhancedDashboard = () => {
       kpisEntries: Object.entries(kpis)
     });
 
-    const chartData = Object.entries(kpis).map(([key, value]) => ({
-      name: safeName(key),
-      value: safeNumber(value?.total_items, 0),
-      expired: safeNumber(value?.expired_items, 0),
-      stock_value: safeNumber(value?.stock_value, 0)
-    }));
+    const chartData = Object.entries(kpis).map(([key, value]) => {
+      // Use the department name from the value object, or fall back to key
+      const departmentName = value?.department || key;
+      
+      return {
+        name: departmentName, // Use actual department name instead of safeName(key)
+        value: safeNumber(value?.total_items, 0),
+        expired: safeNumber(value?.expired_items, 0),
+        stock_value: safeNumber(value?.stock_value, 0)
+      };
+    });
     
     console.log('📈 Chart Data Result:', {
       chartData,
       itemCount: chartData.length,
-      hasValidData: chartData.some(item => item.value > 0 || item.stock_value > 0)
+      hasValidData: chartData.some(item => item.value > 0 || item.stock_value > 0),
+      departmentNames: chartData.map(item => item.name)
     });
     
     logDashboardActivity('CHART_DATA_PROCESSED', {
       itemCount: chartData.length,
-      names: chartData.map(item => item.name)
+      names: chartData.map(item => item.name),
+      departments: chartData.map(item => item.name)
     });
     
     return chartData;
