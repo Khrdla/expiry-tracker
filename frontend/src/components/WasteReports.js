@@ -965,18 +965,25 @@ const EnhancedWasteReports = () => {
               )}
 
               <button
-                onClick={addToPendingEntries}
-                disabled={!selectedProduct || !wasteQuantity || wasteQuantity <= 0 || !wasteReason}
-                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🚀 Button clicked!');
+                  addToPendingEntries();
+                }}
+                type="button"
+                className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-bold border-2 border-red-700"
               >
-                <Plus size={16} />
-                Add to List
-                {selectedProduct && wasteQuantity && wasteReason && (
-                  <span className="text-xs bg-green-600 px-2 py-1 rounded-full">
-                    Ready
-                  </span>
-                )}
+                🔥 ADD TO LIST (DEBUG)
               </button>
+              
+              {/* Debug Info */}
+              <div className="mt-2 p-2 bg-gray-100 text-xs rounded">
+                <p>Product: {selectedProduct ? '✅ Selected' : '❌ None'}</p>
+                <p>Quantity: {wasteQuantity || '❌ Empty'}</p>
+                <p>Reason: {wasteReason || '❌ None'}</p>
+                <p>Pending: {pendingEntries.length} entries</p>
+              </div>
             </div>
           </div>
 
