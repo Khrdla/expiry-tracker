@@ -991,10 +991,16 @@ const EnhancedWasteReports = () => {
 
               <button
                 onClick={addToPendingEntries}
-                disabled={!selectedProduct || !wasteQuantity}
-                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={!selectedProduct || !wasteQuantity || wasteQuantity <= 0 || !wasteReason}
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
               >
+                <Plus size={16} />
                 Add to List
+                {selectedProduct && wasteQuantity && wasteReason && (
+                  <span className="text-xs bg-green-600 px-2 py-1 rounded-full">
+                    Ready
+                  </span>
+                )}
               </button>
             </div>
           </div>
