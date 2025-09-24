@@ -360,7 +360,7 @@ const EnhancedWasteReports = () => {
         return;
       }
 
-      const response = await fetch(`${BACKEND_URL}/api/products/search?q=${encodeURIComponent(query)}`, {
+      const response = await fetch(`${BACKEND_URL}/api/search?q=${encodeURIComponent(query)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
