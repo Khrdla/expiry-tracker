@@ -287,11 +287,22 @@ const EnhancedWasteReports = () => {
           sections: data?.sections?.length || 0
         });
         
+        // Process filter options with safety checks and debug logging
         const processedOptions = {
           departments: processFilterArray(data?.departments, 'Department'),
           sections: processFilterArray(data?.sections, 'Section'),
           suppliers: processFilterArray(data?.suppliers, 'Supplier')
         };
+        
+        // Debug logging to understand filter data
+        console.log('🗑️ WasteReports Filter Options Debug:', {
+          rawData: {
+            departments: data?.departments,
+            sections: data?.sections,
+            suppliers: data?.suppliers
+          },
+          processedData: processedOptions
+        });
         
         setFilterOptions(processedOptions);
       } else {
