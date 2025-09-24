@@ -31,28 +31,50 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 class CurrencyConverter:
-    """Handle currency conversions with exchange rates"""
+    """Handle currency conversions with dynamic exchange rates from database"""
     
-    def __init__(self):
-        # Default exchange rates (YER/SAR/EUR to USD)
-        # These should ideally come from master data or external API
-        self.exchange_rates = {
+    def __init__(self, db=None):
+        self.db = db
+        # Default fallback exchange rates
+        self.fallback_rates = {
             'YER': 0.004,   # 1 YER = 0.004 USD (250 YER = 1 USD)
             'SAR': 0.267,   # 1 SAR = 0.267 USD (3.75 SAR = 1 USD)  
             'EUR': 1.10,    # 1 EUR = 1.10 USD
             'USD': 1.0      # 1 USD = 1 USD
         }
     
-    def convert_to_usd(self, amount: float, from_currency: str) -> float:
-        """Convert amount from source currency to USD"""
-        if from_currency not in self.exchange_rates:
+    async def get_current_rates(self):
+        """Get current exchange rates from database or fallback to defaults"""
+        if self.db:
+            try:
+                # Get latest currency settings from database
+                settings = await self.db.currency_settings.find_one(
+                    {"is_active": True}, 
+                    sort=[("last_updated", -1)]
+                )
+                
+                if settings and "exchange_rates" in settings:
+                    print(f"Using database exchange rates: {settings['exchange_rates']}")
+                    return settings["exchange_rates"]
+            except Exception as e:
+                print(f"Failed to get database rates, using fallback: {e}")
+        
+        print(f"Using fallback exchange rates: {self.fallback_rates}")
+        return self.fallback_rates
+    
+    async def convert_to_usd(self, amount: float, from_currency: str) -> float:
+        """Convert amount from source currency to USD using current rates"""
+        rates = await self.get_current_rates()
+        
+        if from_currency not in rates:
             raise ValueError(f"Unsupported currency: {from_currency}")
         
-        return round(amount * self.exchange_rates[from_currency], 2)
+        return round(amount * rates[from_currency], 2)
     
-    def get_exchange_rate(self, from_currency: str) -> float:
+    async def get_exchange_rate(self, from_currency: str) -> float:
         """Get exchange rate from source currency to USD"""
-        return self.exchange_rates.get(from_currency, 1.0)
+        rates = await self.get_current_rates()
+        return rates.get(from_currency, 1.0)
 
 class CompanyBranding:
     """Centralized company branding configuration"""
