@@ -433,86 +433,61 @@ const EnhancedWasteReports = () => {
     return quantity * price;
   };
 
-  // Enhanced pending entries management with form clearing and feedback
+  // Simple and robust pending entries management 
   const addToPendingEntries = () => {
-    console.log('🗑️ Adding to pending entries:', {
-      selectedProduct: selectedProduct?.product_name,
-      wasteQuantity,
-      wasteReason,
-      hasProduct: !!selectedProduct,
-      hasQuantity: !!wasteQuantity
+    console.log('🔥 ADD TO LIST CLICKED!');
+    console.log('Current state:', {
+      selectedProduct: selectedProduct,
+      wasteQuantity: wasteQuantity,
+      wasteReason: wasteReason,
+      pendingEntriesLength: pendingEntries.length
     });
     
-    if (!selectedProduct) {
-      setError('Please select a product first');
-      console.warn('❌ No product selected');
-      return;
+    try {
+      // Simple validation
+      if (!selectedProduct) {
+        alert('Please select a product first');
+        console.error('No product selected');
+        return;
+      }
+      
+      if (!wasteQuantity) {
+        alert('Please enter a quantity');
+        console.error('No quantity entered');
+        return;
+      }
+      
+      // Create simple entry
+      const newEntry = {
+        id: Date.now() + Math.random(), // Ensure unique ID
+        productName: selectedProduct.product_name || 'Test Product',
+        quantity: parseFloat(wasteQuantity) || 0,
+        reason: wasteReason || 'damaged',
+        value: (parseFloat(wasteQuantity) || 0) * (selectedProduct.purchase_price || 0),
+        timestamp: new Date().toLocaleString()
+      };
+      
+      console.log('🎯 Creating entry:', newEntry);
+      
+      // Force state update
+      setPendingEntries(currentEntries => {
+        const updatedEntries = [...currentEntries, newEntry];
+        console.log('📦 New pending entries array:', updatedEntries);
+        return updatedEntries;
+      });
+      
+      // Clear form
+      setWasteQuantity('');
+      setSelectedProduct(null);
+      setSearchTerm('');
+      
+      alert(`✅ Entry added! Total entries: ${pendingEntries.length + 1}`);
+      console.log('🎉 SUCCESS: Entry added and form cleared');
+      
+    } catch (error) {
+      console.error('❌ Error in addToPendingEntries:', error);
+      alert('Error adding entry: ' + error.message);
     }
-    
-    if (!wasteQuantity || wasteQuantity <= 0) {
-      setError('Please enter a valid quantity');
-      console.warn('❌ Invalid quantity:', wasteQuantity);
-      return;
-    }
-    
-    if (!wasteReason) {
-      setError('Please select a reason for waste');
-      console.warn('❌ No reason selected');
-      return;
-    }
-    
-    const entry = {
-      id: Date.now(),
-      product: {
-        ...selectedProduct,
-        // Ensure all required fields are present
-        product_name: selectedProduct.product_name || 'Unknown Product',
-        item_number: selectedProduct.item_number || selectedProduct.barcode || 'N/A',
-        supplier: selectedProduct.supplier || 'Unknown',
-        department: selectedProduct.department || 'General',
-        purchase_price: safeNumber(selectedProduct.purchase_price, 0),
-        purchase_currency: selectedProduct.purchase_currency || 'YER'
-      },
-      quantity: safeNumber(wasteQuantity, 0),
-      reason: wasteReason,
-      wasteValue: calculateWasteValue(),
-      dateAdded: new Date().toISOString()
-    };
-    
-    console.log('✅ Creating waste entry:', entry);
-    
-    logActivity('PENDING_ENTRY_ADDED', {
-      productId: selectedProduct.id,
-      productName: selectedProduct.product_name,
-      quantity: entry.quantity,
-      value: entry.wasteValue,
-      reason: entry.reason
-    });
-    
-    // Add to pending entries
-    setPendingEntries(prev => {
-      const newEntries = [...prev, entry];
-      console.log('📋 Updated pending entries:', newEntries.length, 'total');
-      return newEntries;
-    });
-    
-    // Clear form for next entry
-    setWasteQuantity('');
-    setWasteReason('damaged');
-    setSelectedProduct(null);
-    setSearchTerm('');
-    setError('');
-    
-    // Show success message
-    setError(''); // Clear any previous errors
-    console.log('🎉 Entry added successfully, form cleared');
-    
-    // Optional: Show a brief success message
-    const tempError = error;
-    setError('✅ Entry added to list!');
-    setTimeout(() => {
-      setError(tempError);
-    }, 2000);
     
     // Reset form
     setSelectedProduct(null);
