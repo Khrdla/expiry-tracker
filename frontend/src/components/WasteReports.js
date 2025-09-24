@@ -538,9 +538,11 @@ const EnhancedWasteReports = () => {
       setSearchTerm('');
       setError('');
       
-      // Show success message
+      // Show success message with proper cleanup
       setError('✅ Entry added to list successfully!');
-      setTimeout(() => setError(''), 3000);
+      clearSuccessTimeout(); // Clear any existing timeout
+      const timeoutId = setTimeout(() => setError(''), 3000);
+      setSuccessTimeout(timeoutId);
       
       console.log('🎉 Entry added successfully, form cleared');
       
