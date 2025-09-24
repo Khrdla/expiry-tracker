@@ -534,7 +534,7 @@ const EnhancedDashboard = () => {
               <div key={key} className="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{safeName(key)}</p>
+                    <p className="text-sm font-medium text-gray-600">{value?.department || key}</p>
                     <p className="text-2xl font-bold text-gray-900">
                       {safeNumber(value?.total_items, 0).toLocaleString()}
                     </p>
