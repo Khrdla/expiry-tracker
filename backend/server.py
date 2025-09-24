@@ -2446,106 +2446,106 @@ async def export_dashboard_pdf(
 async def export_expiry_tracker_data(
     current_user: User = Depends(get_current_user)
 ):
-    """Export expiry tracker data"""
+    """Export expiry tracker data with enhanced formatting (original currency only)"""
     try:
+        from enhanced_export_system import EnhancedOtherReportsExporter
+        
+        # Get products with expiry data
+        products = []
+        async for product in db.products.find({}):
+            if product.get('expiry_date'):
+                products.append(product)
+        
+        # Use enhanced exporter
+        exporter = EnhancedOtherReportsExporter()
+        excel_data = exporter.generate_expiry_tracker_excel(products)
+        
+        filename = f"expiry_tracker_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return Response(
+            content=excel_data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Enhanced expiry tracker export failed: {e}")
+        # Fallback to original implementation
         import xlsxwriter
-        from io import BytesIO
         
-        output = BytesIO()
+        output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        worksheet = workbook.add_worksheet('Expiry Tracker Data')
         
-        # Formats
-        title_format = workbook.add_format({
-            'bold': True,
-            'font_size': 16,
-            'align': 'center',
-            'bg_color': '#FF6B35'  # Orange theme for Expiry Tracker
-        })
+        # Get company branding
+        branding = get_company_branding()
         
+        worksheet = workbook.add_worksheet('Expiry Tracker')
+        
+        # Define formats with company colors
         header_format = workbook.add_format({
             'bold': True,
-            'bg_color': '#FFE5D9',
+            'font_color': 'white',
+            'bg_color': branding['excel_header_color'],
             'border': 1,
             'align': 'center'
         })
         
-        cell_format = workbook.add_format({
-            'border': 1,
-            'align': 'left'
+        company_format = workbook.add_format({
+            'bold': True,
+            'font_size': 16,
+            'font_color': branding['excel_header_color'],
+            'align': 'center'
         })
         
-        # Title
-        worksheet.merge_range('A1:K1', 'Geant Hypermarket - Expiry Tracker Export', title_format)
-        worksheet.write('A2', f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        # Company header
+        worksheet.merge_range('A1:G1', branding['company_name'], company_format)
+        worksheet.merge_range('A2:G2', 'EXPIRY TRACKER REPORT', header_format)
         
-        # Headers
+        # Headers  
         headers = [
-            'Product Name', 'Item Number', 'Barcode', 'Department', 'Section', 
-            'Supplier', 'Quantity', 'Expiry Date', 'Days Until Expiry', 'Status', 'Notes'
+            'Product Name', 'Department', 'Expiry Date', 'Days Until Expiry',
+            'Quantity', 'Value (Original Currency)', 'Status'
         ]
         
         for col, header in enumerate(headers):
             worksheet.write(3, col, header, header_format)
         
-        # Get products with expiry dates
-        accessible_departments = get_accessible_departments(current_user)
-        filter_dict = {
-            "department": {"$in": [d.value for d in accessible_departments]},
-            "expiry_date": {"$exists": True, "$ne": None}
-        }
-        
-        products = await db.products.find(filter_dict).sort("expiry_date", 1).to_list(length=None)
-        
-        # Write data
-        for row, product in enumerate(products, start=4):
-            expiry_date = product.get('expiry_date')
-            days_until_expiry = ""
-            status = "No Date"
-            
-            if expiry_date:
-                if isinstance(expiry_date, str):
-                    expiry_date_obj = datetime.fromisoformat(expiry_date.replace('Z', '+00:00'))
-                else:
-                    expiry_date_obj = expiry_date
+        # Get and process products
+        row = 4
+        async for product in db.products.find({}):
+            if product.get('expiry_date'):
+                # Calculate value in original currency
+                value = product.get('purchase_price', 0) * product.get('quantity', 0)
+                currency = product.get('purchase_currency', 'USD')
                 
-                days_until_expiry = (expiry_date_obj.date() - datetime.now().date()).days
+                # Calculate days until expiry
+                days_until_expiry = "N/A"
+                if product.get('expiry_date'):
+                    try:
+                        expiry_date = datetime.fromisoformat(product['expiry_date'].replace('Z', '+00:00'))
+                        days_until_expiry = (expiry_date - datetime.now(timezone.utc)).days
+                    except:
+                        pass
                 
-                if days_until_expiry < 0:
-                    status = "EXPIRED"
-                elif days_until_expiry <= 7:
-                    status = "NEAR EXPIRY"
-                else:
-                    status = "GOOD"
-            
-            worksheet.write(row, 0, product.get('product_name', ''), cell_format)
-            worksheet.write(row, 1, product.get('item_number', ''), cell_format)
-            worksheet.write(row, 2, product.get('barcode', ''), cell_format)
-            worksheet.write(row, 3, product.get('department', ''), cell_format)
-            worksheet.write(row, 4, product.get('section', ''), cell_format)
-            worksheet.write(row, 5, product.get('supplier', ''), cell_format)
-            worksheet.write(row, 6, product.get('quantity', 0), cell_format)
-            worksheet.write(row, 7, expiry_date_obj.strftime('%Y-%m-%d') if expiry_date else '', cell_format)
-            worksheet.write(row, 8, days_until_expiry if isinstance(days_until_expiry, int) else '', cell_format)
-            worksheet.write(row, 9, status, cell_format)
-            worksheet.write(row, 10, product.get('notes', ''), cell_format)
-        
-        # Auto-adjust columns
-        worksheet.set_column('A:K', 15)
-        worksheet.set_column('A:A', 25)  # Product name wider
+                worksheet.write(row, 0, product.get('product_name', ''))
+                worksheet.write(row, 1, product.get('department', ''))
+                worksheet.write(row, 2, product.get('expiry_date', 'N/A'))
+                worksheet.write(row, 3, days_until_expiry)
+                worksheet.write(row, 4, product.get('quantity', 0))
+                worksheet.write(row, 5, f"{value:,.2f} {currency}")
+                worksheet.write(row, 6, product.get('status', 'Unknown'))
+                
+                row += 1
         
         workbook.close()
         output.seek(0)
         
-        filename = f"expiry_tracker_export_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        filename = f"expiry_tracker_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         
-        return FileResponse(
-            path=None,
-            headers={
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            },
-            content=output.getvalue()
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
         
     except Exception as e:
