@@ -854,14 +854,39 @@ const EnhancedWasteReports = () => {
                 )}
               </div>
               
-              {/* Enhanced Selected Product Info */}
+              {/* Enhanced Selected Product Info with All Master Data */}
               {selectedProduct && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-medium text-green-800">{selectedProduct.product_name}</h4>
-                  <p className="text-sm text-green-600">
-                    {selectedProduct.item_number} | {selectedProduct.department} | 
-                    Price: {formatCurrency(selectedProduct.purchase_price, selectedProduct.purchase_currency)}
-                  </p>
+                <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Product Basic Info */}
+                    <div>
+                      <h4 className="font-semibold text-green-800 mb-2">{selectedProduct.product_name}</h4>
+                      <div className="space-y-1 text-sm text-green-700">
+                        <p><span className="font-medium">Item #:</span> {selectedProduct.item_number}</p>
+                        <p><span className="font-medium">Barcode:</span> {selectedProduct.barcode}</p>
+                        <p><span className="font-medium">Department:</span> {selectedProduct.department}</p>
+                        <p><span className="font-medium">Section:</span> {selectedProduct.section}</p>
+                        <p><span className="font-medium">Supplier:</span> {selectedProduct.supplier}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Pricing & Stock Info */}
+                    <div>
+                      <h5 className="font-medium text-green-800 mb-2">Pricing & Stock</h5>
+                      <div className="space-y-1 text-sm text-green-700">
+                        <p><span className="font-medium">Purchase Price:</span> {formatCurrency(selectedProduct.purchase_price, selectedProduct.purchase_currency)}</p>
+                        <p><span className="font-medium">Selling Price:</span> {formatCurrency(selectedProduct.selling_price, selectedProduct.selling_currency)}</p>
+                        <p><span className="font-medium">Currency:</span> {selectedProduct.purchase_currency}</p>
+                        <p><span className="font-medium">Current Stock:</span> {selectedProduct.quantity} {selectedProduct.unit}</p>
+                        {selectedProduct.expiry_date && (
+                          <p><span className="font-medium">Expiry Date:</span> {new Date(selectedProduct.expiry_date).toLocaleDateString()}</p>
+                        )}
+                        {selectedProduct.margin_percentage > 0 && (
+                          <p><span className="font-medium">Margin:</span> {selectedProduct.margin_percentage}%</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
