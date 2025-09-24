@@ -398,7 +398,7 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
 class EnhancedOtherReportsExporter(EnhancedExcelExporter):
     """Exporter for all other reports (Return, Expiry, Supplier) - Original currency only"""
     
-    def generate_return_forms_excel(self, return_forms: List[Dict]) -> bytes:
+    async def generate_return_forms_excel(self, return_forms: List[Dict]) -> bytes:
         """Generate return forms report (original currency only)"""
         wb, ws = self.create_styled_workbook("Return Forms Report")
         
@@ -441,7 +441,7 @@ class EnhancedOtherReportsExporter(EnhancedExcelExporter):
         output.seek(0)
         return output.getvalue()
     
-    def generate_expiry_tracker_excel(self, products: List[Dict]) -> bytes:
+    async def generate_expiry_tracker_excel(self, products: List[Dict]) -> bytes:
         """Generate expiry tracker report (original currency only)"""
         wb, ws = self.create_styled_workbook("Expiry Tracker Report")
         
