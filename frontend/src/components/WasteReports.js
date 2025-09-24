@@ -363,12 +363,64 @@ const EnhancedWasteReports = () => {
     }));
   };
 
-  // Enhanced product selection
+  // Enhanced product selection with comprehensive auto-fill
   const handleProductSelect = (product) => {
-    logActivity('PRODUCT_SELECTED', { productId: product?.id });
-    setSelectedProduct(product);
-    setSearchTerm(product?.product_name || '');
+    logActivity('PRODUCT_SELECTED', { 
+      productId: product?.id,
+      productName: product?.product_name,
+      department: product?.department,
+      supplier: product?.supplier,
+      currency: product?.purchase_currency
+    });
+    
+    // Create enhanced product object with all master data fields
+    const enhancedProduct = {
+      id: product?.id,
+      product_name: product?.product_name || 'Unknown Product',
+      item_number: product?.item_number || product?.barcode || '',
+      barcode: product?.barcode || product?.item_number || '',
+      department: product?.department || 'Unknown Department',
+      section: product?.section || 'Unknown Section',
+      supplier: product?.supplier || 'Unknown Supplier',
+      category: product?.category || product?.department || 'General',
+      
+      // Pricing information with proper currency
+      purchase_price: safeNumber(product?.purchase_price, 0),
+      purchase_currency: product?.purchase_currency || product?.currency || 'YER',
+      selling_price: safeNumber(product?.selling_price, 0),
+      selling_currency: product?.selling_currency || product?.purchase_currency || 'YER',
+      
+      // Stock and expiry information
+      quantity: safeNumber(product?.quantity, 0),
+      expiry_date: product?.expiry_date || null,
+      
+      // Additional master data fields
+      brand: product?.brand || '',
+      unit: product?.unit || 'pcs',
+      min_stock_level: safeNumber(product?.min_stock_level, 0),
+      
+      // Calculated margins and values
+      margin_percentage: product?.purchase_price && product?.selling_price 
+        ? ((product.selling_price - product.purchase_price) / product.purchase_price * 100).toFixed(2)
+        : 0,
+      profit_per_unit: product?.selling_price && product?.purchase_price
+        ? (product.selling_price - product.purchase_price).toFixed(2)
+        : 0
+    };
+    
+    setSelectedProduct(enhancedProduct);
+    setSearchTerm(enhancedProduct.product_name);
     setSearchResults([]);
+    
+    console.log('📦 Product Auto-filled:', {
+      productName: enhancedProduct.product_name,
+      supplier: enhancedProduct.supplier,
+      department: enhancedProduct.department,
+      currency: enhancedProduct.purchase_currency,
+      expiry: enhancedProduct.expiry_date,
+      margin: enhancedProduct.margin_percentage + '%',
+      stockLevel: enhancedProduct.quantity
+    });
   };
 
   // Enhanced waste value calculation
