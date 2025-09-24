@@ -366,7 +366,7 @@ const EnhancedWasteReports = () => {
       
       if (response.ok) {
         const data = await response.json();
-        const processedResults = processSearchResults(data.products || []);
+        const processedResults = processSearchResults(data || []);
         
         logActivity('SEARCH_SUCCESS', { results: processedResults.length });
         setSearchResults(processedResults);
