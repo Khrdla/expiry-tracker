@@ -3392,134 +3392,324 @@ async def generate_waste_report_excel(report_data: dict, period: str):
         )
 
 async def generate_waste_report_pdf(report_data: dict, period: str):
-    """Generate PDF waste report"""
-    import io
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-    
-    buffer = io.BytesIO()
-    
-    # Create PDF document
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    styles = getSampleStyleSheet()
-    
-    # Get company branding
-    branding = get_company_branding()
-    
-    # Custom styles with company colors
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=16,
-        spaceAfter=20,
-        alignment=TA_CENTER,
-        textColor=colors.Color(*branding['pdf_primary_color']),
-        fontName='Helvetica-Bold'
-    )
-    
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=14,
-        spaceAfter=12,
-        textColor=colors.Color(*branding['pdf_primary_color']),
-        fontName='Helvetica-Bold'
-    )
-    
-    story = []
-    
-    # Add company logo and header
-    add_logo_to_pdf_story(story)
-    
-    # Report title
-    story.append(Paragraph(f"WASTE REPORT - {period.upper()}", title_style))
-    story.append(Spacer(1, 20))
-    
-    # Report details
-    details_data = [
-        ['Report Period:', period.title()],
-        ['Generated At:', datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')]
-    ]
-    
-    if report_data.get('department'):
-        details_data.append(['Department:', report_data['department']])
-    if report_data.get('section'):
-        details_data.append(['Section:', report_data['section']])
-    
-    details_table = Table(details_data, colWidths=[2*inch, 4*inch])
-    details_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 11),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
-    
-    story.append(details_table)
-    story.append(Spacer(1, 30))
-    
-    # Currency totals
-    story.append(Paragraph("WASTE VALUE BY CURRENCY", heading_style))
-    
-    currency_data = [['Currency', 'Total Waste Value']]
-    for currency, total in report_data['currency_totals'].items():
-        if total > 0:  # Only show currencies with waste
-            currency_data.append([currency, f"{total:,.2f} {currency}"])
-    
-    if len(currency_data) > 1:
-        currency_table = Table(currency_data, colWidths=[2*inch, 3*inch])
+    """Generate PDF waste report with USD conversion"""
+    try:
+        from enhanced_export_system import EnhancedWasteReportExporter
+        
+        # Note: For now using fallback PDF as enhanced system focuses on Excel
+        # Future enhancement could add PDF generation to enhanced system
+        
+        import io
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib import colors
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+        
+        buffer = io.BytesIO()
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Custom styles with company colors
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.Color(*branding['pdf_primary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceAfter=10,
+            alignment=TA_LEFT,
+            textColor=colors.Color(*branding['pdf_secondary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        # Build story
+        story = []
+        
+        # Add company logo
+        logo_added = add_logo_to_pdf_story(story)
+        
+        # Company header
+        if not logo_added:
+            story.append(Paragraph(branding['company_name'], title_style))
+        
+        story.append(Paragraph(f"WASTE REPORT - {period.upper()}", title_style))
+        story.append(Spacer(1, 20))
+        
+        # Report metadata
+        story.append(Paragraph("Report Details", subtitle_style))
+        
+        metadata_data = [
+            ["Report Period:", period.title()],
+            ["Generated At:", datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')]
+        ]
+        
+        if report_data.get('department'):
+            metadata_data.append(["Department:", report_data['department']])
+        
+        if report_data.get('section'):
+            metadata_data.append(["Section:", report_data['section']])
+        
+        metadata_table = Table(metadata_data, colWidths=[2*inch, 4*inch])
+        metadata_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.Color(*branding['pdf_primary_color'])),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        
+        story.append(metadata_table)
+        story.append(Spacer(1, 20))
+        
+        # Currency totals with USD conversion
+        story.append(Paragraph("Waste Value by Currency (with USD Conversion)", subtitle_style))
+        
+        # Exchange rates
+        exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
+        
+        currency_data = [["Currency", "Original Amount", "USD Equivalent", "Exchange Rate"]]
+        total_usd = 0
+        
+        for currency, total in report_data['currency_totals'].items():
+            if total > 0:
+                rate = exchange_rates.get(currency, 1.0)
+                usd_amount = total * rate
+                total_usd += usd_amount
+                
+                currency_data.append([
+                    currency,
+                    f"{total:,.2f} {currency}",
+                    f"{usd_amount:,.2f} USD",
+                    f"{rate:.4f}"
+                ])
+        
+        # Add total USD row if multiple currencies
+        if len(report_data['currency_totals']) > 1:
+            currency_data.append(["TOTAL", "", f"{total_usd:,.2f} USD", ""])
+        
+        currency_table = Table(currency_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
         currency_table.setStyle(TableStyle([
+            # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(*branding['pdf_primary_color'])),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.Color(0.95, 0.97, 0.95)),  # Light green
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            
+            # Data rows
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 11),
-            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            
+            # Highlight USD values
+            ('TEXTCOLOR', (2, 1), (2, -1), colors.Color(0.8, 0.2, 0.2)),  # Red for USD amounts
+            ('FONTNAME', (2, 1), (2, -1), 'Helvetica-Bold'),
+            
+            # Total row (if exists)
+            ('BACKGROUND', (0, -1), (-1, -1), colors.Color(0.95, 0.95, 0.95)),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ]))
+        
         story.append(currency_table)
-    else:
-        story.append(Paragraph("No waste entries found for this period.", styles['Normal']))
-    
-    story.append(Spacer(1, 30))
-    
-    # Summary
-    story.append(Paragraph("SUMMARY", heading_style))
-    summary_data = [
-        ['Total Waste Entries:', str(report_data['total_entries'])],
-        ['Total Quantity Wasted:', str(report_data['total_quantity_wasted'])]
-    ]
-    
-    summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
-    summary_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 11),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
-    
-    story.append(summary_table)
-    
-    # Build PDF
-    doc.build(story)
-    
-    buffer.seek(0)
-    filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-    
-    return Response(
-        content=buffer.getvalue(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
+        story.append(Spacer(1, 20))
+        
+        # Summary section
+        story.append(Paragraph("Summary", subtitle_style))
+        
+        summary_data = [
+            ["Total Waste Entries:", str(report_data['total_entries'])],
+            ["Total Quantity Wasted:", str(report_data['total_quantity_wasted'])],
+            ["Report Period:", report_data.get('period', 'Unknown')],
+            ["Total USD Value:", f"{total_usd:,.2f} USD"]
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
+        summary_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.Color(*branding['pdf_primary_color'])),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            
+            # Highlight USD total
+            ('TEXTCOLOR', (1, -1), (1, -1), colors.Color(0.8, 0.2, 0.2)),
+            ('FONTNAME', (1, -1), (1, -1), 'Helvetica-Bold'),
+        ]))
+        
+        story.append(summary_table)
+        
+        # Build PDF
+        doc.build(story)
+        
+        buffer.seek(0)
+        filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Error in PDF generation: {e}")
+        # Original fallback implementation
+        import io
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib import colors
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+        
+        buffer = io.BytesIO()
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Custom styles with company colors
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.Color(*branding['pdf_primary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceAfter=10,
+            alignment=TA_LEFT,
+            textColor=colors.Color(*branding['pdf_secondary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        # Build story
+        story = []
+        
+        # Add company logo
+        logo_added = add_logo_to_pdf_story(story)
+        
+        # Company header
+        if not logo_added:
+            story.append(Paragraph(branding['company_name'], title_style))
+        
+        story.append(Paragraph(f"WASTE REPORT - {period.upper()}", title_style))
+        story.append(Spacer(1, 20))
+        
+        # Report metadata
+        story.append(Paragraph("Report Details", subtitle_style))
+        
+        metadata_data = [
+            ["Report Period:", period.title()],
+            ["Generated At:", datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')]
+        ]
+        
+        if report_data.get('department'):
+            metadata_data.append(["Department:", report_data['department']])
+        
+        if report_data.get('section'):
+            metadata_data.append(["Section:", report_data['section']])
+        
+        metadata_table = Table(metadata_data, colWidths=[2*inch, 4*inch])
+        metadata_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.Color(*branding['pdf_primary_color'])),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        
+        story.append(metadata_table)
+        story.append(Spacer(1, 20))
+        
+        # Currency totals (original format as fallback)
+        story.append(Paragraph("Waste Value by Currency", subtitle_style))
+        
+        currency_data = [["Currency", "Total Waste Value"]]
+        
+        for currency, total in report_data['currency_totals'].items():
+            if total > 0:
+                currency_data.append([currency, f"{total:,.2f} {currency}"])
+        
+        currency_table = Table(currency_data, colWidths=[2*inch, 4*inch])
+        currency_table.setStyle(TableStyle([
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(*branding['pdf_primary_color'])),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            
+            # Data
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        
+        story.append(currency_table)
+        story.append(Spacer(1, 20))
+        
+        # Summary
+        story.append(Paragraph("Summary", subtitle_style))
+        
+        summary_data = [
+            ["Total Waste Entries:", str(report_data['total_entries'])],
+            ["Total Quantity Wasted:", str(report_data['total_quantity_wasted'])],
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
+        summary_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.Color(*branding['pdf_primary_color'])),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        
+        story.append(summary_table)
+        
+        # Build PDF
+        doc.build(story)
+        
+        buffer.seek(0)
+        filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
 
 # =============================================================================
 # SYSTEM RESET API ENDPOINT
