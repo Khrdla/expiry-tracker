@@ -729,6 +729,12 @@ backend:
       - working: true
         agent: "main"
         comment: "AUDIT FIXES IMPLEMENTED: ✅ Removed duplicate form reset logic (lines 521-525 that duplicated lines 504-508), ✅ Added proper memory leak prevention with cleanup functions in useEffect hooks and timeout management, ✅ Cleaned up unused imports (Upload, Eye, CheckCircle icons were imported but not used), ✅ Added cancellation tokens for async operations to prevent memory leaks, ✅ Enhanced timeout management with proper cleanup on component unmount. Code is now cleaner and more efficient."
+      - working: false
+        agent: "user"
+        comment: "URGENT: User reported barcode search not working. Barcode '3222474131326' shows 'No products found' in waste form search despite product existing in database."
+      - working: true
+        agent: "testing"
+        comment: "CRITICAL BARCODE SEARCH FIX APPLIED: ✅ ROOT CAUSE: WasteReports using wrong endpoint '/api/products/search' (405 Method Not Allowed) instead of '/api/search'. ✅ FIX IMPLEMENTED: Updated search endpoint and response processing. ✅ VERIFICATION: Barcode '3222474131326' now successfully returns 'Energy Drink Taurine 25Cl'. ✅ ALL TEST BARCODES WORKING: Authentication, barcode lookup, product search all confirmed working. Users can now search by barcode or product name in WasteReports form."
 
 frontend:
   - task: "Fix company branding - remove hardcoded 'Geant Hypermarket'"
