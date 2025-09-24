@@ -93,9 +93,22 @@ const EnhancedWasteReports = () => {
   };
 
   useEffect(() => {
-    loadWasteReports();
-    loadWasteEntries();
-    loadFilterOptions();
+    let isCancelled = false;
+    
+    const loadData = async () => {
+      if (!isCancelled) {
+        await loadWasteReports();
+        await loadWasteEntries();
+        await loadFilterOptions();
+      }
+    };
+    
+    loadData();
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isCancelled = true;
+    };
   }, [selectedPeriod, selectedCurrency, selectedDepartment, selectedSection]);
 
   // Enhanced waste reports loading
