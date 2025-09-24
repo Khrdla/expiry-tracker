@@ -2565,7 +2565,7 @@ async def export_return_forms(
         
         # Use enhanced exporter
         exporter = EnhancedOtherReportsExporter(db)
-        excel_data = exporter.generate_return_forms_excel(return_forms)
+        excel_data = await exporter.generate_return_forms_excel(return_forms)
         
         filename = f"return_forms_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         
