@@ -4,6 +4,8 @@ import {
   Plus, 
   Filter, 
   Download, 
+  Upload,
+  Eye,
   Calendar,
   TrendingUp,
   DollarSign,
