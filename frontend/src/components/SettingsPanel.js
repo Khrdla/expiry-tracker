@@ -44,6 +44,22 @@ const SettingsPanel = ({ user }) => {
   const [importResult, setImportResult] = useState(null);
   const [showImportResult, setShowImportResult] = useState(false);
 
+  // Currency Settings States
+  const [currencySettings, setCurrencySettings] = useState({
+    base_currency: 'USD',
+    exchange_rates: {
+      'YER': 0.004,
+      'SAR': 0.267,
+      'EUR': 1.10,
+      'USD': 1.0
+    },
+    last_updated: null,
+    updated_by: null
+  });
+  const [currencyLoading, setCurrencyLoading] = useState(false);
+  const [editingCurrency, setEditingCurrency] = useState(null);
+  const [tempRate, setTempRate] = useState('');
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
