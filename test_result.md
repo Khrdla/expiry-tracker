@@ -115,6 +115,7 @@ user_problem_statement: |
   5. Supplier service level and stock value not exist
   6. Summary and add/edit product cards not available
   7. Products page shows "No products found" despite dashboard showing 1,807 products
+  8. WasteReports audit fixes requested - missing imports, duplicate form reset logic, potential memory leaks
 
 backend:
   - task: "Fix products API endpoint - no products showing"
