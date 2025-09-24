@@ -3181,156 +3181,197 @@ def add_logo_to_pdf_story(story):
     return False
 
 async def generate_waste_report_excel(report_data: dict, period: str):
-    """Generate Excel waste report with company branding"""
-    import io
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
-    
-    # Create workbook
-    wb = Workbook()
-    ws = wb.active
-    ws.title = f"Waste Report - {period.title()}"
-    
-    # Get company branding
-    branding = get_company_branding()
-    
-    # Define styles with company colors
-    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
-    header_fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
-    subheader_font = Font(name='Arial', size=12, bold=True, color=branding['excel_header_color'])
-    currency_font = Font(name='Arial', size=12, bold=True, color='D32F2F')
-    company_font = Font(name='Arial', size=16, bold=True, color=branding['excel_header_color'])
-    border = Border(
-        left=Side(border_style='thin'),
-        right=Side(border_style='thin'),
-        top=Side(border_style='thin'),
-        bottom=Side(border_style='thin')
-    )
-    
-    # Add company logo (will add extra rows if successful)
-    logo_added = add_logo_to_excel(ws, row=1, col=1)
-    start_row = 4 if logo_added else 1
-    
-    # Company header
-    if logo_added:
-        ws.merge_cells(f'B1:F1')
-        ws['B1'] = branding['company_name']
-        ws['B1'].font = company_font
-        ws['B1'].alignment = Alignment(horizontal='center', vertical='center')
+    """Generate Excel waste report with enhanced formatting and USD conversion"""
+    try:
+        from enhanced_export_system import EnhancedWasteReportExporter
         
-        ws.merge_cells(f'B2:F2')
-        ws['B2'] = f"WASTE REPORT - {period.upper()}"
-        ws['B2'].font = header_font
-        ws['B2'].fill = header_fill
-        ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
-    else:
-        # Fallback without logo
-        ws.merge_cells(f'A{start_row}:F{start_row}')
-        ws[f'A{start_row}'] = f"{branding['company_name']} - WASTE REPORT ({period.upper()})"
-        ws[f'A{start_row}'].font = header_font
-        ws[f'A{start_row}'].fill = header_fill
-        ws[f'A{start_row}'].alignment = Alignment(horizontal='center')
-        start_row += 1
-    
-    # Report details
-    row = start_row + 2
-    ws[f'A{row}'] = "Report Period:"
-    ws[f'B{row}'] = period.title()
-    ws[f'A{row}'].font = subheader_font
-    
-    row += 1
-    ws[f'A{row}'] = "Generated At:"
-    ws[f'B{row}'] = datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')
-    
-    if report_data.get('department'):
+        exporter = EnhancedWasteReportExporter()
+        excel_data = exporter.generate_excel(report_data, period)
+        
+        filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return Response(
+            content=excel_data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Error in enhanced waste report export: {e}")
+        # Fallback to original implementation if enhanced fails
+        import io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+        
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Waste Report - {period.title()}"
+        
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Define styles with company colors
+        header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+        subheader_font = Font(name='Arial', size=12, bold=True, color=branding['excel_header_color'])
+        currency_font = Font(name='Arial', size=12, bold=True, color='D32F2F')
+        company_font = Font(name='Arial', size=16, bold=True, color=branding['excel_header_color'])
+        border = Border(
+            left=Side(border_style='thin'),
+            right=Side(border_style='thin'),
+            top=Side(border_style='thin'),
+            bottom=Side(border_style='thin')
+        )
+        
+        # Add company logo (will add extra rows if successful)
+        logo_added = add_logo_to_excel(ws, row=1, col=1)
+        start_row = 4 if logo_added else 1
+        
+        # Company header
+        if logo_added:
+            ws.merge_cells(f'B1:F1')
+            ws['B1'] = branding['company_name']
+            ws['B1'].font = company_font
+            ws['B1'].alignment = Alignment(horizontal='center', vertical='center')
+            
+            ws.merge_cells(f'B2:F2')
+            ws['B2'] = f"WASTE REPORT - {period.upper()}"
+            ws['B2'].font = header_font
+            ws['B2'].fill = header_fill
+            ws['B2'].alignment = Alignment(horizontal='center', vertical='center')
+        else:
+            # Fallback without logo
+            ws.merge_cells(f'A{start_row}:F{start_row}')
+            ws[f'A{start_row}'] = f"{branding['company_name']} - WASTE REPORT ({period.upper()})"
+            ws[f'A{start_row}'].font = header_font
+            ws[f'A{start_row}'].fill = header_fill
+            ws[f'A{start_row}'].alignment = Alignment(horizontal='center')
+            start_row += 1
+        
+        # Report details
+        row = start_row + 2
+        ws[f'A{row}'] = "Report Period:"
+        ws[f'B{row}'] = period.title()
+        ws[f'A{row}'].font = subheader_font
+        
         row += 1
-        ws[f'A{row}'] = "Department:"
-        ws[f'B{row}'] = report_data['department']
-    
-    if report_data.get('section'):
-        row += 1
-        ws[f'A{row}'] = "Section:"
-        ws[f'B{row}'] = report_data['section']
-    
-    # Currency totals
-    row += 3
-    ws[f'A{row}'] = "WASTE VALUE BY CURRENCY"
-    ws[f'A{row}'].font = subheader_font
-    
-    row += 1
-    ws[f'A{row}'] = "Currency"
-    ws[f'B{row}'] = "Total Waste Value"
-    ws[f'A{row}'].font = header_font
-    ws[f'B{row}'].font = header_font
-    ws[f'A{row}'].fill = header_fill
-    ws[f'B{row}'].fill = header_fill
-    
-    for currency, total in report_data['currency_totals'].items():
-        if total > 0:  # Only show currencies with waste
+        ws[f'A{row}'] = "Generated At:"
+        ws[f'B{row}'] = datetime.fromisoformat(report_data['generated_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d %H:%M:%S')
+        
+        if report_data.get('department'):
             row += 1
-            ws[f'A{row}'] = currency
-            ws[f'B{row}'] = f"{total:,.2f} {currency}"
-            ws[f'B{row}'].font = currency_font
-    
-    # Summary
-    row += 3
-    ws[f'A{row}'] = "SUMMARY"
-    ws[f'A{row}'].font = subheader_font
-    
-    row += 1
-    ws[f'A{row}'] = "Total Waste Entries:"
-    ws[f'B{row}'] = report_data['total_entries']
-    
-    row += 1
-    ws[f'A{row}'] = "Total Quantity Wasted:"
-    ws[f'B{row}'] = report_data['total_quantity_wasted']
-    
-    # Apply borders
-    for row_num in range(1, row + 1):
+            ws[f'A{row}'] = "Department:"
+            ws[f'B{row}'] = report_data['department']
+        
+        if report_data.get('section'):
+            row += 1
+            ws[f'A{row}'] = "Section:"
+            ws[f'B{row}'] = report_data['section']
+        
+        # Currency totals with USD conversion
+        row += 3
+        ws[f'A{row}'] = "WASTE VALUE BY CURRENCY (WITH USD CONVERSION)"
+        ws[f'A{row}'].font = subheader_font
+        
+        row += 1
+        ws[f'A{row}'] = "Currency"
+        ws[f'B{row}'] = "Original Amount"
+        ws[f'C{row}'] = "USD Equivalent"
+        ws[f'D{row}'] = "Exchange Rate"
+        
         for col in ['A', 'B', 'C', 'D']:
-            cell = ws[f'{col}{row_num}']
-            if cell.value:
-                cell.border = border
-    
-    # Auto-adjust column widths
-    for column in ws.columns:
-        max_length = 0
-        column_letter = None
+            ws[f'{col}{row}'].font = header_font
+            ws[f'{col}{row}'].fill = header_fill
         
-        # Find the first non-merged cell to get column letter
-        for cell in column:
-            try:
-                if hasattr(cell, 'column_letter'):
-                    column_letter = cell.column_letter
-                    break
-            except:
-                continue
+        # Exchange rates
+        exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
+        total_usd = 0
         
-        if column_letter:
-            # Calculate max length
+        for currency, total in report_data['currency_totals'].items():
+            if total > 0:  # Only show currencies with waste
+                row += 1
+                rate = exchange_rates.get(currency, 1.0)
+                usd_amount = total * rate
+                total_usd += usd_amount
+                
+                ws[f'A{row}'] = currency
+                ws[f'B{row}'] = f"{total:,.2f} {currency}"
+                ws[f'C{row}'] = f"{usd_amount:,.2f} USD"
+                ws[f'D{row}'] = f"{rate:.4f}"
+                
+                ws[f'B{row}'].font = currency_font
+                ws[f'C{row}'].font = currency_font
+        
+        # Total USD row
+        if len(report_data['currency_totals']) > 1:
+            row += 1
+            ws[f'A{row}'] = "TOTAL"
+            ws[f'B{row}'] = ""
+            ws[f'C{row}'] = f"{total_usd:,.2f} USD"
+            ws[f'D{row}'] = ""
+            ws[f'A{row}'].font = header_font
+            ws[f'C{row}'].font = header_font
+        
+        # Summary
+        row += 3
+        ws[f'A{row}'] = "SUMMARY"
+        ws[f'A{row}'].font = subheader_font
+        
+        row += 1
+        ws[f'A{row}'] = "Total Waste Entries:"
+        ws[f'B{row}'] = report_data['total_entries']
+        
+        row += 1
+        ws[f'A{row}'] = "Total Quantity Wasted:"
+        ws[f'B{row}'] = report_data['total_quantity_wasted']
+        
+        # Apply borders
+        for row_num in range(1, row + 1):
+            for col in ['A', 'B', 'C', 'D']:
+                cell = ws[f'{col}{row_num}']
+                if cell.value:
+                    cell.border = border
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = None
+            
+            # Find the first non-merged cell to get column letter
             for cell in column:
                 try:
-                    if hasattr(cell, 'value') and cell.value:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
+                    if hasattr(cell, 'column_letter'):
+                        column_letter = cell.column_letter
+                        break
                 except:
-                    pass
+                    continue
             
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
-    
-    # Save to bytes
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
-    
-    filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-    
-    return Response(
-        content=output.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
+            if column_letter:
+                # Calculate max length
+                for cell in column:
+                    try:
+                        if hasattr(cell, 'value') and cell.value:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                    except:
+                        pass
+                
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Save to response
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
 
 async def generate_waste_report_pdf(report_data: dict, period: str):
     """Generate PDF waste report"""
