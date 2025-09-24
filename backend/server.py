@@ -3203,8 +3203,8 @@ async def generate_waste_report_excel(report_data: dict, period: str):
     try:
         from enhanced_export_system import EnhancedWasteReportExporter
         
-        exporter = EnhancedWasteReportExporter()
-        excel_data = exporter.generate_excel(report_data, period)
+        exporter = EnhancedWasteReportExporter(db)
+        excel_data = await exporter.generate_excel(report_data, period)
         
         filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         
