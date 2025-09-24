@@ -314,7 +314,7 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
         output.seek(0)
         return output.getvalue()
     
-    def _add_currency_summary(self, ws, start_row: int, currency_totals: Dict) -> int:
+    async def _add_currency_summary(self, ws, start_row: int, currency_totals: Dict) -> int:
         """Add currency summary with USD conversion"""
         current_row = start_row
         
@@ -325,8 +325,8 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
         
         for currency, amount in currency_totals.items():
             if amount > 0:
-                usd_amount = self.converter.convert_to_usd(amount, currency)
-                exchange_rate = self.converter.get_exchange_rate(currency)
+                usd_amount = await self.converter.convert_to_usd(amount, currency)
+                exchange_rate = await self.converter.get_exchange_rate(currency)
                 total_usd += usd_amount
                 
                 data.append([
