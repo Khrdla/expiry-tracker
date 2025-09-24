@@ -281,7 +281,7 @@ class EnhancedExcelExporter:
 class EnhancedWasteReportExporter(EnhancedExcelExporter):
     """Specialized exporter for waste reports with USD conversion"""
     
-    def generate_excel(self, report_data: Dict, period: str) -> bytes:
+    async def generate_excel(self, report_data: Dict, period: str) -> bytes:
         """Generate enhanced waste report Excel with USD conversion"""
         wb, ws = self.create_styled_workbook(f"Waste Report - {period.title()}")
         
@@ -296,11 +296,11 @@ class EnhancedWasteReportExporter(EnhancedExcelExporter):
         current_row = self.add_report_metadata(ws, current_row, "WASTE", period, filters)
         
         # Currency totals with USD conversion
-        current_row = self._add_currency_summary(ws, current_row, report_data['currency_totals'])
+        current_row = await self._add_currency_summary(ws, current_row, report_data['currency_totals'])
         
         # Waste entries detail (if available)
         if 'entries' in report_data and report_data['entries']:
-            current_row = self._add_waste_entries_table(ws, current_row, report_data['entries'])
+            current_row = await self._add_waste_entries_table(ws, current_row, report_data['entries'])
         
         # Summary statistics
         current_row = self._add_summary_section(ws, current_row, report_data)
