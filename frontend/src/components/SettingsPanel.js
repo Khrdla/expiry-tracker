@@ -66,6 +66,7 @@ const SettingsPanel = ({ user }) => {
     fetchSettings();
     fetchEmailStatus();
     fetchSystemStatus();
+    fetchCurrencySettings();
   }, []);
 
   const fetchSystemStatus = async () => {
