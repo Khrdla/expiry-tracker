@@ -23,7 +23,7 @@ const EnhancedReturnForm = ({ user }) => {
     prepared_by_supervisor: user?.full_name || user?.username || '',
     supervisor_signature: '',
     supervisor_timestamp: '',
-    section_manager_name: '',
+    section_manager_name: user?.full_name || user?.username || 'Imad Qejji', // Auto-fill with current user
     section_manager_signature: '',
     section_manager_timestamp: '',
     department_head_name: '',
