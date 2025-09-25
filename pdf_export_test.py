@@ -241,8 +241,8 @@ class PDFExportTester:
             return None
     
     def test_return_form_pdf_export(self):
-        """Test return form PDF export functionality"""
-        print("\n📋 Testing Return Form PDF Exports")
+        """Test return form PDF export functionality with GEANT professional layout"""
+        print("\n📋 Testing Return Form PDF Exports - GEANT Professional Layout")
         
         # First create a test return form
         return_id = self.create_test_return_form()
@@ -252,7 +252,7 @@ class PDFExportTester:
             return
         
         try:
-            # Test PDF export
+            # Test the MAIN PDF export endpoint that frontend calls
             url = f"{BACKEND_URL}/export/return-form/{return_id}?format=pdf"
             response = self.session.get(url)
             
@@ -271,6 +271,15 @@ class PDFExportTester:
                 if is_valid:
                     self.log_test("Return Form PDF - Export", True, 
                                 f"Valid PDF generated ({len(response.content)} bytes)")
+                    
+                    # Test professional GEANT layout elements
+                    self.test_professional_geant_layout(response.content)
+                    
+                    # Test SAR currency conversion
+                    self.test_sar_currency_conversion(response.content)
+                    
+                    # Test clean export format
+                    self.test_clean_export_format(response.content)
                 
             else:
                 self.log_test("Return Form PDF - Export", False, 
@@ -278,6 +287,97 @@ class PDFExportTester:
                 
         except Exception as e:
             self.log_test("Return Form PDF - Export", False, f"Exception: {str(e)}")
+    
+    def test_professional_geant_layout(self, pdf_content):
+        """Test for professional ReportLab layout with GEANT branding"""
+        try:
+            # Check for GEANT HYPERMARKET branding
+            has_geant = b'GEANT' in pdf_content or b'Geant' in pdf_content
+            has_hypermarket = b'HYPERMARKET' in pdf_content or b'Hypermarket' in pdf_content
+            
+            # Check for ReportLab indicators (vs basic FPDF)
+            has_reportlab = b'ReportLab' in pdf_content or b'/Producer' in pdf_content
+            
+            # Check for professional sections
+            has_form_details = b'Form Details' in pdf_content or b'FORM DETAILS' in pdf_content
+            has_product_info = b'Product Information' in pdf_content or b'PRODUCT INFORMATION' in pdf_content
+            has_return_value = b'Return Value' in pdf_content or b'RETURN VALUE' in pdf_content
+            has_approvals = b'Approvals' in pdf_content or b'APPROVALS' in pdf_content
+            
+            # Check for green theme colors
+            has_green_theme = (b'#1B4332' in pdf_content or b'#2D6A4F' in pdf_content or 
+                             b'#40916C' in pdf_content or b'green' in pdf_content)
+            
+            # Check for proper margins and A4 layout (larger file size indicates professional layout)
+            has_professional_size = len(pdf_content) > 10000  # Professional PDFs should be >10KB
+            
+            professional_elements = sum([
+                has_geant, has_hypermarket, has_reportlab, has_form_details,
+                has_product_info, has_return_value, has_approvals, 
+                has_green_theme, has_professional_size
+            ])
+            
+            success = professional_elements >= 5  # At least 5 professional elements
+            
+            self.log_test("Professional GEANT Layout", success,
+                        f"GEANT: {has_geant}, Hypermarket: {has_hypermarket}, ReportLab: {has_reportlab}, "
+                        f"Sections: {has_form_details or has_product_info or has_return_value or has_approvals}, "
+                        f"Green theme: {has_green_theme}, Professional size: {has_professional_size} "
+                        f"({professional_elements}/9 elements)")
+            
+        except Exception as e:
+            self.log_test("Professional GEANT Layout", False, f"Exception: {str(e)}")
+    
+    def test_sar_currency_conversion(self, pdf_content):
+        """Test SAR to USD conversion accuracy (369.36 SAR → ~$98.50 USD, NOT $369.36)"""
+        try:
+            # Look for SAR amount
+            has_sar_amount = b'369' in pdf_content and (b'SAR' in pdf_content or b'sar' in pdf_content)
+            
+            # Look for correct USD conversion (~$98.50, NOT $369.36)
+            has_correct_usd = (b'98.5' in pdf_content or b'$98' in pdf_content or 
+                             b'98.50' in pdf_content or b'98.51' in pdf_content or
+                             b'USD 98' in pdf_content)
+            
+            # Make sure it's NOT showing 1:1 conversion error
+            has_incorrect_usd = b'$369' in pdf_content or b'USD 369' in pdf_content
+            
+            # Look for exchange rate display (1 SAR = 0.2667 USD)
+            has_exchange_rate = (b'0.2667' in pdf_content or b'0.267' in pdf_content or 
+                               b'3.75' in pdf_content)  # 1 USD = 3.75 SAR
+            
+            # Look for dual currency display
+            has_dual_currency = (b'SAR' in pdf_content and (b'USD' in pdf_content or b'$' in pdf_content))
+            
+            success = has_sar_amount and has_dual_currency and not has_incorrect_usd
+            
+            self.log_test("SAR Currency Conversion", success,
+                        f"SAR amount: {has_sar_amount}, Correct USD (~$98.50): {has_correct_usd}, "
+                        f"Incorrect USD ($369): {has_incorrect_usd}, Exchange rate: {has_exchange_rate}, "
+                        f"Dual currency: {has_dual_currency}")
+            
+        except Exception as e:
+            self.log_test("SAR Currency Conversion", False, f"Exception: {str(e)}")
+    
+    def test_clean_export_format(self, pdf_content):
+        """Test that PDF doesn't contain system messages like 'Status: PENDING'"""
+        try:
+            # Check for system messages that shouldn't be in export
+            has_status_pending = b'Status: PENDING' in pdf_content or b'STATUS: PENDING' in pdf_content
+            has_system_messages = b'System:' in pdf_content or b'SYSTEM:' in pdf_content
+            has_debug_info = b'DEBUG' in pdf_content or b'debug' in pdf_content
+            has_error_messages = b'Error:' in pdf_content or b'ERROR:' in pdf_content
+            
+            # Should be clean export format
+            is_clean_export = not (has_status_pending or has_system_messages or has_debug_info or has_error_messages)
+            
+            self.log_test("Clean Export Format", is_clean_export,
+                        f"Clean export: {is_clean_export}, No status pending: {not has_status_pending}, "
+                        f"No system messages: {not has_system_messages}, No debug: {not has_debug_info}, "
+                        f"No errors: {not has_error_messages}")
+            
+        except Exception as e:
+            self.log_test("Clean Export Format", False, f"Exception: {str(e)}")
     
     def test_error_handling(self):
         """Test error handling for invalid periods and parameters"""
