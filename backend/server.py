@@ -3348,109 +3348,88 @@ async def export_return_form_pdf(
         story.append(currency_table)
         story.append(Spacer(1, 0.3*inch))
         
-        # Enhanced Approvals & Signatures Workflow
-        story.append(Paragraph("Approvals & Signatures Workflow", styles['Heading3']))
-        story.append(Spacer(1, 10))
+        # ===== APPROVALS & SIGNATURES SECTION =====
+        story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
         
-        # Digital Approvals Section
-        story.append(Paragraph("Digital Approvals (Completed):", ParagraphStyle(
-            'DigitalTitle', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold',
-            textColor=colors.Color(0.0, 0.4, 0.0)
-        )))
-        story.append(Spacer(1, 8))
+        # Digital Signatures Section
+        digital_title_style = ParagraphStyle(
+            'DigitalTitle', 
+            parent=styles['Normal'], 
+            fontSize=10, 
+            fontName='Helvetica-Bold',
+            textColor=geant_green,
+            spaceAfter=5
+        )
         
-        # Supervisor Digital Approval
-        supervisor_status = "✅ APPROVED" if return_form.get('supervisor_approved') else "❌ PENDING"
-        supervisor_timestamp = return_form.get('supervisor_timestamp', 'Not completed')
-        supervisor_signature = return_form.get('supervisor_signature', 'Not signed')
+        story.append(Paragraph("Digital Signatures:", digital_title_style))
         
-        digital_approvals = [
-            ['Supervisor Approval:', supervisor_status, supervisor_timestamp],
-            ['Selected Supervisor:', return_form.get('selected_supervisor', 'Not selected'), ''],
-            ['Digital Signature:', supervisor_signature, ''],
+        # Clean digital signatures without system messages
+        digital_sigs = [
+            ['Supervisor:', return_form.get('selected_supervisor', '')],
+            ['Signature:', return_form.get('supervisor_signature', '')],
+            ['Date/Time:', return_form.get('supervisor_timestamp', '')],
+            ['', ''],  # Spacer row
+            ['Section Manager:', return_form.get('section_manager_name', 'Imad Qejji')],
+            ['Signature:', return_form.get('section_manager_signature', '')],
+            ['Date/Time:', return_form.get('section_manager_timestamp', '')],
         ]
         
-        # Section Manager Digital Approval 
-        section_status = "✅ APPROVED" if return_form.get('section_manager_approved') else "❌ PENDING"
-        section_timestamp = return_form.get('section_manager_timestamp', 'Not completed')
-        section_signature = return_form.get('section_manager_signature', 'Not signed')
-        
-        digital_approvals.extend([
-            ['Section Manager Approval:', section_status, section_timestamp],
-            ['Section Manager Name:', return_form.get('section_manager_name', 'Imad Qejji'), ''],
-            ['Digital Signature:', section_signature, ''],
-        ])
-        
-        digital_table = Table(digital_approvals, colWidths=[2.0*inch, 2.0*inch, 1.7*inch])
+        digital_table = Table(digital_sigs, colWidths=[2*inch, 4.5*inch])
         digital_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.0, 0.4, 0.0)),
-            ('BACKGROUND', (0, 3), (-1, 3), colors.Color(0.0, 0.4, 0.0)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('TEXTCOLOR', (0, 3), (-1, 3), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (0, 1), (-1, 2), [colors.Color(0.95, 1.0, 0.95)]),
-            ('ROWBACKGROUNDS', (0, 4), (-1, 5), [colors.Color(0.95, 1.0, 0.95)]),
-            ('PADDING', (0, 0), (-1, -1), 4)
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 0.5, geant_accent),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            # Remove border from spacer row
+            ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
+            ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 0.2*inch))
         
-        # Manual Signatures Section (For After-Printing)
-        story.append(Paragraph("Manual Signatures (Required After Printing):", ParagraphStyle(
-            'ManualTitle', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold',
-            textColor=colors.Color(0.8, 0.4, 0.0)
-        )))
-        story.append(Spacer(1, 8))
+        # Manual Signatures Section - Clean and Professional
+        story.append(Paragraph("Manual Signatures:", digital_title_style))
         
         manual_sigs = [
-            ['Department Head', 'Manual signature required after printing', ''],
-            ['Name: ___________________________', '', ''],
-            ['Signature: _______________________', 'Date: _______________', ''],
-            ['', '', ''],
-            ['Finance Department', 'Manual signature + official stamp required', ''],
-            ['Name: ___________________________', '', ''],
-            ['Signature: _______________________', 'Official Stamp', 'Date: _______________'],
+            ['Department Head', ''],
+            ['Name: _________________________________', 'Date: _______________'],
+            ['Signature: _____________________________', ''],
+            ['', ''],  # Spacer
+            ['Finance Department', ''],
+            ['Name: _________________________________', 'Date: _______________'],
+            ['Signature: _____________________________', 'Official Stamp:'],
+            ['', '_______________'],
         ]
         
-        manual_table = Table(manual_sigs, colWidths=[2.5*inch, 2.0*inch, 1.2*inch])
+        manual_table = Table(manual_sigs, colWidths=[4*inch, 2.5*inch])
         manual_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
             ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.8, 0.4, 0.0)),
-            ('BACKGROUND', (0, 4), (-1, 4), colors.Color(0.8, 0.0, 0.0)),
+            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
+            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
-            ('LINEBELOW', (0, 1), (0, 1), 1, colors.black),  # Name line
-            ('LINEBELOW', (0, 2), (0, 2), 1, colors.black),  # Signature line
-            ('LINEBELOW', (1, 2), (1, 2), 1, colors.black),  # Date line
-            ('LINEBELOW', (0, 5), (0, 5), 1, colors.black),  # Finance name line
-            ('LINEBELOW', (0, 6), (0, 6), 1, colors.black),  # Finance signature line
-            ('LINEBELOW', (2, 6), (2, 6), 1, colors.black),  # Finance date line
-            ('BOX', (1, 6), (1, 6), 2, colors.red),  # Stamp box
-            ('PADDING', (0, 0), (-1, -1), 6),
-            ('SPAN', (0, 3), (-1, 3))  # Empty row span
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            # Remove border from spacer row
+            ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
+            ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
+            # Add box for stamp
+            ('BOX', (1, 7), (1, 7), 1, geant_green),
         ]))
         
         story.append(manual_table)
-        story.append(Spacer(1, 15))
-        
-        # Export Validation Status
-        ready_for_export = return_form.get('ready_for_export', False)
-        validation_msg = "✅ EXPORT APPROVED - All digital approvals completed" if ready_for_export else "⚠️ EXPORT PENDING - Digital approvals required"
-        
-        story.append(Paragraph(f"Export Status: {validation_msg}", ParagraphStyle(
-            'ExportStatus', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold',
-            textColor=colors.Color(0.0, 0.6, 0.0) if ready_for_export else colors.Color(0.8, 0.4, 0.0),
-            alignment=1
-        )))
+        story.append(Spacer(1, 0.2*inch))
         
         # Notes section
         if return_form.get('notes'):
