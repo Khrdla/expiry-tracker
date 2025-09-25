@@ -64,6 +64,8 @@
 ##     -agent: "main"
 ##     -message: "COMPREHENSIVE BARCODE AND DASHBOARD FIXES IMPLEMENTED: ✅ Created EnhancedBarcodeScanner.js with multi-format support (EAN, UPC, QR, Code128), prevents scanner failures due to UI re-renders with stable refs, comprehensive error handling/logging system, enhanced camera management with proper cleanup, multiple detection algorithms with fallbacks, performance tracking metrics. ✅ Fixed dashboard data issues with enhanced safeName()/safeNumber() functions to prevent numeric indices, proper data processing with fallbacks, comprehensive null handling. ✅ Updated all components (EnhancedDashboard, ProductDetailsModal, EnhancedProductManagement) to use enhanced scanner and improved data handling. ✅ Ready for comprehensive backend and frontend testing with automated agents."
 
+    -agent: "testing"
+    -message: "🚨 URGENT SAR CURRENCY INVESTIGATION COMPLETED - CRITICAL ISSUE RESOLVED: User's reported problem of 369.36 SAR showing as $369.36 USD (1:1 conversion) has been identified and fixed. Root cause: Currency settings had invalid configuration with base_currency='INVALID' and only 'FAKE': 999 rate, causing SAR to default to 1.0 rate. Applied comprehensive fix with correct exchange rates: SAR: 0.2667 (1 USD = 3.75 SAR), YER: 0.004, EUR: 1.10, USD: 1.0 (base). Verified user's exact scenario: 369.36 SAR now correctly converts to $98.51 USD. All currency APIs working correctly, return forms with SAR currency converting properly. The 1:1 conversion error is completely eliminated."
 # Protocol Guidelines for Main agent
 #
 # 1. Update Test Result File Before Testing:
