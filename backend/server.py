@@ -974,6 +974,39 @@ async def create_return_form(
         logger.error(f"Error creating return form: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create return form")
 
+@api_router.post("/return-forms")
+async def create_return_form_enhanced(
+    return_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new return form with enhanced user information"""
+    try:
+        # Ensure section manager name is properly set if missing
+        if not return_data.get('section_manager_name') and current_user:
+            return_data['section_manager_name'] = current_user.full_name or current_user.username or 'Imad Qejji'
+        
+        # Ensure prepared_by_supervisor is properly set if missing
+        if not return_data.get('prepared_by_supervisor') and current_user:
+            return_data['prepared_by_supervisor'] = current_user.full_name or current_user.username or 'Imad Qejji'
+        
+        # Add additional fields
+        return_form = {
+            **return_data,
+            "id": str(uuid.uuid4()),
+            "created_at": datetime.now(),
+            "created_by": current_user.username,
+            "status": "draft"
+        }
+        
+        # Store in database
+        await db.return_forms.insert_one(return_form)
+        
+        return {"message": "Return form created successfully", "id": return_form["id"], "form": return_form}
+        
+    except Exception as e:
+        logger.error(f"Error creating enhanced return form: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create return form")
+
 @api_router.get("/returns")
 async def get_return_forms(
     current_user: User = Depends(get_current_user),
