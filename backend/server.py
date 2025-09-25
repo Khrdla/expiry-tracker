@@ -2625,13 +2625,39 @@ async def export_return_form_with_approvals(
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 async def generate_enhanced_return_form_pdf(return_form: dict):
-    """Generate bulletproof return form PDF that will always work"""
+    """Generate enhanced return form PDF with supervisor dropdown, currency, and branding"""
     try:
-        import io
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-        from reportlab.lib import colors
+        from fpdf import FPDF
+        
+        # Create PDF using fpdf2 for better compatibility
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Company Branding Header
+        pdf.set_font('Arial', 'B', 18)
+        pdf.set_text_color(27, 67, 50)  # Company green color
+        pdf.cell(0, 12, 'GEANT HYPERMARKET', 0, 1, 'C')
+        
+        pdf.set_font('Arial', 'B', 14)
+        pdf.cell(0, 10, 'SUPPLIER RETURN FORM', 0, 1, 'C')
+        pdf.ln(5)
+        
+        # Form Reference Information
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 8, 'FORM DETAILS', 0, 1)
+        pdf.set_font('Arial', '', 10)
+        
+        current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
+        form_details = [
+            f"Reference Number: {return_form.get('reference_number', 'N/A')}",
+            f"Return Date: {return_form.get('return_date', 'N/A')}",
+            f"Generated: {current_time}"
+        ]
+        
+        for detail in form_details:
+            pdf.cell(0, 6, detail, 0, 1)
+        pdf.ln(5)
         
         # Create buffer and document
         buffer = io.BytesIO()
