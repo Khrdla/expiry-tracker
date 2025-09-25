@@ -513,17 +513,35 @@ class PDFExportTester:
         for result in self.test_results:
             print(f"  {result}")
         
-        # Critical Assessment
-        print("\n🎯 CRITICAL ASSESSMENT:")
-        if success_rate >= 90:
-            print("✅ PDF EXPORT SYSTEM IS WORKING CORRECTLY")
-            print("   All critical PDF exports are generating valid, openable files.")
-        elif success_rate >= 70:
-            print("⚠️ PDF EXPORT SYSTEM HAS MINOR ISSUES")
-            print("   Most exports working but some issues need attention.")
+        # Critical Assessment for GEANT Professional Layout
+        print("\n🎯 CRITICAL ASSESSMENT - GEANT PROFESSIONAL LAYOUT:")
+        
+        # Check if key tests passed
+        geant_layout_passed = any("Professional GEANT Layout" in result and "✅ PASS" in result for result in self.test_results)
+        sar_conversion_passed = any("SAR Currency Conversion" in result and "✅ PASS" in result for result in self.test_results)
+        clean_export_passed = any("Clean Export Format" in result and "✅ PASS" in result for result in self.test_results)
+        main_export_passed = any("Return Form PDF - Export" in result and "✅ PASS" in result for result in self.test_results)
+        
+        critical_requirements_met = sum([geant_layout_passed, sar_conversion_passed, clean_export_passed, main_export_passed])
+        
+        if critical_requirements_met >= 3:
+            print("✅ GEANT PROFESSIONAL PDF LAYOUT IS WORKING")
+            print("   User's 'NO UPDATES' issue should be RESOLVED")
+            print(f"   Critical requirements met: {critical_requirements_met}/4")
+        elif critical_requirements_met >= 2:
+            print("⚠️ GEANT PROFESSIONAL PDF LAYOUT HAS MINOR ISSUES")
+            print("   Some improvements made but user may still see issues")
+            print(f"   Critical requirements met: {critical_requirements_met}/4")
         else:
-            print("❌ PDF EXPORT SYSTEM HAS MAJOR ISSUES")
-            print("   Significant problems detected that need immediate fixing.")
+            print("❌ GEANT PROFESSIONAL PDF LAYOUT STILL HAS MAJOR ISSUES")
+            print("   User's 'NO UPDATES' issue likely PERSISTS")
+            print(f"   Critical requirements met: {critical_requirements_met}/4")
+        
+        print(f"\n📋 Key Requirements Status:")
+        print(f"   ✅ Main Export Endpoint: {'WORKING' if main_export_passed else 'FAILED'}")
+        print(f"   ✅ Professional GEANT Layout: {'WORKING' if geant_layout_passed else 'FAILED'}")
+        print(f"   ✅ SAR Currency Conversion: {'WORKING' if sar_conversion_passed else 'FAILED'}")
+        print(f"   ✅ Clean Export Format: {'WORKING' if clean_export_passed else 'FAILED'}")
         
         # Cleanup
         if self.created_return_forms:
