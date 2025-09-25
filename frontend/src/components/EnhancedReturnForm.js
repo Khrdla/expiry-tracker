@@ -867,18 +867,36 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
       </div>
 
-      {/* Export Requirements Notice */}
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* Enhanced Export Requirements Notice */}
+      <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
         <div className="flex items-start space-x-2">
           <AlertTriangle className="text-blue-600 mt-1" size={16} />
           <div>
-            <div className="font-medium text-blue-800">Export Requirements</div>
-            <div className="text-sm text-blue-700 mt-1">
-              • Both Supervisor and Section Manager approvals required before export
-              <br />
-              • Department Head and Finance signatures will be empty lines for manual signing after printing
-              <br />
-              • All timestamps are recorded in DD/MM/YYYY – HH:MM format
+            <div className="font-medium text-blue-800">Enhanced Export Requirements</div>
+            <div className="text-sm text-blue-700 mt-2 space-y-1">
+              <div className="flex items-center">
+                <CheckCircle size={14} className="text-green-600 mr-1" />
+                <strong>Required for Export:</strong>
+              </div>
+              <div className="ml-4 space-y-1">
+                • Supervisor selected from dropdown (Mahmoud Badr or Abdelhamed Mostafa)
+                <br />
+                • Section Manager field filled (Default: Imad Qejji)
+                <br />
+                • Both digital approvals completed
+              </div>
+              <div className="flex items-center mt-2">
+                <Clock size={14} className="text-orange-600 mr-1" />
+                <strong>After Export:</strong>
+              </div>
+              <div className="ml-4">
+                • Department Head: Manual signature on printed form
+                <br />
+                • Finance: Manual signature + official stamp on printed form
+              </div>
+              <div className="mt-2 p-2 bg-blue-100 rounded text-xs">
+                📊 <strong>Currency Display:</strong> Shows supplier currency + USD equivalent for reporting
+              </div>
             </div>
           </div>
         </div>
