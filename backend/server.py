@@ -3087,13 +3087,13 @@ async def fetch_current_exchange_rates():
         }
     }
 
-# Return Form PDF Export (Individual)
+# Enhanced Return Form PDF Export with Supervisor Dropdown & Dual Currency
 @api_router.get("/export/return-form/{return_id}/pdf")
 async def export_return_form_pdf(
     return_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Export individual return form as PDF"""
+    """Export enhanced return form as PDF with supervisor dropdown, dual currency, and complete approval workflow"""
     try:
         from reportlab.lib.pagesizes import letter, A4
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -3107,8 +3107,17 @@ async def export_return_form_pdf(
         if not return_form:
             raise HTTPException(status_code=404, detail="Return form not found")
         
+        # Get current exchange rates for USD conversion
+        try:
+            rates_response = await get_current_exchange_rates()
+            exchange_rates = rates_response.get('exchange_rates', {
+                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+            })
+        except:
+            exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
+        
         output = BytesIO()
-        doc = SimpleDocTemplate(output, pagesize=A4)
+        doc = SimpleDocTemplate(output, pagesize=A4, topMargin=0.5*inch)
         styles = getSampleStyleSheet()
         
         story = []
@@ -3116,12 +3125,23 @@ async def export_return_form_pdf(
         # Get company branding
         branding = get_company_branding()
         
-        # Define title style with company colors
+        # Define enhanced title style
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=16,
+            fontSize=18,
             textColor=colors.Color(*branding['pdf_primary_color']),
+            alignment=1,
+            fontName='Helvetica-Bold',
+            spaceAfter=10
+        )
+        
+        # Subtitle style
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading3'],
+            fontSize=12,
+            textColor=colors.Color(*branding['pdf_accent_color']),
             alignment=1,
             fontName='Helvetica-Bold'
         )
@@ -3130,87 +3150,244 @@ async def export_return_form_pdf(
         add_logo_to_pdf_story(story)
         
         # Document title
-        story.append(Paragraph("PRODUCT RETURN FORM", title_style))
-        story.append(Spacer(1, 20))
+        story.append(Paragraph("SUPPLIER RETURN FORM", title_style))
+        story.append(Paragraph("Enhanced Workflow with Dual Currency Display", subtitle_style))
+        story.append(Spacer(1, 15))
         
-        # Reference info
+        # Reference info with enhanced formatting
         ref_data = [
             ['Reference Number:', return_form.get('reference_number', '')],
             ['Return Date:', return_form.get('return_date', '')],
-            ['Status:', return_form.get('status', 'pending').upper()]
+            ['Status:', return_form.get('status', 'draft').upper()],
+            ['Created By:', return_form.get('created_by', '')]
         ]
         
-        ref_table = Table(ref_data, colWidths=[2*inch, 3*inch])
+        ref_table = Table(ref_data, colWidths=[2.2*inch, 3.5*inch])
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1.5, colors.Color(*branding['pdf_primary_color'])),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.97, 0.99, 0.97)]),
+            ('PADDING', (0, 0), (-1, -1), 8)
         ]))
         
         story.append(ref_table)
         story.append(Spacer(1, 20))
         
-        # Item details
-        story.append(Paragraph("Item Details", styles['Heading3']))
+        # Supervisor Selection Section (NEW - From Dropdown)
+        story.append(Paragraph("Supervisor Selection", styles['Heading3']))
+        supervisor_data = [
+            ['Selected Supervisor:', return_form.get('selected_supervisor', 'Not Selected')],
+            ['Prepared by Supervisor:', return_form.get('prepared_by_supervisor', 'Auto-filled from selection')],
+            ['Available Options:', 'Mahmoud Badr, Abdelhamed Mostafa']
+        ]
+        
+        supervisor_table = Table(supervisor_data, colWidths=[2.2*inch, 3.5*inch])
+        supervisor_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.2, 0.4, 0.8)),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 0.97, 1.0)]),
+            ('PADDING', (0, 0), (-1, -1), 6)
+        ]))
+        
+        story.append(supervisor_table)
+        story.append(Spacer(1, 20))
+        
+        # Product Information Section
+        story.append(Paragraph("Product Information", styles['Heading3']))
         item_data = [
             ['Product Code:', return_form.get('product_code', '')],
             ['Product Name:', return_form.get('product_name', '')],
-            ['Product Barcode:', return_form.get('barcode', '') or 'N/A'],  # Added barcode field
+            ['Barcode:', return_form.get('barcode', '') or 'N/A'],
             ['Quantity:', str(return_form.get('quantity', 0))],
-            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}"],
-            ['Total Value:', f"{return_form.get('total_value', '0.00')} {return_form.get('purchase_currency', 'YER')}"],  # Added total value
             ['Supplier:', return_form.get('supplier', '')],
+            ['Department/Section:', f"{return_form.get('department', '')} / {return_form.get('section', '')}"],
             ['Reason for Return:', return_form.get('reason_for_return', '')]
         ]
         
-        item_table = Table(item_data, colWidths=[2*inch, 4*inch])
+        item_table = Table(item_data, colWidths=[2.2*inch, 3.5*inch])
         item_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color']))
-        ]))
-        
-        story.append(item_table)
-        story.append(Spacer(1, 30))
-        
-        # Signatures
-        story.append(Paragraph("Approvals & Signatures", styles['Heading3']))
-        
-        sig_data = [
-            ['Prepared by Supervisor:', return_form.get('prepared_by_supervisor', ''), 'Signature: _______________'],
-            ['Section Manager:', return_form.get('section_manager_name', ''), 'Signature: _______________'],
-            ['Department Head:', return_form.get('department_head_name', ''), 'Signature: _______________'],
-            ['Finance Department:', '', 'Signature: _______________']
-        ]
-        
-        sig_table = Table(sig_data, colWidths=[2*inch, 2*inch, 2*inch])
-        sig_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.97, 0.95)])
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 0.99, 0.98)]),
+            ('PADDING', (0, 0), (-1, -1), 6)
         ]))
         
-        story.append(sig_table)
+        story.append(item_table)
+        story.append(Spacer(1, 20))
         
-        # Notes
+        # Enhanced Currency Display Section (DUAL CURRENCY)
+        story.append(Paragraph("Return Value (Dual Currency Display)", styles['Heading3']))
+        
+        # Calculate values safely
+        purchase_price = float(return_form.get('purchase_price', 0))
+        quantity = float(return_form.get('quantity', 0))
+        purchase_currency = return_form.get('purchase_currency', 'YER')
+        
+        # Calculate totals
+        total_supplier_currency = purchase_price * quantity
+        
+        # Convert to USD
+        exchange_rate = exchange_rates.get(purchase_currency, 1.0)
+        total_usd = total_supplier_currency * exchange_rate
+        
+        currency_data = [
+            ['Unit Price (Supplier Currency):', f"{purchase_price:.3f} {purchase_currency}"],
+            ['Total Value (Supplier Currency):', f"{total_supplier_currency:.2f} {purchase_currency}"],
+            ['USD Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"],
+            ['USD Equivalent (Reporting):', f"${total_usd:.2f} USD"],
+            ['Currency Last Updated:', datetime.now().strftime('%d/%m/%Y %H:%M')]
+        ]
+        
+        currency_table = Table(currency_data, colWidths=[2.5*inch, 3.2*inch])
+        currency_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.1, 0.5, 0.1)),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1.5, colors.Color(*branding['pdf_primary_color'])),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95), colors.Color(0.90, 1.0, 0.90)]),
+            ('PADDING', (0, 0), (-1, -1), 8),
+            # Highlight USD row
+            ('BACKGROUND', (0, 3), (-1, 3), colors.Color(0.8, 0.95, 0.8)),
+            ('FONTSIZE', (0, 1), (-1, 1), 11),
+            ('FONTSIZE', (0, 3), (-1, 3), 11)
+        ]))
+        
+        story.append(currency_table)
+        story.append(Spacer(1, 25))
+        
+        # Enhanced Approvals & Signatures Workflow
+        story.append(Paragraph("Approvals & Signatures Workflow", styles['Heading3']))
+        story.append(Spacer(1, 10))
+        
+        # Digital Approvals Section
+        story.append(Paragraph("Digital Approvals (Completed):", ParagraphStyle(
+            'DigitalTitle', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold',
+            textColor=colors.Color(0.0, 0.4, 0.0)
+        )))
+        story.append(Spacer(1, 8))
+        
+        # Supervisor Digital Approval
+        supervisor_status = "✅ APPROVED" if return_form.get('supervisor_approved') else "❌ PENDING"
+        supervisor_timestamp = return_form.get('supervisor_timestamp', 'Not completed')
+        supervisor_signature = return_form.get('supervisor_signature', 'Not signed')
+        
+        digital_approvals = [
+            ['Supervisor Approval:', supervisor_status, supervisor_timestamp],
+            ['Selected Supervisor:', return_form.get('selected_supervisor', 'Not selected'), ''],
+            ['Digital Signature:', supervisor_signature, ''],
+        ]
+        
+        # Section Manager Digital Approval 
+        section_status = "✅ APPROVED" if return_form.get('section_manager_approved') else "❌ PENDING"
+        section_timestamp = return_form.get('section_manager_timestamp', 'Not completed')
+        section_signature = return_form.get('section_manager_signature', 'Not signed')
+        
+        digital_approvals.extend([
+            ['Section Manager Approval:', section_status, section_timestamp],
+            ['Section Manager Name:', return_form.get('section_manager_name', 'Imad Qejji'), ''],
+            ['Digital Signature:', section_signature, ''],
+        ])
+        
+        digital_table = Table(digital_approvals, colWidths=[2.0*inch, 2.0*inch, 1.7*inch])
+        digital_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.0, 0.4, 0.0)),
+            ('BACKGROUND', (0, 3), (-1, 3), colors.Color(0.0, 0.4, 0.0)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 3), (-1, 3), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
+            ('ROWBACKGROUNDS', (0, 1), (-1, 2), [colors.Color(0.95, 1.0, 0.95)]),
+            ('ROWBACKGROUNDS', (0, 4), (-1, 5), [colors.Color(0.95, 1.0, 0.95)]),
+            ('PADDING', (0, 0), (-1, -1), 4)
+        ]))
+        
+        story.append(digital_table)
+        story.append(Spacer(1, 15))
+        
+        # Manual Signatures Section (For After-Printing)
+        story.append(Paragraph("Manual Signatures (Required After Printing):", ParagraphStyle(
+            'ManualTitle', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold',
+            textColor=colors.Color(0.8, 0.4, 0.0)
+        )))
+        story.append(Spacer(1, 8))
+        
+        manual_sigs = [
+            ['Department Head', 'Manual signature required after printing', ''],
+            ['Name: ___________________________', '', ''],
+            ['Signature: _______________________', 'Date: _______________', ''],
+            ['', '', ''],
+            ['Finance Department', 'Manual signature + official stamp required', ''],
+            ['Name: ___________________________', '', ''],
+            ['Signature: _______________________', 'Official Stamp', 'Date: _______________'],
+        ]
+        
+        manual_table = Table(manual_sigs, colWidths=[2.5*inch, 2.0*inch, 1.2*inch])
+        manual_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.8, 0.4, 0.0)),
+            ('BACKGROUND', (0, 4), (-1, 4), colors.Color(0.8, 0.0, 0.0)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
+            ('LINEBELOW', (0, 1), (0, 1), 1, colors.black),  # Name line
+            ('LINEBELOW', (0, 2), (0, 2), 1, colors.black),  # Signature line
+            ('LINEBELOW', (1, 2), (1, 2), 1, colors.black),  # Date line
+            ('LINEBELOW', (0, 5), (0, 5), 1, colors.black),  # Finance name line
+            ('LINEBELOW', (0, 6), (0, 6), 1, colors.black),  # Finance signature line
+            ('LINEBELOW', (2, 6), (2, 6), 1, colors.black),  # Finance date line
+            ('BOX', (1, 6), (1, 6), 2, colors.red),  # Stamp box
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('SPAN', (0, 3), (-1, 3))  # Empty row span
+        ]))
+        
+        story.append(manual_table)
+        story.append(Spacer(1, 15))
+        
+        # Export Validation Status
+        ready_for_export = return_form.get('ready_for_export', False)
+        validation_msg = "✅ EXPORT APPROVED - All digital approvals completed" if ready_for_export else "⚠️ EXPORT PENDING - Digital approvals required"
+        
+        story.append(Paragraph(f"Export Status: {validation_msg}", ParagraphStyle(
+            'ExportStatus', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold',
+            textColor=colors.Color(0.0, 0.6, 0.0) if ready_for_export else colors.Color(0.8, 0.4, 0.0),
+            alignment=1
+        )))
+        
+        # Notes section
         if return_form.get('notes'):
-            story.append(Spacer(1, 20))
+            story.append(Spacer(1, 15))
             story.append(Paragraph("Additional Notes", styles['Heading3']))
             story.append(Paragraph(return_form.get('notes', ''), styles['Normal']))
         
+        # Build the PDF
         doc.build(story)
         output.seek(0)
         
-        filename = f"return_form_{return_form.get('reference_number', return_id)}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        filename = f"enhanced_return_form_{return_form.get('reference_number', return_id)}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
         
         from fastapi.responses import Response
         
@@ -3223,7 +3400,8 @@ async def export_return_form_pdf(
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating return form PDF: {str(e)}")
+        logger.error(f"Error generating enhanced return form PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating enhanced return form PDF: {str(e)}")
 
 # Settings endpoints
 @api_router.get("/settings/email", response_model=EmailSettings)
