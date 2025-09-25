@@ -3017,20 +3017,30 @@ async def generate_enhanced_return_form_excel(return_form: dict):
                 except:
                     pass  # Skip if cell doesn't exist
         
-        # Auto-adjust columns
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
+        # Auto-adjust columns safely (avoiding MergedCell issues)
+        try:
+            from openpyxl.worksheet.cell_range import MergedCell
             
-            for cell in column:
-                try:
-                    if cell.value:
-                        max_length = max(max_length, len(str(cell.value)))
-                except:
-                    pass
-            
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = max(adjusted_width, 12)
+            for column_letter in ['A', 'B', 'C', 'D', 'E', 'F']:
+                max_length = 0
+                
+                for row_num in range(1, current_row + 1):
+                    try:
+                        cell = ws[f'{column_letter}{row_num}']
+                        # Skip merged cells to avoid MergedCell attribute error
+                        if isinstance(cell, MergedCell):
+                            continue
+                        if cell.value:
+                            max_length = max(max_length, len(str(cell.value)))
+                    except:
+                        pass
+                
+                adjusted_width = min(max_length + 2, 50)
+                ws.column_dimensions[column_letter].width = max(adjusted_width, 15)
+        except Exception as e:
+            # Fallback to default column widths if auto-adjust fails
+            for col_letter in ['A', 'B', 'C', 'D', 'E', 'F']:
+                ws.column_dimensions[col_letter].width = 20
         
         # Save to bytes
         output = io.BytesIO()
