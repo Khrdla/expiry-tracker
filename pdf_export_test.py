@@ -190,23 +190,33 @@ class PDFExportTester:
                 self.log_test(f"Waste Report {period.title()} Excel - Export", False, f"Exception: {str(e)}")
     
     def create_test_return_form(self):
-        """Create a test return form for PDF export testing"""
+        """Create return form with supervisor 'Mahmoud Badr' and SAR currency as per review request"""
         try:
+            # Calculate test values for SAR currency conversion
+            quantity = 98.5
+            purchase_price = 3.75
+            total_sar = quantity * purchase_price  # Should be 369.375 SAR
+            
             return_form_data = {
-                "reference_number": f"RTN-TEST-{int(datetime.now().timestamp())}",
-                "product_code": "TEST001",
-                "product_name": "Test Product for PDF Export",
-                "barcode": "1234567890123",
-                "quantity": 5,
-                "purchase_price": 10.50,
-                "purchase_currency": "YER",
-                "supplier": "Test Supplier Ltd",
-                "reason_for_return": "Quality issue - PDF export testing",
-                "department": "01-FMG",
-                "section": "Test Section",
-                "requested_by": ADMIN_USERNAME,
-                "approved_by": "Manager",
-                "notes": "This is a test return form created for PDF export verification"
+                "reference_number": f"RTN-GEANT-TEST-{int(datetime.now().timestamp())}",
+                "product_code": "SAR-TEST-001",
+                "product_name": "Test Product for SAR Conversion",
+                "barcode": "3222471081716",  # Apple Juice Box 1L from review request
+                "quantity": quantity,
+                "purchase_price": purchase_price,
+                "purchase_currency": "SAR",  # Critical: SAR currency for conversion testing
+                "supplier": "Test Supplier for GEANT",
+                "reason_for_return": "Testing professional GEANT PDF layout",
+                "selected_supervisor": "Mahmoud Badr",  # Critical: specific supervisor from review
+                "prepared_by_supervisor": "Mahmoud Badr",
+                "section_manager_name": "Imad Qejji",
+                "notes": f"Test return form for professional PDF export - Total: {total_sar} SAR should convert to ~$98.50 USD",
+                "supervisor_approved": True,  # Critical: digital approval
+                "supervisor_signature": "Mahmoud_Badr_signature",
+                "supervisor_timestamp": datetime.now().isoformat(),
+                "section_manager_approved": True,  # Critical: digital approval
+                "section_manager_signature": "Imad_Qejji_signature", 
+                "section_manager_timestamp": datetime.now().isoformat()
             }
             
             response = self.session.post(f"{BACKEND_URL}/returns", json=return_form_data)
