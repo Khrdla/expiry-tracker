@@ -2850,21 +2850,21 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         digital_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 0.5, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
             # Remove border from spacer row
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.1*inch))  # Reduced from 0.2*inch
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
@@ -3472,21 +3472,21 @@ async def export_return_form_pdf(
         digital_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 0.5, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
             # Remove border from spacer row
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.1*inch))  # Reduced from 0.2*inch
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
