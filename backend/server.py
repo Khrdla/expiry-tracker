@@ -3157,12 +3157,14 @@ async def export_return_form_pdf(
             sanitized_form[key] = sanitize_text(value)
         return_form = sanitized_form
         
-        from reportlab.lib.pagesizes import letter, A4
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
-        from reportlab.lib.units import inch
+        from reportlab.lib.units import inch, cm
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
         from io import BytesIO
+        import os
         
         # Enhanced Approval Validation - Same as main export endpoint
         if not return_form.get("supervisor_approved") or not return_form.get("section_manager_approved"):
