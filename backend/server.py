@@ -2629,6 +2629,27 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
     try:
         from fpdf import FPDF
         
+        # CRITICAL FIX: Sanitize all text data to prevent Unicode font issues
+        def sanitize_text(text):
+            """Remove problematic Unicode characters that Helvetica font can't handle"""
+            if not text:
+                return ""
+            text = str(text)
+            # Replace em-dash and en-dash with regular dash
+            text = text.replace('–', '-').replace('—', '-')
+            # Replace curly quotes with straight quotes
+            text = text.replace(''', "'").replace(''', "'")
+            text = text.replace('"', '"').replace('"', '"')
+            # Remove other problematic Unicode characters
+            text = text.encode('ascii', 'ignore').decode('ascii')
+            return text
+        
+        # Sanitize all return form data
+        sanitized_form = {}
+        for key, value in return_form.items():
+            sanitized_form[key] = sanitize_text(value)
+        return_form = sanitized_form
+        
         # Create PDF using fpdf2 for better compatibility
         pdf = FPDF()
         pdf.add_page()
