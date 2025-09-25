@@ -308,8 +308,9 @@ const EnhancedReturnForm = ({ user }) => {
     if (!returnData.section_manager_name.trim()) {
       setMessage({ 
         type: 'error', 
-        text: '❌ Please enter Section Manager name first!' 
+        text: '❌ Section Manager field is required!' 
       });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       return;
     }
 
@@ -321,12 +322,13 @@ const EnhancedReturnForm = ({ user }) => {
       section_manager_approved: true,
       section_manager_timestamp: timestamp,
       section_manager_signature: `Digital Signature - ${prev.section_manager_name}`,
-      ready_for_export: prev.supervisor_approved // Ready if both approvals
+      // Ready for export only if supervisor is selected AND section manager approved
+      ready_for_export: prev.selected_supervisor && prev.supervisor_approved
     }));
     
     setMessage({ 
       type: 'success', 
-      text: '✅ Section Manager approval added with timestamp!' 
+      text: '✅ Section Manager approval by Imad Qejji added with timestamp!' 
     });
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
