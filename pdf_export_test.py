@@ -219,7 +219,7 @@ class PDFExportTester:
                 "section_manager_timestamp": datetime.now().isoformat()
             }
             
-            response = self.session.post(f"{BACKEND_URL}/returns", json=return_form_data)
+            response = self.session.post(f"{BACKEND_URL}/return-forms", json=return_form_data)
             
             if response.status_code == 200:
                 result = response.json()
