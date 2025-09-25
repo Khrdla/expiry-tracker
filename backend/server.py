@@ -2884,15 +2884,15 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         manual_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
             ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
             ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
-            ('PADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
             # Remove border from spacer row
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
@@ -2901,7 +2901,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ]))
         
         story.append(manual_table)
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.08*inch))  # Reduced from 0.2*inch
         
         # Professional Footer
         footer_style = ParagraphStyle(
@@ -3506,15 +3506,15 @@ async def export_return_form_pdf(
         manual_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
             ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
             ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
-            ('PADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
             # Remove border from spacer row
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
@@ -3523,7 +3523,7 @@ async def export_return_form_pdf(
         ]))
         
         story.append(manual_table)
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.08*inch))  # Reduced from 0.2*inch
         
         # ===== ADDITIONAL NOTES SECTION (IF ANY) =====
         if return_form.get('notes'):
