@@ -660,19 +660,32 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Total Value</label>
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={`${returnData.total_value} ${returnData.purchase_currency}`}
-              readOnly
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg"
-            />
-            {usdValue > 0 && (
-              <div className="text-sm text-green-600 font-medium">
-                ≈ ${usdValue.toFixed(2)} USD
+          <label className="block text-sm font-medium text-gray-700 mb-2">Return Value</label>
+          <div className="space-y-3">
+            {/* Supplier Currency (Primary) */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm font-medium text-blue-800 mb-1">
+                Total Value (Supplier Currency)
               </div>
-            )}
+              <div className="text-lg font-bold text-blue-900">
+                {returnData.total_value} {returnData.purchase_currency}
+              </div>
+            </div>
+            
+            {/* USD Equivalent (Secondary) */}
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="text-sm font-medium text-green-800 mb-1">
+                USD Equivalent (Reporting)
+              </div>
+              <div className="text-lg font-bold text-green-900">
+                ${returnData.total_value_usd} USD
+              </div>
+              {currencyRates[returnData.purchase_currency] && (
+                <div className="text-xs text-green-600 mt-1">
+                  Rate: 1 {returnData.purchase_currency} = {currencyRates[returnData.purchase_currency].toFixed(4)} USD
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
