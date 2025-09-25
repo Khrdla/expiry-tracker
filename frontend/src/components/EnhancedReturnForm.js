@@ -795,20 +795,36 @@ const EnhancedReturnForm = ({ user }) => {
             )}
           </div>
 
-          {/* Manual Signature Lines */}
+          {/* Manual Signature Lines (For After-Printing) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="font-medium text-yellow-800">Department Head</div>
-              <div className="text-sm text-yellow-700 mt-1">Manual signature after printing</div>
-              <div className="mt-3 border-b border-yellow-300 w-full h-8"></div>
-              <div className="text-xs text-yellow-600 mt-1">Signature & Date</div>
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="font-medium text-orange-800 flex items-center">
+                <AlertTriangle size={16} className="mr-2" />
+                Department Head
+              </div>
+              <div className="text-sm text-orange-700 mt-1">
+                ⏳ Manual signature required after printing
+              </div>
+              <div className="text-xs text-orange-600 mt-2 p-2 bg-orange-100 rounded">
+                Remains blank for manual signing after form is printed
+              </div>
+              <div className="mt-3 border-b-2 border-dashed border-orange-300 w-full h-8"></div>
+              <div className="text-xs text-orange-600 mt-1">Signature & Date Line</div>
             </div>
             
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="font-medium text-yellow-800">Finance Department</div>
-              <div className="text-sm text-yellow-700 mt-1">Manual signature after printing</div>
-              <div className="mt-3 border-b border-yellow-300 w-full h-8"></div>
-              <div className="text-xs text-yellow-600 mt-1">Signature & Date</div>
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="font-medium text-red-800 flex items-center">
+                <AlertTriangle size={16} className="mr-2" />
+                Finance Department
+              </div>
+              <div className="text-sm text-red-700 mt-1">
+                ⏳ Manual signature + official stamp after printing
+              </div>
+              <div className="text-xs text-red-600 mt-2 p-2 bg-red-100 rounded">
+                Requires both signature AND official stamp after printing
+              </div>
+              <div className="mt-3 border-b-2 border-dashed border-red-300 w-full h-8"></div>
+              <div className="text-xs text-red-600 mt-1">Signature, Stamp & Date Line</div>
             </div>
           </div>
         </div>
