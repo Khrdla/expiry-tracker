@@ -2642,11 +2642,10 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             text = text.encode('ascii', 'ignore').decode('ascii')
             return text
         
-        # Sanitize all return form data
-        sanitized_form = {}
-        for key, value in return_form.items():
-            sanitized_form[key] = sanitize_text(value)
-        return_form = sanitized_form
+        # Apply light sanitization only to text fields that might have problematic characters
+        for key in ['notes', 'reason_for_return', 'supervisor_timestamp', 'section_manager_timestamp']:
+            if key in return_form and return_form[key]:
+                return_form[key] = sanitize_text(return_form[key])
         
         # PROFESSIONAL REPORTLAB LAYOUT FOR GEANT HYPERMARKET
         from reportlab.lib.pagesizes import A4
@@ -3253,11 +3252,10 @@ async def export_return_form_pdf(
             text = text.encode('ascii', 'ignore').decode('ascii')
             return text
         
-        # Sanitize all return form data
-        sanitized_form = {}
-        for key, value in return_form.items():
-            sanitized_form[key] = sanitize_text(value)
-        return_form = sanitized_form
+        # Apply light sanitization only to text fields that might have problematic characters
+        for key in ['notes', 'reason_for_return', 'supervisor_timestamp', 'section_manager_timestamp']:
+            if key in return_form and return_form[key]:
+                return_form[key] = sanitize_text(return_form[key])
         
         from reportlab.lib.pagesizes import A4
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
