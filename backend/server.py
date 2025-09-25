@@ -4703,6 +4703,50 @@ async def quick_update_rate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update exchange rate: {str(e)}")
 
+@api_router.get("/debug/pdf-test")
+async def debug_pdf_test():
+    """Debug endpoint to test PDF generation and identify issues"""
+    try:
+        from fpdf import FPDF
+        
+        # Create a simple test PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'PDF TEST - GEANT HYPERMARKET', 0, 1, 'C')
+        pdf.set_font('Arial', '', 12)
+        pdf.cell(0, 10, f'Generated: {datetime.now().strftime("%d/%m/%Y %H:%M")}', 0, 1, 'C')
+        pdf.cell(0, 10, 'This is a test PDF to verify generation is working.', 0, 1, 'C')
+        pdf.cell(0, 10, 'If you can open this file, PDF generation is working correctly.', 0, 1, 'C')
+        
+        pdf_content = pdf.output(dest='S').encode('latin1')
+        
+        # Enhanced headers for maximum compatibility
+        headers = {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": "attachment; filename=pdf_test_debug.pdf",
+            "Content-Length": str(len(pdf_content)),
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "X-Content-Type-Options": "nosniff",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+        
+        return Response(
+            content=pdf_content,
+            media_type="application/pdf",
+            headers=headers
+        )
+        
+    except Exception as e:
+        return {
+            "error": f"PDF test failed: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+            "message": "PDF generation is not working properly"
+        }
+
         raise HTTPException(status_code=500, detail="Failed to get supplier performance")
 
 # Include router after all endpoints are defined
