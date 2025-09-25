@@ -1,22 +1,13 @@
 #!/usr/bin/env python3
 """
-DIRECT BARCODE API TEST - Can the scanner read and fetch barcode data?
-
-This test focuses specifically on testing the barcode lookup API functionality
-to answer the critical question: Can the barcode scanner actually read barcodes 
-and fetch product data?
-
-Test Coverage:
-1. Authentication with admin credentials
-2. Barcode lookup API with known barcodes
-3. Product data verification
-4. Response format validation
-5. Mobile compatibility checks
+Enhanced Supplier Return Form System Testing
+Testing comprehensive return form functionality with supervisor dropdown, dual currency, and PDF exports
 """
 
 import requests
 import json
-import sys
+import os
+import time
 from datetime import datetime
 
 # Configuration
@@ -24,30 +15,34 @@ BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-# Known test barcodes from the review request
-TEST_BARCODES = [
-    "3222471081716",  # Known barcode 1
-    "9501100046987",  # Known barcode 2
-]
+# Test data from review request
+TEST_SUPERVISORS = ["Mahmoud Badr", "Abdelhamed Mostafa"]
+SECTION_MANAGER = "Imad Qejji"
+TEST_CURRENCIES = ["YER", "SAR", "EUR"]
+TEST_BARCODE = "3222471081716"  # Apple Juice Box 1L
 
-# Additional test barcodes from previous testing
-ADDITIONAL_BARCODES = [
-    "3222471052747",
-    "3222471075722", 
-    "3222471081273"
-]
-
-class BarcodeAPITester:
+class EnhancedReturnFormTester:
     def __init__(self):
         self.session = requests.Session()
         self.token = None
         self.test_results = []
-        self.total_tests = 0
-        self.passed_tests = 0
+        self.created_return_forms = []
         
-    def log_test(self, test_name, success, details=""):
+    def log_result(self, test_name, success, details="", response_time=0):
         """Log test result"""
-        self.total_tests += 1
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "response_time": f"{response_time:.0f}ms",
+            "timestamp": datetime.now().strftime("%H:%M:%S")
+        }
+        self.test_results.append(result)
+        print(f"{status} {test_name} ({response_time:.0f}ms)")
+        if details:
+            print(f"    Details: {details}")
         if success:
             self.passed_tests += 1
             status = "✅ PASS"
