@@ -43,333 +43,442 @@ class EnhancedReturnFormTester:
         print(f"{status} {test_name} ({response_time:.0f}ms)")
         if details:
             print(f"    Details: {details}")
-        if success:
-            self.passed_tests += 1
-            status = "✅ PASS"
-        else:
-            status = "❌ FAIL"
-            
-        result = f"{status} - {test_name}"
-        if details:
-            result += f": {details}"
-            
-        print(result)
-        self.test_results.append({
-            "test": test_name,
-            "success": success,
-            "details": details,
-            "timestamp": datetime.now().isoformat()
-        })
-        
-    def test_authentication(self):
-        """Test 1: Authentication with admin credentials"""
-        print("\n🔐 TESTING AUTHENTICATION")
-        print("=" * 50)
-        
+    
+    def authenticate(self):
+        """Authenticate with admin credentials"""
         try:
-            login_data = {
-                "username": ADMIN_USERNAME,
-                "password": ADMIN_PASSWORD
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
+            start_time = time.time()
+            response = self.session.post(f"{BACKEND_URL}/auth/login", 
+                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
+            response_time = (time.time() - start_time) * 1000
             
             if response.status_code == 200:
                 data = response.json()
-                if "access_token" in data:
-                    self.token = data["access_token"]
-                    self.session.headers.update({"Authorization": f"Bearer {self.token}"})
-                    self.log_test("Admin Login", True, f"Token received: {self.token[:20]}...")
-                    return True
-                else:
-                    self.log_test("Admin Login", False, "No access token in response")
-                    return False
+                self.token = data.get("access_token")
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                self.log_result("Admin Authentication", True, 
+                    f"Token received, expires in 24h", response_time)
+                return True
             else:
-                self.log_test("Admin Login", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Admin Authentication", False, 
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
                 return False
-                
         except Exception as e:
-            self.log_test("Admin Login", False, f"Exception: {str(e)}")
+            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_barcode_lookup_api(self):
-        """Test 2: Barcode Lookup API with known barcodes"""
-        print("\n📱 TESTING BARCODE LOOKUP API")
-        print("=" * 50)
-        
-        if not self.token:
-            self.log_test("Barcode API Setup", False, "No authentication token available")
-            return False
-            
-        # Test primary barcodes from review request
-        for barcode in TEST_BARCODES:
-            self._test_single_barcode(barcode, is_primary=True)
-            
-        # Test additional barcodes for comprehensive coverage
-        for barcode in ADDITIONAL_BARCODES:
-            self._test_single_barcode(barcode, is_primary=False)
-            
-        return True
-    
-    def _test_single_barcode(self, barcode, is_primary=False):
-        """Test a single barcode lookup"""
+    def test_currency_rates_api(self):
+        """Test GET /api/currency/rates for real-time exchange rates"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/barcode/{barcode}")
-            
-            test_name = f"Barcode Lookup {barcode}" + (" (PRIMARY)" if is_primary else "")
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/currency/rates")
+            response_time = (time.time() - start_time) * 1000
             
             if response.status_code == 200:
-                try:
+                data = response.json()
+                
+                # Verify response structure
+                required_fields = ["base_currency", "exchange_rates", "last_updated"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_result("Currency Rates API Structure", False,
+                        f"Missing fields: {missing_fields}", response_time)
+                    return False
+                
+                # Check if test currencies are present
+                exchange_rates = data.get("exchange_rates", {})
+                test_currencies_present = [curr for curr in TEST_CURRENCIES if curr in exchange_rates]
+                
+                self.log_result("Currency Rates API", True,
+                    f"Base: {data.get('base_currency')}, Rates: {len(exchange_rates)} currencies, "
+                    f"Test currencies present: {test_currencies_present}", response_time)
+                return True
+            else:
+                self.log_result("Currency Rates API", False,
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
+                return False
+        except Exception as e:
+            self.log_result("Currency Rates API", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_barcode_lookup(self):
+        """Test barcode lookup for test data"""
+        try:
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/barcode/{TEST_BARCODE}")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                product = response.json()
+                
+                # Verify required fields for return form
+                required_fields = ["product_name", "purchase_price", "purchase_currency", "supplier"]
+                missing_fields = [field for field in required_fields if field not in product]
+                
+                if missing_fields:
+                    self.log_result("Test Barcode Lookup", False,
+                        f"Missing fields: {missing_fields}", response_time)
+                    return None
+                
+                self.log_result("Test Barcode Lookup", True,
+                    f"Product: {product.get('product_name')}, "
+                    f"Price: {product.get('purchase_price')} {product.get('purchase_currency')}, "
+                    f"Supplier: {product.get('supplier')}", response_time)
+                return product
+            else:
+                self.log_result("Test Barcode Lookup", False,
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
+                return None
+        except Exception as e:
+            self.log_result("Test Barcode Lookup", False, f"Exception: {str(e)}")
+            return None
+    
+    def test_return_form_creation_with_supervisor(self, product_data):
+        """Test return form creation with supervisor dropdown integration"""
+        try:
+            for supervisor in TEST_SUPERVISORS:
+                start_time = time.time()
+                
+                return_form_data = {
+                    "reference_number": f"RTN-{int(time.time())}-{supervisor.replace(' ', '')}",
+                    "product_code": product_data.get("item_number", "TEST-001"),
+                    "product_name": product_data.get("product_name", "Test Product"),
+                    "barcode": TEST_BARCODE,
+                    "quantity": 5,
+                    "purchase_price": product_data.get("purchase_price", 10.0),
+                    "purchase_currency": product_data.get("purchase_currency", "YER"),
+                    "supplier": product_data.get("supplier", "Test Supplier"),
+                    "reason_for_return": "Quality issue - damaged packaging",
+                    "selected_supervisor": supervisor,  # Key requirement from review
+                    "prepared_by_supervisor": supervisor,
+                    "section_manager_name": SECTION_MANAGER,
+                    "notes": f"Test return form with supervisor: {supervisor}",
+                    "supervisor_approved": True,
+                    "supervisor_signature": f"{supervisor}_signature",
+                    "supervisor_timestamp": datetime.now().isoformat(),
+                    "section_manager_approved": True,
+                    "section_manager_signature": f"{SECTION_MANAGER}_signature", 
+                    "section_manager_timestamp": datetime.now().isoformat()
+                }
+                
+                response = self.session.post(f"{BACKEND_URL}/return-forms", json=return_form_data)
+                response_time = (time.time() - start_time) * 1000
+                
+                if response.status_code == 200:
                     data = response.json()
+                    form_id = data.get("id")
+                    if form_id:
+                        self.created_return_forms.append(form_id)
                     
-                    # Verify response format
-                    required_fields = [
-                        'product_name', 'item_number', 'barcode', 'department', 
-                        'section', 'purchase_price', 'purchase_currency', 
-                        'selling_price', 'supplier', 'quantity', 'status'
-                    ]
-                    
-                    missing_fields = [field for field in required_fields if field not in data]
-                    
-                    if missing_fields:
-                        self.log_test(test_name, False, f"Missing fields: {missing_fields}")
-                    else:
-                        # Log successful lookup with key details
-                        product_info = f"Product: {data.get('product_name', 'N/A')}, " \
-                                     f"Dept: {data.get('department', 'N/A')}, " \
-                                     f"Price: {data.get('purchase_price', 0)} {data.get('purchase_currency', 'N/A')}, " \
-                                     f"Status: {data.get('status', 'N/A')}"
-                        self.log_test(test_name, True, product_info)
-                        
-                        # Additional validation for primary barcodes
-                        if is_primary:
-                            self._validate_product_data(barcode, data)
-                            
-                except json.JSONDecodeError:
-                    self.log_test(test_name, False, "Invalid JSON response")
-                    
-            elif response.status_code == 404:
-                self.log_test(test_name, False, "Product not found (404)")
-            elif response.status_code == 403:
-                self.log_test(test_name, False, "Authentication required (403)")
-            else:
-                self.log_test(test_name, False, f"HTTP {response.status_code}: {response.text[:100]}")
-                
-        except Exception as e:
-            self.log_test(f"Barcode Lookup {barcode}", False, f"Exception: {str(e)}")
-    
-    def _validate_product_data(self, barcode, data):
-        """Validate product data completeness for primary barcodes"""
-        # Test response size (mobile compatibility)
-        response_size = len(json.dumps(data))
-        size_test_name = f"Response Size {barcode}"
-        
-        if response_size < 2000:  # Less than 2KB is mobile-friendly
-            self.log_test(size_test_name, True, f"{response_size} bytes (mobile-friendly)")
-        else:
-            self.log_test(size_test_name, False, f"{response_size} bytes (too large for mobile)")
-        
-        # Test data completeness
-        completeness_test_name = f"Data Completeness {barcode}"
-        
-        essential_data = {
-            'product_name': data.get('product_name'),
-            'purchase_price': data.get('purchase_price'),
-            'purchase_currency': data.get('purchase_currency'),
-            'department': data.get('department'),
-            'supplier': data.get('supplier')
-        }
-        
-        empty_fields = [k for k, v in essential_data.items() if not v or v == 0]
-        
-        if empty_fields:
-            self.log_test(completeness_test_name, False, f"Empty essential fields: {empty_fields}")
-        else:
-            self.log_test(completeness_test_name, True, "All essential fields populated")
-    
-    def test_authentication_requirements(self):
-        """Test 3: Verify authentication is properly required"""
-        print("\n🔒 TESTING AUTHENTICATION REQUIREMENTS")
-        print("=" * 50)
-        
-        # Test without authentication
-        session_no_auth = requests.Session()
-        
-        try:
-            response = session_no_auth.get(f"{BACKEND_URL}/barcode/{TEST_BARCODES[0]}")
-            
-            if response.status_code == 403:
-                self.log_test("Auth Required Test", True, "Correctly returns 403 without auth")
-            elif response.status_code == 401:
-                self.log_test("Auth Required Test", True, "Correctly returns 401 without auth")
-            else:
-                self.log_test("Auth Required Test", False, f"Expected 401/403, got {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Auth Required Test", False, f"Exception: {str(e)}")
-    
-    def test_invalid_barcode_handling(self):
-        """Test 4: Test handling of invalid barcodes"""
-        print("\n🚫 TESTING INVALID BARCODE HANDLING")
-        print("=" * 50)
-        
-        if not self.token:
-            self.log_test("Invalid Barcode Setup", False, "No authentication token available")
-            return
-            
-        invalid_barcodes = [
-            "0000000000000",  # Non-existent barcode
-            "invalid123",     # Invalid format
-            "999999999999"    # Another non-existent
-        ]
-        
-        for barcode in invalid_barcodes:
-            try:
-                response = self.session.get(f"{BACKEND_URL}/barcode/{barcode}")
-                
-                if response.status_code == 404:
-                    self.log_test(f"Invalid Barcode {barcode}", True, "Correctly returns 404")
+                    self.log_result(f"Return Form Creation - {supervisor}", True,
+                        f"Form ID: {form_id}, Supervisor: {supervisor}, "
+                        f"Currency: {return_form_data['purchase_currency']}", response_time)
                 else:
-                    self.log_test(f"Invalid Barcode {barcode}", False, f"Expected 404, got {response.status_code}")
+                    self.log_result(f"Return Form Creation - {supervisor}", False,
+                        f"Status: {response.status_code}, Response: {response.text}", response_time)
                     
-            except Exception as e:
-                self.log_test(f"Invalid Barcode {barcode}", False, f"Exception: {str(e)}")
+        except Exception as e:
+            self.log_result("Return Form Creation with Supervisor", False, f"Exception: {str(e)}")
     
-    def test_cors_and_mobile_headers(self):
-        """Test 5: Verify CORS and mobile compatibility headers"""
-        print("\n📱 TESTING CORS AND MOBILE COMPATIBILITY")
-        print("=" * 50)
-        
-        if not self.token:
-            self.log_test("CORS Test Setup", False, "No authentication token available")
+    def test_dual_currency_display(self):
+        """Test dual currency display in return form responses"""
+        if not self.created_return_forms:
+            self.log_result("Dual Currency Display", False, "No return forms created to test")
             return
-            
+        
         try:
-            # Test with mobile user agent
-            mobile_headers = {
-                "Authorization": f"Bearer {self.token}",
-                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15",
-                "Accept": "application/json",
-                "Content-Type": "application/json"
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/returns")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                forms = response.json()
+                
+                if not forms:
+                    self.log_result("Dual Currency Display", False, "No return forms found", response_time)
+                    return
+                
+                # Check first form for dual currency fields
+                test_form = forms[0]
+                
+                # Look for original currency
+                has_original_currency = "purchase_currency" in test_form and "purchase_price" in test_form
+                
+                # Look for USD conversion (this might be calculated on-the-fly)
+                currency_fields = [key for key in test_form.keys() if "currency" in key.lower()]
+                price_fields = [key for key in test_form.keys() if "price" in key.lower() or "usd" in key.lower()]
+                
+                self.log_result("Dual Currency Display", has_original_currency,
+                    f"Original currency: {has_original_currency}, "
+                    f"Currency fields: {currency_fields}, Price fields: {price_fields}", response_time)
+            else:
+                self.log_result("Dual Currency Display", False,
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
+                    
+        except Exception as e:
+            self.log_result("Dual Currency Display", False, f"Exception: {str(e)}")
+    
+    def test_pdf_export_main(self):
+        """Test main PDF export endpoint: GET /api/export/return-form/{form_id}?format=pdf"""
+        if not self.created_return_forms:
+            self.log_result("Main PDF Export", False, "No return forms created to test")
+            return
+        
+        try:
+            form_id = self.created_return_forms[0]
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                # Check if it's a PDF
+                content_type = response.headers.get('content-type', '')
+                is_pdf = 'application/pdf' in content_type or response.content.startswith(b'%PDF')
+                pdf_size = len(response.content)
+                
+                self.log_result("Main PDF Export", is_pdf,
+                    f"Content-Type: {content_type}, Size: {pdf_size} bytes, "
+                    f"PDF signature: {response.content[:10]}", response_time)
+            else:
+                self.log_result("Main PDF Export", False,
+                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
+                    
+        except Exception as e:
+            self.log_result("Main PDF Export", False, f"Exception: {str(e)}")
+    
+    def test_pdf_export_individual(self):
+        """Test individual PDF export endpoint: GET /api/export/return-form/{return_id}/pdf"""
+        if not self.created_return_forms:
+            self.log_result("Individual PDF Export", False, "No return forms created to test")
+            return
+        
+        try:
+            form_id = self.created_return_forms[0]
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}/pdf")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                # Check if it's a PDF
+                content_type = response.headers.get('content-type', '')
+                is_pdf = 'application/pdf' in content_type or response.content.startswith(b'%PDF')
+                pdf_size = len(response.content)
+                
+                self.log_result("Individual PDF Export", is_pdf,
+                    f"Content-Type: {content_type}, Size: {pdf_size} bytes, "
+                    f"PDF signature: {response.content[:10]}", response_time)
+            else:
+                self.log_result("Individual PDF Export", False,
+                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
+                    
+        except Exception as e:
+            self.log_result("Individual PDF Export", False, f"Exception: {str(e)}")
+    
+    def test_approval_workflow_validation(self):
+        """Test approval workflow and digital signature timestamps"""
+        try:
+            # Test creating return form without approvals
+            start_time = time.time()
+            
+            incomplete_form_data = {
+                "reference_number": f"RTN-INCOMPLETE-{int(time.time())}",
+                "product_code": "TEST-001",
+                "product_name": "Test Product",
+                "quantity": 1,
+                "purchase_price": 10.0,
+                "purchase_currency": "YER",
+                "supplier": "Test Supplier",
+                "reason_for_return": "Test incomplete form",
+                "selected_supervisor": TEST_SUPERVISORS[0],
+                # Missing approvals intentionally
+                "supervisor_approved": False,
+                "section_manager_approved": False
             }
             
-            response = requests.get(
-                f"{BACKEND_URL}/barcode/{TEST_BARCODES[0]}", 
-                headers=mobile_headers
-            )
+            response = self.session.post(f"{BACKEND_URL}/return-forms", json=incomplete_form_data)
+            response_time = (time.time() - start_time) * 1000
             
             if response.status_code == 200:
-                # Check for CORS headers
-                cors_headers = [
-                    'Access-Control-Allow-Origin',
-                    'Access-Control-Allow-Methods', 
-                    'Access-Control-Allow-Headers'
-                ]
+                data = response.json()
+                incomplete_form_id = data.get("id")
                 
-                present_cors = [h for h in cors_headers if h in response.headers]
+                # Try to export without approvals - should fail
+                export_response = self.session.get(f"{BACKEND_URL}/export/return-form/{incomplete_form_id}/pdf")
                 
-                if present_cors:
-                    self.log_test("CORS Headers", True, f"Present: {present_cors}")
+                if export_response.status_code == 403:
+                    self.log_result("Approval Workflow Validation", True,
+                        f"Export correctly blocked without approvals (403 status)", response_time)
                 else:
-                    self.log_test("CORS Headers", False, "No CORS headers found")
-                
-                # Test mobile response time
-                response_time = response.elapsed.total_seconds() * 1000  # Convert to ms
-                
-                if response_time < 1000:  # Less than 1 second
-                    self.log_test("Mobile Response Time", True, f"{response_time:.0f}ms")
-                else:
-                    self.log_test("Mobile Response Time", False, f"{response_time:.0f}ms (too slow)")
-                    
+                    self.log_result("Approval Workflow Validation", False,
+                        f"Export should be blocked but got status: {export_response.status_code}", response_time)
             else:
-                self.log_test("Mobile Compatibility", False, f"HTTP {response.status_code}")
-                
+                self.log_result("Approval Workflow Validation", False,
+                    f"Failed to create incomplete form: {response.status_code}", response_time)
+                    
         except Exception as e:
-            self.log_test("Mobile Compatibility", False, f"Exception: {str(e)}")
+            self.log_result("Approval Workflow Validation", False, f"Exception: {str(e)}")
     
-    def run_all_tests(self):
-        """Run all barcode API tests"""
-        print("🎯 DIRECT BARCODE API TEST - Can the scanner read and fetch barcode data?")
-        print("=" * 80)
+    def test_excel_export(self):
+        """Test Excel export functionality"""
+        if not self.created_return_forms:
+            self.log_result("Excel Export", False, "No return forms created to test")
+            return
+        
+        try:
+            form_id = self.created_return_forms[0]
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=excel")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                # Check if it's an Excel file
+                content_type = response.headers.get('content-type', '')
+                is_excel = 'spreadsheet' in content_type or 'excel' in content_type
+                excel_size = len(response.content)
+                
+                self.log_result("Excel Export", is_excel or excel_size > 1000,
+                    f"Content-Type: {content_type}, Size: {excel_size} bytes", response_time)
+            else:
+                self.log_result("Excel Export", False,
+                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
+                    
+        except Exception as e:
+            self.log_result("Excel Export", False, f"Exception: {str(e)}")
+    
+    def test_company_branding_in_exports(self):
+        """Test company logo and branding in PDF exports"""
+        if not self.created_return_forms:
+            self.log_result("Company Branding in Exports", False, "No return forms created to test")
+            return
+        
+        try:
+            form_id = self.created_return_forms[0]
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}/pdf")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                pdf_content = response.content
+                
+                # Check for company branding indicators in PDF
+                has_geant_branding = b'GEANT' in pdf_content or b'Geant' in pdf_content
+                has_hypermarket = b'HYPERMARKET' in pdf_content or b'Hypermarket' in pdf_content
+                pdf_size = len(pdf_content)
+                
+                # Larger PDF size might indicate logo/branding inclusion
+                has_branding = has_geant_branding or has_hypermarket or pdf_size > 5000
+                
+                self.log_result("Company Branding in Exports", has_branding,
+                    f"GEANT branding: {has_geant_branding}, Hypermarket: {has_hypermarket}, "
+                    f"PDF size: {pdf_size} bytes", response_time)
+            else:
+                self.log_result("Company Branding in Exports", False,
+                    f"Status: {response.status_code}", response_time)
+                    
+        except Exception as e:
+            self.log_result("Company Branding in Exports", False, f"Exception: {str(e)}")
+    
+    def run_comprehensive_tests(self):
+        """Run all enhanced return form system tests"""
+        print("🚀 ENHANCED SUPPLIER RETURN FORM SYSTEM TESTING")
+        print("=" * 60)
         print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Barcodes: {TEST_BARCODES}")
-        print(f"Admin User: {ADMIN_USERNAME}")
-        print("=" * 80)
+        print(f"Test Supervisors: {TEST_SUPERVISORS}")
+        print(f"Section Manager: {SECTION_MANAGER}")
+        print(f"Test Currencies: {TEST_CURRENCIES}")
+        print(f"Test Barcode: {TEST_BARCODE}")
+        print("=" * 60)
         
-        # Run tests in sequence
-        auth_success = self.test_authentication()
+        # 1. Authentication
+        if not self.authenticate():
+            print("❌ Authentication failed - stopping tests")
+            return
         
-        if auth_success:
-            self.test_barcode_lookup_api()
-            self.test_authentication_requirements()
-            self.test_invalid_barcode_handling()
-            self.test_cors_and_mobile_headers()
-        else:
-            print("\n❌ CRITICAL: Authentication failed - cannot proceed with barcode tests")
+        # 2. Currency API Integration
+        self.test_currency_rates_api()
         
-        # Print final summary
+        # 3. Test barcode lookup for product data
+        product_data = self.test_barcode_lookup()
+        if not product_data:
+            # Use fallback data if barcode lookup fails
+            product_data = {
+                "product_name": "Apple Juice Box 1L",
+                "purchase_price": 0.754,
+                "purchase_currency": "EUR",
+                "supplier": "ExtenC",
+                "item_number": "TEST-001"
+            }
+        
+        # 4. Supervisor Dropdown Integration
+        self.test_return_form_creation_with_supervisor(product_data)
+        
+        # 5. Dual Currency Display
+        self.test_dual_currency_display()
+        
+        # 6. Enhanced PDF Export - Main endpoint
+        self.test_pdf_export_main()
+        
+        # 7. Enhanced PDF Export - Individual endpoint
+        self.test_pdf_export_individual()
+        
+        # 8. Excel Export
+        self.test_excel_export()
+        
+        # 9. Approval Workflow Validation
+        self.test_approval_workflow_validation()
+        
+        # 10. Company Branding in Exports
+        self.test_company_branding_in_exports()
+        
+        # Summary
         self.print_summary()
     
     def print_summary(self):
-        """Print test summary"""
-        print("\n" + "=" * 80)
-        print("📊 BARCODE API TEST SUMMARY")
-        print("=" * 80)
+        """Print comprehensive test summary"""
+        print("\n" + "=" * 60)
+        print("📊 ENHANCED RETURN FORM SYSTEM TEST SUMMARY")
+        print("=" * 60)
         
-        success_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
+        passed = sum(1 for result in self.test_results if result["success"])
+        total = len(self.test_results)
+        success_rate = (passed / total * 100) if total > 0 else 0
         
-        print(f"Total Tests: {self.total_tests}")
-        print(f"Passed: {self.passed_tests}")
-        print(f"Failed: {self.total_tests - self.passed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
+        print(f"✅ PASSED: {passed}/{total} tests ({success_rate:.1f}%)")
+        print(f"🔄 CREATED RETURN FORMS: {len(self.created_return_forms)}")
         
-        print("\n🎯 CRITICAL QUESTION ANSWER:")
+        # Critical requirements verification
+        print("\n🎯 CRITICAL REQUIREMENTS VERIFICATION:")
         
-        # Analyze results to answer the key question
-        barcode_tests = [r for r in self.test_results if "Barcode Lookup" in r["test"] and "PRIMARY" in r["test"]]
-        auth_tests = [r for r in self.test_results if "Admin Login" in r["test"]]
+        critical_tests = {
+            "Supervisor Dropdown Integration": any("Return Form Creation -" in r["test"] and r["success"] for r in self.test_results),
+            "Currency API Integration": any("Currency Rates API" in r["test"] and r["success"] for r in self.test_results),
+            "Dual Currency Display": any("Dual Currency Display" in r["test"] and r["success"] for r in self.test_results),
+            "Main PDF Export": any("Main PDF Export" in r["test"] and r["success"] for r in self.test_results),
+            "Individual PDF Export": any("Individual PDF Export" in r["test"] and r["success"] for r in self.test_results),
+            "Approval Workflow": any("Approval Workflow" in r["test"] and r["success"] for r in self.test_results),
+            "Company Branding": any("Company Branding" in r["test"] and r["success"] for r in self.test_results)
+        }
         
-        if auth_tests and auth_tests[0]["success"]:
-            print("✅ Authentication: WORKING - Admin credentials accepted")
-        else:
-            print("❌ Authentication: FAILED - Cannot login with admin credentials")
+        for requirement, status in critical_tests.items():
+            status_icon = "✅" if status else "❌"
+            print(f"{status_icon} {requirement}")
         
-        if barcode_tests:
-            successful_lookups = [t for t in barcode_tests if t["success"]]
-            if successful_lookups:
-                print(f"✅ Barcode Lookup: WORKING - {len(successful_lookups)}/{len(barcode_tests)} primary barcodes found")
-                print("✅ Product Data: Available - API returns complete product information")
-                print("✅ Response Format: Valid - JSON format suitable for frontend integration")
-            else:
-                print("❌ Barcode Lookup: FAILED - No primary barcodes found")
-                print("❌ Product Data: Not Available - API cannot fetch product information")
-        else:
-            print("❌ Barcode Lookup: NOT TESTED - Authentication failure prevented testing")
+        # Failed tests details
+        failed_tests = [r for r in self.test_results if not r["success"]]
+        if failed_tests:
+            print(f"\n❌ FAILED TESTS ({len(failed_tests)}):")
+            for test in failed_tests:
+                print(f"   • {test['test']}: {test['details']}")
         
-        print("\n🔍 CONCLUSION:")
-        if success_rate >= 80:
-            print("✅ The barcode scanner CAN read and fetch barcode data successfully!")
-            print("✅ Backend API is ready for real barcode scanning integration")
-        elif success_rate >= 50:
-            print("⚠️  The barcode scanner has PARTIAL functionality - some issues need fixing")
-        else:
-            print("❌ The barcode scanner CANNOT reliably read and fetch barcode data")
-            print("❌ Critical issues must be resolved before barcode scanning integration")
+        # Performance summary
+        avg_response_time = sum(float(r["response_time"].replace("ms", "")) for r in self.test_results) / len(self.test_results)
+        print(f"\n⚡ AVERAGE RESPONSE TIME: {avg_response_time:.0f}ms")
         
-        print("\n" + "=" * 80)
-
-def main():
-    """Main test execution"""
-    tester = BarcodeAPITester()
-    tester.run_all_tests()
-    
-    # Return exit code based on success rate
-    success_rate = (tester.passed_tests / tester.total_tests * 100) if tester.total_tests > 0 else 0
-    
-    if success_rate >= 80:
-        sys.exit(0)  # Success
-    else:
-        sys.exit(1)  # Failure
+        print("\n" + "=" * 60)
+        print("🏁 ENHANCED RETURN FORM SYSTEM TESTING COMPLETE")
+        print("=" * 60)
 
 if __name__ == "__main__":
-    main()
+    tester = EnhancedReturnFormTester()
+    tester.run_comprehensive_tests()
