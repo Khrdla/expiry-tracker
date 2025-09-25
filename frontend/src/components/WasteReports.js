@@ -1048,8 +1048,6 @@ const EnhancedWasteReports = () => {
                   </div>
                 )}
               </div>
-
-              </div>
               
               {/* Enhanced Selected Product Info with All Master Data */}
               {selectedProduct && (
