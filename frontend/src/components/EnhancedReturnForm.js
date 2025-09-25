@@ -712,15 +712,20 @@ const EnhancedReturnForm = ({ user }) => {
       <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
           <Signature className="mr-2" size={20} />
-          Approvals & Signatures
+          Approvals & Signatures Workflow
         </h3>
         
         <div className="space-y-6">
-          {/* Supervisor Approval */}
+          {/* Supervisor Approval (From Dropdown) */}
           <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
             <div>
-              <div className="font-medium text-gray-800">Prepared by Supervisor</div>
-              <div className="text-sm text-gray-600">{returnData.prepared_by_supervisor}</div>
+              <div className="font-medium text-gray-800">Supervisor Approval</div>
+              <div className="text-sm text-gray-600">
+                {returnData.selected_supervisor ? 
+                  `Selected: ${returnData.selected_supervisor}` : 
+                  'No supervisor selected'
+                }
+              </div>
               {returnData.supervisor_approved && (
                 <>
                   <div className="text-sm text-green-600 font-medium mt-1">
@@ -729,11 +734,17 @@ const EnhancedReturnForm = ({ user }) => {
                   <div className="text-xs text-gray-500">{returnData.supervisor_signature}</div>
                 </>
               )}
+              {!returnData.selected_supervisor && (
+                <div className="text-sm text-red-600 mt-1">
+                  ⚠️ Please select a supervisor from the dropdown above
+                </div>
+              )}
             </div>
             {!returnData.supervisor_approved ? (
               <button
                 onClick={approveBySupervisor}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={!returnData.selected_supervisor}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckCircle size={16} className="inline mr-1" />
                 Approve
