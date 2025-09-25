@@ -2724,22 +2724,22 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             ['Generated On:', datetime.now().strftime('%d/%m/%Y %H:%M')]
         ]
         
-        ref_table = Table(ref_data, colWidths=[2.5*inch, 4*inch])
+        ref_table = Table(ref_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (0, -1), 12),
+            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
+            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
         ]))
         
         story.append(ref_table)
-        story.append(Spacer(1, 0.25*inch))
+        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
         
         # ===== PRODUCT INFORMATION SECTION =====
         story.append(Paragraph("PRODUCT INFORMATION", section_style))
@@ -3352,22 +3352,22 @@ async def export_return_form_pdf(
             ['Generated On:', datetime.now().strftime('%d/%m/%Y %H:%M')]
         ]
         
-        ref_table = Table(ref_data, colWidths=[2.5*inch, 4*inch])
+        ref_table = Table(ref_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (0, -1), 12),
+            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
+            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
         ]))
         
         story.append(ref_table)
-        story.append(Spacer(1, 0.25*inch))
+        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
         
         # ===== PRODUCT INFORMATION SECTION =====
         story.append(Paragraph("PRODUCT INFORMATION", section_style))
