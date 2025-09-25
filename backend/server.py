@@ -3117,6 +3117,20 @@ async def export_return_form_pdf(
         if not return_form:
             raise HTTPException(status_code=404, detail="Return form not found")
         
+        # Enhanced Approval Validation - Same as main export endpoint
+        if not return_form.get("supervisor_approved") or not return_form.get("section_manager_approved"):
+            raise HTTPException(
+                status_code=400, 
+                detail="Both Supervisor and Section Manager approvals required before export. Please complete digital signatures first."
+            )
+        
+        # Additional validation for supervisor selection
+        if not return_form.get("selected_supervisor"):
+            raise HTTPException(
+                status_code=400,
+                detail="Supervisor must be selected from dropdown (Mahmoud Badr or Abdelhamed Mostafa) before export"
+            )
+        
         # Get current exchange rates for USD conversion
         try:
             rates_response = await get_current_exchange_rates()
