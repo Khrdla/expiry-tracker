@@ -20,7 +20,7 @@ import time
 from datetime import datetime, timedelta
 
 # Configuration from review request
-BACKEND_URL = "https://stockmate-14.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 

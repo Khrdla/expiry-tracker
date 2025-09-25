@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://stockmate-14.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
@@ -126,7 +126,7 @@ class ImageFixVerificationTester:
             return False
         
         # Simulate the corrected frontend URL construction
-        frontend_backend_url = "https://stockmate-14.preview.emergentagent.com"
+        frontend_backend_url = "https://geant-inventory-2.preview.emergentagent.com"
         corrected_url = f"{frontend_backend_url}/api{image_url}"
         
         print(f"📋 Original image_url: {image_url}")
@@ -173,7 +173,7 @@ class ImageFixVerificationTester:
             self.log_test("URL Comparison", False, "No image_url in product")
             return False
         
-        frontend_backend_url = "https://stockmate-14.preview.emergentagent.com"
+        frontend_backend_url = "https://geant-inventory-2.preview.emergentagent.com"
         
         # Old (broken) construction
         old_url = f"{frontend_backend_url}{image_url}"
@@ -249,7 +249,7 @@ class ImageFixVerificationTester:
             image_url = self.target_product.get('image_url', '')
             print(f"✅ Target Product: {self.target_product.get('product_name', 'N/A')}")
             print(f"📋 Image URL: {image_url}")
-            print(f"🔧 Fixed URL: https://stockmate-14.preview.emergentagent.com/api{image_url}")
+            print(f"🔧 Fixed URL: https://geant-inventory-2.preview.emergentagent.com/api{image_url}")
         
         # Analyze results
         url_tests = [r for r in self.test_results if "URL" in r["test"]]

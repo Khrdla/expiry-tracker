@@ -6,7 +6,7 @@ Debug test for failing endpoints
 import requests
 import json
 
-BASE_URL = "https://stockmate-14.preview.emergentagent.com/api"
+BASE_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
