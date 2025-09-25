@@ -103,10 +103,22 @@ const EnhancedReturnForm = ({ user }) => {
     
     setReturnData(prev => ({
       ...prev,
-      total_value: totalOriginal.toFixed(2)
+      total_value: totalOriginal.toFixed(2),
+      total_value_usd: totalUSD.toFixed(2)
     }));
     
     setUsdValue(totalUSD);
+  };
+
+  // Handle supervisor selection and auto-fill prepared_by field
+  const handleSupervisorChange = (selectedValue) => {
+    setReturnData(prev => ({
+      ...prev,
+      selected_supervisor: selectedValue,
+      prepared_by_supervisor: selectedValue, // Auto-fill prepared by field
+      supervisor_approved: false, // Reset approval when supervisor changes
+      ready_for_export: false // Reset export readiness
+    }));
   };
 
   // Enhanced search with auto-suggestions
