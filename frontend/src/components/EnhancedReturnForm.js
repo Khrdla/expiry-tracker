@@ -275,8 +275,18 @@ const EnhancedReturnForm = ({ user }) => {
     setShowBarcodeScanner(false);
   };
 
-  // Approval functions with timestamps
+  // Enhanced approval function with validation
   const approveBySupervisor = () => {
+    // Validate supervisor selection
+    if (!returnData.selected_supervisor) {
+      setMessage({ 
+        type: 'error', 
+        text: '❌ Please select a supervisor from the dropdown first!' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      return;
+    }
+
     const now = new Date();
     const timestamp = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} – ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
@@ -284,12 +294,12 @@ const EnhancedReturnForm = ({ user }) => {
       ...prev,
       supervisor_approved: true,
       supervisor_timestamp: timestamp,
-      supervisor_signature: `Digital Signature - ${user?.full_name || user?.username || 'Supervisor'}`
+      supervisor_signature: `Digital Signature - ${prev.selected_supervisor}`
     }));
     
     setMessage({ 
       type: 'success', 
-      text: '✅ Supervisor approval added with timestamp!' 
+      text: `✅ Supervisor approval by ${returnData.selected_supervisor} added with timestamp!` 
     });
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
