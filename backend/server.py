@@ -2823,14 +2823,14 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         # ===== APPROVALS & SIGNATURES SECTION =====
         story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
         
-        # Digital Signatures Section
+        # Optimized Digital Signatures Section
         digital_title_style = ParagraphStyle(
             'DigitalTitle', 
             parent=styles['Normal'], 
-            fontSize=10, 
+            fontSize=9,     # Reduced from 10
             fontName='Helvetica-Bold',
             textColor=geant_green,
-            spaceAfter=5
+            spaceAfter=3    # Reduced from 5
         )
         
         story.append(Paragraph("Digital Signatures:", digital_title_style))
@@ -3445,14 +3445,14 @@ async def export_return_form_pdf(
         # ===== APPROVALS & SIGNATURES SECTION =====
         story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
         
-        # Digital Signatures Section
+        # Optimized Digital Signatures Section
         digital_title_style = ParagraphStyle(
             'DigitalTitle', 
             parent=styles['Normal'], 
-            fontSize=10, 
+            fontSize=9,     # Reduced from 10
             fontName='Helvetica-Bold',
             textColor=geant_green,
-            spaceAfter=5
+            spaceAfter=3    # Reduced from 5
         )
         
         story.append(Paragraph("Digital Signatures:", digital_title_style))
