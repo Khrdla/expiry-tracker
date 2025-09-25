@@ -333,13 +333,33 @@ const EnhancedReturnForm = ({ user }) => {
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
 
-  // Enhanced export function with approval checks
+  // Enhanced export function with strict validation
   const handleExport = async (format) => {
+    // Enhanced validation rules
+    if (!returnData.selected_supervisor) {
+      setMessage({ 
+        type: 'error', 
+        text: '❌ Please select a supervisor from the dropdown before export!' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      return;
+    }
+
+    if (!returnData.section_manager_name.trim()) {
+      setMessage({ 
+        type: 'error', 
+        text: '❌ Section Manager field must be filled before export!' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      return;
+    }
+
     if (!returnData.supervisor_approved || !returnData.section_manager_approved) {
       setMessage({ 
         type: 'error', 
-        text: '❌ Both Supervisor and Section Manager approvals required before export!' 
+        text: '❌ Both Supervisor and Section Manager digital approvals required before export!' 
       });
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
       return;
     }
 
