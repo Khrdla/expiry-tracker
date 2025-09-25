@@ -1190,7 +1190,7 @@ mobile_app_comprehensive_fixes:
 
 test_plan:
   current_focus: 
-    - "GEANT Hypermarket Professional PDF Layout Design Testing Completed"
+    - "Professional GEANT PDF Layout with Fixed Sanitization - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
