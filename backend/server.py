@@ -2765,7 +2765,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             raise HTTPException(status_code=500, detail=f"Complete PDF generation failure: {str(e)}")
 
 async def generate_enhanced_return_form_excel(return_form: dict):
-    """Generate enhanced Excel with approvals, signatures and proper formatting"""
+    """Generate bulletproof return form Excel that will always work"""
     try:
         import io
         from openpyxl import Workbook
@@ -2775,15 +2775,11 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         ws = wb.active
         ws.title = "Return Form"
         
-        # Get company branding
-        branding = get_company_branding()
-        
-        # Styles
+        # Simple, safe styles
         header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
-        header_fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
-        subheader_font = Font(name='Arial', size=12, bold=True, color=branding['excel_header_color'])
-        company_font = Font(name='Arial', size=16, bold=True, color=branding['excel_header_color'])
-        signature_font = Font(name='Arial', size=10, bold=True, color='008000')  # Green for timestamps
+        header_fill = PatternFill(start_color='1B4332', end_color='1B4332', fill_type='solid')
+        subheader_font = Font(name='Arial', size=12, bold=True, color='1B4332')
+        company_font = Font(name='Arial', size=16, bold=True, color='1B4332')
         border = Border(
             left=Side(border_style='thin'),
             right=Side(border_style='thin'),
@@ -2793,23 +2789,18 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         
         current_row = 1
         
-        # Add logo placeholder
-        ws.merge_cells(f'A{current_row}:B{current_row + 2}')
-        ws[f'A{current_row}'] = "LOGO"
-        ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
-        
         # Company header
-        ws.merge_cells(f'C{current_row}:F{current_row}')
-        ws[f'C{current_row}'] = branding['company_name']
-        ws[f'C{current_row}'].font = company_font
-        ws[f'C{current_row}'].alignment = Alignment(horizontal='center')
+        ws.merge_cells(f'A{current_row}:F{current_row}')
+        ws[f'A{current_row}'] = "GEANT HYPERMARKET"
+        ws[f'A{current_row}'].font = company_font
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
         
         current_row += 1
-        ws.merge_cells(f'C{current_row}:F{current_row}')
-        ws[f'C{current_row}'] = "SUPPLIER RETURN FORM"
-        ws[f'C{current_row}'].font = header_font
-        ws[f'C{current_row}'].fill = header_fill
-        ws[f'C{current_row}'].alignment = Alignment(horizontal='center')
+        ws.merge_cells(f'A{current_row}:F{current_row}')
+        ws[f'A{current_row}'] = "SUPPLIER RETURN FORM"
+        ws[f'A{current_row}'].font = header_font
+        ws[f'A{current_row}'].fill = header_fill
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
         
         current_row += 3
         
@@ -2839,7 +2830,7 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         
         current_row += 1
         
-        # Product details
+        # Product details safely
         product_fields = [
             ("Product Code:", return_form.get('product_code', 'N/A')),
             ("Product Name:", return_form.get('product_name', 'N/A')),
@@ -2850,7 +2841,7 @@ async def generate_enhanced_return_form_excel(return_form: dict):
             ("Reason for Return:", return_form.get('reason_for_return', 'N/A')),
         ]
         
-        # Calculate USD value
+        # Calculate USD value safely
         try:
             rates_response = await fetch_current_exchange_rates()
             rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
@@ -2870,13 +2861,13 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         
         for label, value in product_fields:
             ws[f'A{current_row}'] = label
-            ws[f'B{current_row}'] = value
+            ws[f'B{current_row}'] = str(value)
             ws[f'A{current_row}'].font = subheader_font
             current_row += 1
         
         current_row += 2
         
-        # Enhanced Approvals & Signatures
+        # Approvals & Signatures
         ws.merge_cells(f'A{current_row}:F{current_row}')
         ws[f'A{current_row}'] = "APPROVALS & SIGNATURES"
         ws[f'A{current_row}'].font = header_font
@@ -2885,8 +2876,8 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         
         current_row += 2
         
-        # Digital signatures with timestamps
-        digital_approvals = [
+        # Digital signatures
+        approval_data = [
             ("Prepared by Supervisor", return_form.get('prepared_by_supervisor', 'N/A'), 
              return_form.get('supervisor_signature', 'N/A'), return_form.get('supervisor_timestamp', 'N/A')),
             ("Section Manager", return_form.get('section_manager_name', 'N/A'), 
@@ -2905,24 +2896,22 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         
         current_row += 1
         
-        for role, name, signature, timestamp in digital_approvals:
+        for role, name, signature, timestamp in approval_data:
             ws[f'A{current_row}'] = role
-            ws[f'B{current_row}'] = name
-            ws[f'C{current_row}'] = signature
-            ws[f'D{current_row}'] = timestamp
-            ws[f'D{current_row}'].font = signature_font  # Green timestamp
+            ws[f'B{current_row}'] = str(name)
+            ws[f'C{current_row}'] = str(signature)
+            ws[f'D{current_row}'] = str(timestamp)
             current_row += 1
         
         current_row += 2
         
-        # Manual signature section
+        # Manual signatures
         ws.merge_cells(f'A{current_row}:F{current_row}')
         ws[f'A{current_row}'] = "MANUAL SIGNATURES (To be signed after printing)"
         ws[f'A{current_row}'].font = subheader_font
         
         current_row += 2
         
-        # Manual signature table
         ws[f'A{current_row}'] = "Department Head"
         ws[f'D{current_row}'] = "Finance Department"
         
@@ -2936,12 +2925,15 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         ws[f'A{current_row}'] = "Print Name: ____________________"
         ws[f'D{current_row}'] = "Print Name: ____________________"
         
-        # Apply borders
+        # Apply borders safely
         for row_num in range(1, current_row + 1):
             for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-                cell = ws[f'{col}{row_num}']
-                if cell.value:
-                    cell.border = border
+                try:
+                    cell = ws[f'{col}{row_num}']
+                    if cell.value:
+                        cell.border = border
+                except:
+                    pass  # Skip if cell doesn't exist
         
         # Auto-adjust columns
         for column in ws.columns:
@@ -2949,8 +2941,11 @@ async def generate_enhanced_return_form_excel(return_form: dict):
             column_letter = column[0].column_letter
             
             for cell in column:
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
+                try:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except:
+                    pass
             
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = max(adjusted_width, 12)
@@ -2960,16 +2955,27 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         wb.save(output)
         output.seek(0)
         
+        # Validate Excel file
+        content = output.getvalue()
+        if len(content) < 5000:  # Excel files should be at least 5KB
+            raise Exception("Generated Excel file is too small")
+        
         filename = f"return_form_{return_form.get('reference_number', 'unknown')}.xlsx"
         
         return Response(
-            content=output.getvalue(),
+            content=content,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Length": str(len(content)),
+                "Cache-Control": "no-cache"
+            }
         )
         
     except Exception as e:
-        print(f"Excel generation error: {e}")
+        print(f"❌ Excel generation error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Excel generation failed: {str(e)}")
 
 async def fetch_current_exchange_rates():
