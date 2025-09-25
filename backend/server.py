@@ -3431,17 +3431,40 @@ async def export_return_form_pdf(
         story.append(manual_table)
         story.append(Spacer(1, 0.2*inch))
         
-        # Notes section
+        # ===== ADDITIONAL NOTES SECTION (IF ANY) =====
         if return_form.get('notes'):
-            story.append(Spacer(1, 15))
-            story.append(Paragraph("Additional Notes", styles['Heading3']))
-            story.append(Paragraph(return_form.get('notes', ''), styles['Normal']))
+            story.append(Paragraph("ADDITIONAL NOTES", section_style))
+            notes_style = ParagraphStyle(
+                'NotesStyle',
+                parent=styles['Normal'],
+                fontSize=9,
+                fontName='Helvetica',
+                leftIndent=12,
+                rightIndent=12,
+                spaceAfter=5
+            )
+            story.append(Paragraph(return_form.get('notes', ''), notes_style))
+            story.append(Spacer(1, 0.15*inch))
+        
+        # ===== PROFESSIONAL FOOTER =====
+        footer_style = ParagraphStyle(
+            'FooterStyle',
+            parent=styles['Normal'],
+            fontSize=8,
+            fontName='Helvetica-Oblique',
+            textColor=colors.Color(0.5, 0.5, 0.5),
+            alignment=TA_CENTER,
+            spaceAfter=5
+        )
+        
+        footer_text = f"GEANT HYPERMARKET Inventory Management System | Generated: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        story.append(Paragraph(footer_text, footer_style))
         
         # Build the PDF
         doc.build(story)
         output.seek(0)
         
-        filename = f"enhanced_return_form_{return_form.get('reference_number', return_id)}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+        filename = f"GEANT_Return_Form_{return_form.get('reference_number', return_id)}.pdf"
         
         from fastapi.responses import Response
         
