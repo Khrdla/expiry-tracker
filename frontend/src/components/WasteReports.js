@@ -63,6 +63,18 @@ const EnhancedWasteReports = () => {
     };
   }, []);
 
+  // Enhanced search and barcode scanning states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  
+  // Barcode scanning refs
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const scannerActiveRef = useRef(false);
+
   const [wasteData, setWasteData] = useState([]);
   const [wasteEntries, setWasteEntries] = useState([]);
   const [loading, setLoading] = useState(true);
