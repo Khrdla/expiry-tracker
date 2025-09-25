@@ -3105,17 +3105,38 @@ async def export_return_form_pdf(
 ):
     """Export enhanced return form as PDF with supervisor dropdown, dual currency, and complete approval workflow"""
     try:
+        # Get return form from database
+        return_form = await db.return_forms.find_one({"id": return_id})
+        if not return_form:
+            raise HTTPException(status_code=404, detail="Return form not found")
+        
+        # CRITICAL FIX: Sanitize all text data to prevent Unicode font issues
+        def sanitize_text(text):
+            """Remove problematic Unicode characters that Helvetica font can't handle"""
+            if not text:
+                return ""
+            text = str(text)
+            # Replace em-dash and en-dash with regular dash
+            text = text.replace('–', '-').replace('—', '-')
+            # Replace curly quotes with straight quotes
+            text = text.replace(''', "'").replace(''', "'")
+            text = text.replace('"', '"').replace('"', '"')
+            # Remove other problematic Unicode characters
+            text = text.encode('ascii', 'ignore').decode('ascii')
+            return text
+        
+        # Sanitize all return form data
+        sanitized_form = {}
+        for key, value in return_form.items():
+            sanitized_form[key] = sanitize_text(value)
+        return_form = sanitized_form
+        
         from reportlab.lib.pagesizes import letter, A4
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
         from reportlab.lib.units import inch
         from io import BytesIO
-        
-        # Get return form from database
-        return_form = await db.return_forms.find_one({"id": return_id})
-        if not return_form:
-            raise HTTPException(status_code=404, detail="Return form not found")
         
         # Enhanced Approval Validation - Same as main export endpoint
         if not return_form.get("supervisor_approved") or not return_form.get("section_manager_approved"):
