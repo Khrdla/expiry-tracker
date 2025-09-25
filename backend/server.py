@@ -3239,29 +3239,41 @@ async def export_return_form_pdf(
         story.append(header_table)
         story.append(Spacer(1, 0.3*inch))
         
-        # Reference info with enhanced formatting
+        # ===== FORM DETAILS SECTION =====
+        section_style = ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Heading3'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            textColor=geant_green,
+            spaceAfter=8,
+            spaceBefore=5
+        )
+        
+        story.append(Paragraph("FORM DETAILS", section_style))
+        
         ref_data = [
             ['Reference Number:', return_form.get('reference_number', '')],
             ['Return Date:', return_form.get('return_date', '')],
-            ['Status:', return_form.get('status', 'draft').upper()],
-            ['Created By:', return_form.get('created_by', '')]
+            ['Generated On:', datetime.now().strftime('%d/%m/%Y %H:%M')]
         ]
         
-        ref_table = Table(ref_data, colWidths=[2.2*inch, 3.5*inch])
+        ref_table = Table(ref_data, colWidths=[2.5*inch, 4*inch])
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1.5, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.97, 0.99, 0.97)]),
-            ('PADDING', (0, 0), (-1, -1), 8)
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
         ]))
         
         story.append(ref_table)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 0.25*inch))
         
         # Supervisor Selection Section (NEW - From Dropdown)
         story.append(Paragraph("Supervisor Selection", styles['Heading3']))
