@@ -868,6 +868,21 @@ backend:
         agent: "testing"
         comment: "CRITICAL BARCODE SEARCH FIX APPLIED: ✅ ROOT CAUSE: WasteReports using wrong endpoint '/api/products/search' (405 Method Not Allowed) instead of '/api/search'. ✅ FIX IMPLEMENTED: Updated search endpoint and response processing. ✅ VERIFICATION: Barcode '3222474131326' now successfully returns 'Energy Drink Taurine 25Cl'. ✅ ALL TEST BARCODES WORKING: Authentication, barcode lookup, product search all confirmed working. Users can now search by barcode or product name in WasteReports form."
 
+  - task: "Single-Page PDF Layout Optimization for Return Forms"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Comprehensive optimizations implemented to fit Return Form PDF entirely on one page: Reduced margins (1.2cm/1.5cm → 0.7cm/0.7cm), optimized logo size (1.5\" → 1.1\"), compressed header font (16pt → 14pt), reduced table fonts (10pt → 9pt, 9pt → 8pt), minimized padding (6 → 3, 4 → 2), optimized section headers (12pt → 10pt), reduced all vertical spacing by 50%+."
+      - working: true
+        agent: "testing"
+        comment: "🎯 SINGLE-PAGE PDF OPTIMIZATION TESTING COMPLETED - COMPLETE SUCCESS: 100% (8/8 tests passed). ✅ CRITICAL REQUIREMENTS VERIFIED: 1) Admin Authentication: Login successful with credentials imadqejji/066380531I (437ms). 2) Product Lookup: Apple Juice Box 1L (3222471081716) found successfully with EUR pricing and ExtenC supplier. 3) Complete Return Form Creation: Successfully created with supervisor 'Mahmoud Badr', SAR currency (98.5 qty × 3.75 price = 369.375 SAR total), full digital approvals (supervisor_approved=true, section_manager_approved=true). 4) PDF Generation: Valid 50,929 byte PDF with proper application/pdf content-type. 5) PAGE COUNT ANALYSIS - CRITICAL SUCCESS: PDF contains exactly 1 page (requirement met perfectly). 6) Content Completeness: 100% (9/9 sections present) - GEANT HYPERMARKET branding, Form Details, Product Information, Return Value Calculation, Approvals & Signatures, Supervisor name, Apple Juice Box, SAR currency, barcode all verified. 7) Professional Quality: 80% quality score with proper GEANT branding and professional structure. 8) Print Readiness: Perfect A4 format compliance (595.3 x 841.9 points). ✅ OPTIMIZATION SUCCESS: All content fits entirely on one A4 page while maintaining readability and professional appearance. The comprehensive margin, font, and spacing optimizations have successfully achieved the single-page requirement without compromising content quality or GEANT branding standards."
+
 frontend:
   - task: "Fix company branding - remove hardcoded 'Geant Hypermarket'"
     implemented: true
