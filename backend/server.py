@@ -2627,19 +2627,16 @@ async def export_return_form_with_approvals(
 async def generate_enhanced_return_form_pdf(return_form: dict):
     """Generate PROFESSIONAL GEANT HYPERMARKET PDF with clean, export-ready layout"""
     try:
-        # CRITICAL FIX: Sanitize all text data to prevent Unicode font issues
+        # LIGHT SANITIZATION: Only fix problematic characters for Helvetica font
         def sanitize_text(text):
-            """Remove problematic Unicode characters that Helvetica font can't handle"""
+            """Fix only the most problematic Unicode characters for PDF fonts"""
             if not text:
                 return ""
             text = str(text)
-            # Replace em-dash and en-dash with regular dash
-            text = text.replace('–', '-').replace('—', '-')
-            # Replace curly quotes with straight quotes
-            text = text.replace(''', "'").replace(''', "'")
-            text = text.replace('"', '"').replace('"', '"')
-            # Remove other problematic Unicode characters
-            text = text.encode('ascii', 'ignore').decode('ascii')
+            # Replace only the most problematic characters
+            text = text.replace('–', '-').replace('—', '-')  # Em/en-dash to regular dash
+            text = text.replace(''', "'").replace(''', "'")  # Curly quotes to straight
+            text = text.replace('"', '"').replace('"', '"')  # Curly quotes to straight
             return text
         
         # Apply light sanitization only to text fields that might have problematic characters
@@ -3237,19 +3234,16 @@ async def export_return_form_pdf(
         if not return_form:
             raise HTTPException(status_code=404, detail="Return form not found")
         
-        # CRITICAL FIX: Sanitize all text data to prevent Unicode font issues
+        # LIGHT SANITIZATION: Only fix problematic characters for Helvetica font
         def sanitize_text(text):
-            """Remove problematic Unicode characters that Helvetica font can't handle"""
+            """Fix only the most problematic Unicode characters for PDF fonts"""
             if not text:
                 return ""
             text = str(text)
-            # Replace em-dash and en-dash with regular dash
-            text = text.replace('–', '-').replace('—', '-')
-            # Replace curly quotes with straight quotes
-            text = text.replace(''', "'").replace(''', "'")
-            text = text.replace('"', '"').replace('"', '"')
-            # Remove other problematic Unicode characters
-            text = text.encode('ascii', 'ignore').decode('ascii')
+            # Replace only the most problematic characters
+            text = text.replace('–', '-').replace('—', '-')  # Em/en-dash to regular dash
+            text = text.replace(''', "'").replace(''', "'")  # Curly quotes to straight
+            text = text.replace('"', '"').replace('"', '"')  # Curly quotes to straight
             return text
         
         # Apply light sanitization only to text fields that might have problematic characters
