@@ -2659,37 +2659,24 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             pdf.cell(0, 6, detail, 0, 1)
         pdf.ln(5)
         
-        # Create buffer and document
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        styles = getSampleStyleSheet()
-        story = []
+        # Supervisor Information Section
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(0, 102, 204)  # Blue color
+        pdf.cell(0, 8, 'SUPERVISOR SELECTION', 0, 1)
+        pdf.set_font('Arial', '', 10)
+        pdf.set_text_color(0, 0, 0)
         
-        # Simple, guaranteed working styles
-        title_style = styles['Title']
-        heading_style = styles['Heading2']
-        normal_style = styles['Normal']
+        selected_supervisor = return_form.get('selected_supervisor', 'Not Selected')
+        prepared_by = return_form.get('prepared_by_supervisor', 'N/A')
         
-        # Company header
-        story.append(Paragraph("GEANT HYPERMARKET", title_style))
-        story.append(Paragraph("SUPPLIER RETURN FORM", heading_style))
-        story.append(Spacer(1, 20))
-        
-        # Form information
-        current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
-        
-        basic_info = [
-            f"Reference Number: {return_form.get('reference_number', 'N/A')}",
-            f"Return Date: {return_form.get('return_date', 'N/A')}",
-            f"Prepared by: {return_form.get('prepared_by_supervisor', 'N/A')}",
-            f"Generated: {current_time}"
+        supervisor_info = [
+            f"Selected Supervisor: {selected_supervisor}",
+            f"Prepared by: {prepared_by}"
         ]
         
-        story.append(Paragraph("Form Details", heading_style))
-        for info in basic_info:
-            story.append(Paragraph(info, normal_style))
-        
-        story.append(Spacer(1, 20))
+        for info in supervisor_info:
+            pdf.cell(0, 6, info, 0, 1)
+        pdf.ln(5)
         
         # Product information
         story.append(Paragraph("Product Information", heading_style))
