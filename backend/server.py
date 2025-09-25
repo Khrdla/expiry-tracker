@@ -2625,10 +2625,8 @@ async def export_return_form_with_approvals(
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 async def generate_enhanced_return_form_pdf(return_form: dict):
-    """Generate enhanced return form PDF with supervisor dropdown, currency, and branding"""
+    """Generate PROFESSIONAL GEANT HYPERMARKET PDF with clean, export-ready layout"""
     try:
-        from fpdf import FPDF
-        
         # CRITICAL FIX: Sanitize all text data to prevent Unicode font issues
         def sanitize_text(text):
             """Remove problematic Unicode characters that Helvetica font can't handle"""
@@ -2649,6 +2647,66 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         for key, value in return_form.items():
             sanitized_form[key] = sanitize_text(value)
         return_form = sanitized_form
+        
+        # PROFESSIONAL REPORTLAB LAYOUT FOR GEANT HYPERMARKET
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch, cm
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+        from io import BytesIO
+        import os
+        
+        # Professional A4 layout with margins
+        output = BytesIO()
+        doc = SimpleDocTemplate(
+            output, 
+            pagesize=A4,
+            topMargin=1.2*cm,
+            bottomMargin=1.5*cm,
+            leftMargin=2*cm,
+            rightMargin=2*cm
+        )
+        
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # GEANT HYPERMARKET Brand Colors (Professional Green Theme)
+        geant_green = colors.Color(0.1, 0.4, 0.2)  # Dark Green
+        geant_light_green = colors.Color(0.85, 0.95, 0.88)  # Light Green Background
+        geant_accent = colors.Color(0.2, 0.6, 0.3)  # Medium Green
+        
+        # ===== HEADER SECTION WITH LOGO =====
+        header_data = []
+        
+        # Try to add company logo
+        logo_path = '/app/frontend/public/geant-logo.jpeg'
+        if os.path.exists(logo_path):
+            try:
+                logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+                header_data = [
+                    [logo, '', 'GEANT HYPERMARKET\nSupplier Return Form'],
+                ]
+            except:
+                header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
+        else:
+            header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
+        
+        header_table = Table(header_data, colWidths=[2*inch, 1*inch, 4*inch])
+        header_table.setStyle(TableStyle([
+            ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (2, 0), (2, 0), 16),
+            ('TEXTCOLOR', (2, 0), (2, 0), geant_green),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        
+        story.append(header_table)
+        story.append(Spacer(1, 0.3*inch))
         
         # Create PDF using fpdf2 for better compatibility
         pdf = FPDF()
