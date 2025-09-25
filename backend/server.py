@@ -3187,43 +3187,55 @@ async def export_return_form_pdf(
         except:
             exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
+        # Professional A4 layout with margins
         output = BytesIO()
-        doc = SimpleDocTemplate(output, pagesize=A4, topMargin=0.5*inch)
-        styles = getSampleStyleSheet()
+        doc = SimpleDocTemplate(
+            output, 
+            pagesize=A4,
+            topMargin=1.2*cm,
+            bottomMargin=1.5*cm,
+            leftMargin=2*cm,
+            rightMargin=2*cm
+        )
         
+        styles = getSampleStyleSheet()
         story = []
         
-        # Get company branding
-        branding = get_company_branding()
+        # GEANT HYPERMARKET Brand Colors (Professional Green Theme)
+        geant_green = colors.Color(0.1, 0.4, 0.2)  # Dark Green
+        geant_light_green = colors.Color(0.85, 0.95, 0.88)  # Light Green Background
+        geant_accent = colors.Color(0.2, 0.6, 0.3)  # Medium Green
         
-        # Define enhanced title style
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            textColor=colors.Color(*branding['pdf_primary_color']),
-            alignment=1,
-            fontName='Helvetica-Bold',
-            spaceAfter=10
-        )
+        # ===== HEADER SECTION WITH LOGO =====
+        header_data = []
         
-        # Subtitle style
-        subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Heading3'],
-            fontSize=12,
-            textColor=colors.Color(*branding['pdf_accent_color']),
-            alignment=1,
-            fontName='Helvetica-Bold'
-        )
+        # Try to add company logo
+        logo_path = '/app/frontend/public/geant-logo.jpeg'
+        if os.path.exists(logo_path):
+            try:
+                logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+                header_data = [
+                    [logo, '', 'GEANT HYPERMARKET\nSupplier Return Form'],
+                ]
+            except:
+                header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
+        else:
+            header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
         
-        # Add company logo and header using helper function
-        add_logo_to_pdf_story(story)
+        header_table = Table(header_data, colWidths=[2*inch, 1*inch, 4*inch])
+        header_table.setStyle(TableStyle([
+            ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (2, 0), (2, 0), 16),
+            ('TEXTCOLOR', (2, 0), (2, 0), geant_green),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
         
-        # Document title
-        story.append(Paragraph("SUPPLIER RETURN FORM", title_style))
-        story.append(Paragraph("Enhanced Workflow with Dual Currency Display", subtitle_style))
-        story.append(Spacer(1, 15))
+        story.append(header_table)
+        story.append(Spacer(1, 0.3*inch))
         
         # Reference info with enhanced formatting
         ref_data = [
