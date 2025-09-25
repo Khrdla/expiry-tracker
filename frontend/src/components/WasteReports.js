@@ -1005,11 +1005,49 @@ const EnhancedWasteReports = () => {
                       handleProductSelect(searchResults[0]);
                     }
                   }}
-                  placeholder="Search by barcode or product name, then click result or press Enter..."
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                  placeholder="Search by barcode or product name..."
+                  className={`w-full pl-10 pr-16 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
                     selectedProduct ? 'border-green-500 bg-green-50' : 'border-gray-300'
                   }`}
                 />
+                
+                {/* Barcode Scanner Button */}
+                <button
+                  onClick={startBarcodeScanner}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                  title="Scan Barcode"
+                >
+                  <Camera size={20} />
+                </button>
+                
+                {/* Loading indicator */}
+                {searchLoading && (
+                  <div className="absolute right-12 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+                
+                {/* Auto-suggestion dropdown */}
+                {showSuggestions && searchResults.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {searchResults.slice(0, 5).map((product, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleProductSelect(product)}
+                        className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-800">{product.product_name}</div>
+                        <div className="text-sm text-gray-600">
+                          {product.barcode || product.item_number} • {product.supplier} • {product.purchase_price} {product.purchase_currency}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Dept: {product.department} • Expires: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
                 
                 {/* Enhanced Search Results Dropdown */}
                 {searchResults.length > 0 && !selectedProduct && (
