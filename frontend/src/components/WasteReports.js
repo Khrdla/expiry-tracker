@@ -1415,6 +1415,66 @@ const EnhancedWasteReports = () => {
         }}
       />
 
+      {/* Barcode Scanner Modal */}
+      {showBarcodeScanner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center">
+                <Camera className="mr-2 text-blue-600" size={20} />
+                Barcode Scanner
+              </h3>
+              <button 
+                onClick={stopBarcodeScanner}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+              >
+                <XCircle size={24} />
+              </button>
+            </div>
+            
+            <div className="relative mb-4">
+              <video 
+                ref={videoRef}
+                className="w-full h-48 bg-black rounded-lg"
+                playsInline
+                muted
+              />
+              <canvas 
+                ref={canvasRef}
+                className="hidden"
+              />
+              
+              {/* Scanner overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 border-2 border-red-500 bg-transparent rounded-lg"></div>
+              </div>
+              
+              {/* Corner guides */}
+              <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-red-400"></div>
+              <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-red-400"></div>
+              <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-red-400"></div>
+              <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-red-400"></div>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">
+                Position barcode within the red frame
+              </p>
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <Scan className="animate-pulse" size={16} />
+                <span>Scanning for barcodes...</span>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-blue-800">
+                💡 <strong>Tip:</strong> Make sure the barcode is well-lit and clearly visible. The scanner supports EAN, UPC, Code 128, and QR codes.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Waste Entry Modal */}
       <AddWasteEntryModal
         isOpen={showAddEntry}
