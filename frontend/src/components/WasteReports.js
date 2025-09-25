@@ -11,7 +11,10 @@ import {
   Package,
   Search,
   Camera,
-  X
+  X,
+  CheckCircle,
+  XCircle,
+  Scan
 } from 'lucide-react';
 import {
   BarChart,
