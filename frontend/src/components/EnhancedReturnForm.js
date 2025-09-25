@@ -537,6 +537,46 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
       </div>
 
+      {/* Supervisor Selection Section */}
+      <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center space-x-2 mb-4">
+          <User className="text-blue-600" size={20} />
+          <h3 className="text-lg font-semibold text-blue-800">Supervisor Selection</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Supervisor *</label>
+            <select
+              value={returnData.selected_supervisor}
+              onChange={(e) => handleSupervisorChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              {supervisorOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              This will auto-fill the "Prepared by" field
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Prepared by Supervisor</label>
+            <input
+              type="text"
+              value={returnData.prepared_by_supervisor}
+              readOnly
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg"
+              placeholder="Auto-filled from supervisor selection"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Product Details Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div>
