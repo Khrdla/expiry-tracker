@@ -3283,15 +3283,15 @@ async def export_return_form_pdf(
         except:
             exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
-        # Professional A4 layout with margins
+        # Optimized A4 layout with reduced margins for single-page fit
         output = BytesIO()
         doc = SimpleDocTemplate(
             output, 
             pagesize=A4,
-            topMargin=1.2*cm,
-            bottomMargin=1.5*cm,
-            leftMargin=2*cm,
-            rightMargin=2*cm
+            topMargin=0.7*cm,    # Reduced from 1.2cm
+            bottomMargin=0.7*cm,  # Reduced from 1.5cm
+            leftMargin=1.3*cm,    # Reduced from 2cm
+            rightMargin=1.3*cm    # Reduced from 2cm
         )
         
         styles = getSampleStyleSheet()
