@@ -999,9 +999,16 @@ async def create_return_form_enhanced(
         }
         
         # Store in database
-        await db.return_forms.insert_one(return_form)
+        result = await db.return_forms.insert_one(return_form)
         
-        return {"message": "Return form created successfully", "id": return_form["id"], "form": return_form}
+        # Remove MongoDB ObjectId for JSON serialization
+        return_form_response = {k: v for k, v in return_form.items() if k != '_id'}
+        
+        # Convert datetime to ISO string
+        if 'created_at' in return_form_response:
+            return_form_response['created_at'] = return_form_response['created_at'].isoformat()
+        
+        return {"message": "Return form created successfully", "id": return_form["id"], "form": return_form_response}
         
     except Exception as e:
         logger.error(f"Error creating enhanced return form: {str(e)}")
