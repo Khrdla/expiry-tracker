@@ -469,32 +469,32 @@ class PDFExportTester:
                 self.log_test("Auth Required - Return Form PDF", False, f"Exception: {str(e)}")
     
     def run_comprehensive_test(self):
-        """Run all PDF export tests"""
-        print("🔍 COMPREHENSIVE PDF EXPORT VERIFICATION TEST")
+        """Run URGENT PDF export tests focusing on GEANT professional layout"""
+        print("🚨 URGENT: Professional GEANT PDF Layout Testing")
         print("=" * 60)
         print(f"Backend URL: {BACKEND_URL}")
         print(f"Admin User: {ADMIN_USERNAME}")
+        print(f"Supervisor: Mahmoud Badr")
+        print(f"Test Currency: SAR")
+        print(f"Expected Conversion: 369.36 SAR → ~$98.50 USD (NOT $369.36)")
         print(f"Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
         
-        # Step 1: Authenticate
+        # Step 1: Authenticate with admin credentials
         if not self.authenticate():
             print("❌ Authentication failed. Cannot proceed with tests.")
             return
         
-        # Step 2: Test waste report PDF exports (PRIORITY)
-        self.test_waste_report_pdf_exports()
-        
-        # Step 3: Test waste report Excel exports
-        self.test_waste_report_excel_exports()
-        
-        # Step 4: Test return form PDF exports
+        # Step 2: Test return form PDF exports with GEANT professional layout (PRIORITY)
         self.test_return_form_pdf_export()
         
-        # Step 5: Test error handling
+        # Step 3: Test waste report PDF exports for comparison
+        self.test_waste_report_pdf_exports()
+        
+        # Step 4: Test error handling
         self.test_error_handling()
         
-        # Step 6: Test authentication requirements
+        # Step 5: Test authentication requirements
         self.test_authentication_requirements()
         
         # Final Results
