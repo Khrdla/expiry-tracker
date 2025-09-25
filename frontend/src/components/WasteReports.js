@@ -65,7 +65,6 @@ const EnhancedWasteReports = () => {
 
   // Enhanced search and barcode scanning states
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
