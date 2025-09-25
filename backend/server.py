@@ -2595,7 +2595,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         
         # Create buffer and document
         buffer = io.BytesIO()
-        doc = SimpleDocDocument(buffer, pagesize=A4)
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
         styles = getSampleStyleSheet()
         story = []
         
