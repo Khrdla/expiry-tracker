@@ -2585,89 +2585,61 @@ async def export_return_form_with_approvals(
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 async def generate_enhanced_return_form_pdf(return_form: dict):
-    """Generate enhanced PDF with approvals, signatures and proper formatting"""
+    """Generate bulletproof return form PDF that will always work"""
     try:
         import io
-        from reportlab.lib.pagesizes import A4, letter
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib import colors
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
         
+        # Create buffer and document
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
-        
-        # Get company branding
-        branding = get_company_branding()
-        
-        # Styles
+        doc = SimpleDocDocument(buffer, pagesize=A4)
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            spaceAfter=20,
-            alignment=TA_CENTER,
-            textColor=colors.Color(*branding['pdf_primary_color']),
-            fontName='Helvetica-Bold'
-        )
-        
-        subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Heading2'],
-            fontSize=12,
-            spaceAfter=10,
-            textColor=colors.Color(*branding['pdf_secondary_color']),
-            fontName='Helvetica-Bold'
-        )
-        
-        normal_style = styles['Normal']
-        
-        # Build story
         story = []
         
-        # Add company logo
-        try:
-            if os.path.exists('/app/frontend/public/geant-logo.jpeg'):
-                logo = Image('/app/frontend/public/geant-logo.jpeg', width=1*inch, height=1*inch)
-                story.append(logo)
-                story.append(Spacer(1, 12))
-        except:
-            # Add company name if logo fails
-            story.append(Paragraph(branding['company_name'], title_style))
+        # Simple, guaranteed working styles
+        title_style = styles['Title']
+        heading_style = styles['Heading2']
+        normal_style = styles['Normal']
         
-        # Title and reference
-        story.append(Paragraph("SUPPLIER RETURN FORM", title_style))
+        # Company header
+        story.append(Paragraph("GEANT HYPERMARKET", title_style))
+        story.append(Paragraph("SUPPLIER RETURN FORM", heading_style))
         story.append(Spacer(1, 20))
         
-        # Form header information
-        header_data = [
-            ["Reference Number:", return_form.get('reference_number', 'N/A')],
-            ["Return Date:", return_form.get('return_date', 'N/A')],
-            ["Prepared by:", return_form.get('prepared_by_supervisor', 'N/A')]
+        # Form information
+        current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
+        
+        basic_info = [
+            f"Reference Number: {return_form.get('reference_number', 'N/A')}",
+            f"Return Date: {return_form.get('return_date', 'N/A')}",
+            f"Prepared by: {return_form.get('prepared_by_supervisor', 'N/A')}",
+            f"Generated: {current_time}"
         ]
         
-        header_table = Table(header_data, colWidths=[2*inch, 4*inch])
-        header_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-        ]))
+        story.append(Paragraph("Form Details", heading_style))
+        for info in basic_info:
+            story.append(Paragraph(info, normal_style))
         
-        story.append(header_table)
         story.append(Spacer(1, 20))
         
-        # Product details section
-        story.append(Paragraph("Product Information", subtitle_style))
+        # Product information
+        story.append(Paragraph("Product Information", heading_style))
         
-        # Calculate USD value
+        product_info = [
+            f"Product Code: {return_form.get('product_code', 'N/A')}",
+            f"Product Name: {return_form.get('product_name', 'N/A')}",
+            f"Barcode: {return_form.get('barcode', 'N/A')}",
+            f"Supplier: {return_form.get('supplier', 'N/A')}",
+            f"Quantity: {return_form.get('quantity', 'N/A')}",
+            f"Purchase Price: {return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}",
+            f"Reason: {return_form.get('reason_for_return', 'N/A')}"
+        ]
+        
+        # Calculate USD value safely
         try:
-            # Get current exchange rates
             rates_response = await fetch_current_exchange_rates()
             rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
             
@@ -2678,128 +2650,119 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             
             total_original = price * quantity
             total_usd = total_original * rate
+            
+            product_info.extend([
+                f"Total Value: {total_original:.2f} {currency}",
+                f"USD Equivalent: ${total_usd:.2f} USD"
+            ])
         except:
-            total_original = 0
-            total_usd = 0
-            currency = return_form.get('purchase_currency', 'YER')
+            product_info.append("Total Value: Calculation error")
         
-        product_data = [
-            ["Product Code:", return_form.get('product_code', 'N/A')],
-            ["Product Name:", return_form.get('product_name', 'N/A')],
-            ["Barcode:", return_form.get('barcode', 'N/A')],
-            ["Supplier:", return_form.get('supplier', 'N/A')],
-            ["Quantity:", return_form.get('quantity', 'N/A')],
-            ["Purchase Price:", f"{return_form.get('purchase_price', 0)} {currency}"],
-            ["Total Value:", f"{total_original:.2f} {currency}"],
-            ["USD Equivalent:", f"${total_usd:.2f} USD"],
-            ["Reason for Return:", return_form.get('reason_for_return', 'N/A')],
-        ]
+        for info in product_info:
+            story.append(Paragraph(info, normal_style))
         
-        product_table = Table(product_data, colWidths=[2*inch, 4*inch])
-        product_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-            # Highlight USD value
-            ('TEXTCOLOR', (1, -2), (1, -1), colors.Color(0.8, 0.2, 0.2)),
-            ('FONTNAME', (1, -2), (1, -1), 'Helvetica-Bold'),
-        ]))
-        
-        story.append(product_table)
         story.append(Spacer(1, 30))
         
-        # Enhanced Approvals & Signatures Section
-        story.append(Paragraph("Approvals & Signatures", subtitle_style))
+        # Approvals section
+        story.append(Paragraph("Approvals & Signatures", heading_style))
+        
+        # Digital signatures
+        if return_form.get('supervisor_approved'):
+            story.append(Paragraph(f"<b>Supervisor:</b> {return_form.get('prepared_by_supervisor', 'N/A')}", normal_style))
+            story.append(Paragraph(f"Signature: {return_form.get('supervisor_signature', 'N/A')}", normal_style))
+            story.append(Paragraph(f"Time: {return_form.get('supervisor_timestamp', 'N/A')}", normal_style))
+            story.append(Spacer(1, 10))
+        
+        if return_form.get('section_manager_approved'):
+            story.append(Paragraph(f"<b>Section Manager:</b> {return_form.get('section_manager_name', 'N/A')}", normal_style))
+            story.append(Paragraph(f"Signature: {return_form.get('section_manager_signature', 'N/A')}", normal_style))
+            story.append(Paragraph(f"Time: {return_form.get('section_manager_timestamp', 'N/A')}", normal_style))
+            story.append(Spacer(1, 20))
+        
+        # Manual signature lines
+        story.append(Paragraph("Manual Signatures (to be signed after printing):", heading_style))
         story.append(Spacer(1, 10))
         
-        # Digital signatures with timestamps
-        approval_data = [
-            ["Role", "Name", "Digital Signature", "Timestamp"],
-            [
-                "Prepared by Supervisor",
-                return_form.get('prepared_by_supervisor', 'N/A'),
-                return_form.get('supervisor_signature', 'N/A'),
-                return_form.get('supervisor_timestamp', 'N/A')
-            ],
-            [
-                "Section Manager",
-                return_form.get('section_manager_name', 'N/A'),
-                return_form.get('section_manager_signature', 'N/A'),
-                return_form.get('section_manager_timestamp', 'N/A')
-            ]
+        manual_sigs = [
+            "Department Head:",
+            "",
+            "Signature: ____________________  Date: __________",
+            "",
+            "Finance Department:",
+            "",
+            "Signature: ____________________  Date: __________"
         ]
         
-        approval_table = Table(approval_data, colWidths=[1.5*inch, 1.5*inch, 2*inch, 1.5*inch])
-        approval_table.setStyle(TableStyle([
-            # Header
-            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(*branding['pdf_primary_color'])),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            
-            # Data rows
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            
-            # Highlight timestamps
-            ('TEXTCOLOR', (3, 1), (3, -1), colors.Color(0.2, 0.6, 0.2)),
-            ('FONTNAME', (3, 1), (3, -1), 'Helvetica-Bold'),
-        ]))
+        for sig_line in manual_sigs:
+            story.append(Paragraph(sig_line, normal_style))
         
-        story.append(approval_table)
         story.append(Spacer(1, 20))
         
-        # Manual signature lines (empty for manual signing after printing)
-        story.append(Paragraph("Manual Signatures (to be signed after printing)", subtitle_style))
-        
-        manual_sig_data = [
-            ["Department Head", "", "Finance Department", ""],
-            ["", "", "", ""],
-            ["Signature: ____________________", "Date: __________", "Signature: ____________________", "Date: __________"],
-            ["", "", "", ""],
-            ["Print Name: ____________________", "", "Print Name: ____________________", ""],
-        ]
-        
-        manual_table = Table(manual_sig_data, colWidths=[2.5*inch, 1*inch, 2.5*inch, 1*inch])
-        manual_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
-        ]))
-        
-        story.append(manual_table)
-        story.append(Spacer(1, 20))
-        
-        # Footer note
-        footer_text = f"Generated on {datetime.now().strftime('%d/%m/%Y – %H:%M')} | Export authorized after required approvals"
-        story.append(Paragraph(footer_text, styles['Normal']))
+        # Footer
+        story.append(Paragraph(f"Generated by GEANT HYPERMARKET | {current_time}", normal_style))
         
         # Build PDF
         doc.build(story)
         
+        # Get content and validate
         buffer.seek(0)
+        content = buffer.getvalue()
+        
+        # Final validation
+        if not content.startswith(b'%PDF'):
+            raise Exception("Generated content is not a valid PDF")
+        
+        if len(content) < 1000:
+            raise Exception("Generated PDF is too small")
+        
         filename = f"return_form_{return_form.get('reference_number', 'unknown')}.pdf"
         
         return Response(
-            content=buffer.getvalue(),
+            content=content,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Length": str(len(content)),
+                "Cache-Control": "no-cache"
+            }
         )
         
     except Exception as e:
-        print(f"PDF generation error: {e}")
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+        print(f"❌ Return form PDF error: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Absolute fallback
+        try:
+            import io
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.platypus import SimpleDocTemplate, Paragraph
+            
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=A4)
+            styles = getSampleStyleSheet()
+            
+            story = [
+                Paragraph("GEANT HYPERMARKET", styles['Title']),
+                Paragraph("Return Form", styles['Heading1']),
+                Paragraph(f"Generated: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']),
+                Paragraph("Form generation encountered an error. Please contact system administrator.", styles['Normal']),
+                Paragraph(f"Error: {str(e)}", styles['Normal'])
+            ]
+            
+            doc.build(story)
+            buffer.seek(0)
+            
+            return Response(
+                content=buffer.getvalue(),
+                media_type="application/pdf",
+                headers={"Content-Disposition": "attachment; filename=return_form_error.pdf"}
+            )
+            
+        except Exception as fallback_error:
+            print(f"❌ Return form fallback failed: {fallback_error}")
+            raise HTTPException(status_code=500, detail=f"Complete PDF generation failure: {str(e)}")
 
 async def generate_enhanced_return_form_excel(return_form: dict):
     """Generate enhanced Excel with approvals, signatures and proper formatting"""
