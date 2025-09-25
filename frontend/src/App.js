@@ -9,7 +9,7 @@ import EnhancedDashboardGrid from "./components/EnhancedDashboardGrid";
 import EnhancedProductManagement from "./components/EnhancedProductManagement";
 import SettingsPanel from "./components/SettingsPanel";
 import ExpiryTracker from "./components/ExpiryTracker";
-import ReturnForm from "./components/ReturnForm";
+import EnhancedReturnForm from "./components/EnhancedReturnForm";
 import WasteReports from "./components/WasteReports";
 
 // Icons
