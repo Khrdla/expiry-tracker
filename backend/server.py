@@ -2678,8 +2678,12 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             pdf.cell(0, 6, info, 0, 1)
         pdf.ln(5)
         
-        # Product information
-        story.append(Paragraph("Product Information", heading_style))
+        # Product Information Section
+        pdf.set_font('Arial', 'B', 12)
+        pdf.set_text_color(0, 102, 204)
+        pdf.cell(0, 8, 'PRODUCT INFORMATION', 0, 1)
+        pdf.set_font('Arial', '', 10)
+        pdf.set_text_color(0, 0, 0)
         
         product_info = [
             f"Product Code: {return_form.get('product_code', 'N/A')}",
@@ -2688,10 +2692,20 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             f"Supplier: {return_form.get('supplier', 'N/A')}",
             f"Quantity: {return_form.get('quantity', 'N/A')}",
             f"Purchase Price: {return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}",
-            f"Reason: {return_form.get('reason_for_return', 'N/A')}"
+            f"Reason for Return: {return_form.get('reason_for_return', 'N/A')}"
         ]
         
-        # Calculate USD value safely
+        for info in product_info:
+            pdf.cell(0, 6, info, 0, 1)
+        pdf.ln(3)
+        
+        # Enhanced Currency Display Section
+        pdf.set_font('Arial', 'B', 11)
+        pdf.set_text_color(0, 150, 0)  # Green color
+        pdf.cell(0, 8, 'RETURN VALUE CALCULATION', 0, 1)
+        pdf.set_font('Arial', '', 10)
+        
+        # Calculate USD value safely with current exchange rates
         try:
             rates_response = await fetch_current_exchange_rates()
             rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
@@ -2704,17 +2718,23 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             total_original = price * quantity
             total_usd = total_original * rate
             
-            product_info.extend([
-                f"Total Value: {total_original:.2f} {currency}",
-                f"USD Equivalent: ${total_usd:.2f} USD"
-            ])
+            # Display both currencies prominently
+            pdf.set_text_color(0, 0, 150)  # Blue
+            pdf.set_font('Arial', 'B', 10)
+            pdf.cell(0, 7, f"Total Value (Supplier Currency): {total_original:.2f} {currency}", 0, 1)
+            
+            pdf.set_text_color(0, 150, 0)  # Green
+            pdf.cell(0, 7, f"USD Equivalent (Reporting): ${total_usd:.2f} USD", 0, 1)
+            
+            pdf.set_text_color(0, 0, 0)  # Black
+            pdf.set_font('Arial', '', 9)
+            pdf.cell(0, 6, f"Exchange Rate: 1 {currency} = {rate:.4f} USD", 0, 1)
         except:
-            product_info.append("Total Value: Calculation error")
+            pdf.set_text_color(200, 0, 0)  # Red for error
+            pdf.cell(0, 6, "Currency calculation error - please verify rates", 0, 1)
+            pdf.set_text_color(0, 0, 0)
         
-        for info in product_info:
-            story.append(Paragraph(info, normal_style))
-        
-        story.append(Spacer(1, 30))
+        pdf.ln(8)
         
         # Approvals section
         story.append(Paragraph("Approvals & Signatures", heading_style))
