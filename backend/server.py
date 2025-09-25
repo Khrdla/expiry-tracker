@@ -3306,13 +3306,13 @@ async def export_return_form_pdf(
         story.append(item_table)
         story.append(Spacer(1, 0.25*inch))
         
-        # Enhanced Currency Display Section (DUAL CURRENCY)
-        story.append(Paragraph("Return Value (Dual Currency Display)", styles['Heading3']))
+        # ===== RETURN VALUE CALCULATION SECTION =====
+        story.append(Paragraph("RETURN VALUE CALCULATION", section_style))
         
         # Calculate values safely
         purchase_price = float(return_form.get('purchase_price', 0))
         quantity = float(return_form.get('quantity', 0))
-        purchase_currency = return_form.get('purchase_currency', 'YER')
+        purchase_currency = return_form.get('purchase_currency', 'SAR')
         
         # Calculate totals
         total_supplier_currency = purchase_price * quantity
@@ -3321,33 +3321,32 @@ async def export_return_form_pdf(
         exchange_rate = exchange_rates.get(purchase_currency, 1.0)
         total_usd = total_supplier_currency * exchange_rate
         
+        # Professional currency display with clean formatting
         currency_data = [
-            ['Unit Price (Supplier Currency):', f"{purchase_price:.3f} {purchase_currency}"],
-            ['Total Value (Supplier Currency):', f"{total_supplier_currency:.2f} {purchase_currency}"],
-            ['USD Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"],
-            ['USD Equivalent (Reporting):', f"${total_usd:.2f} USD"],
-            ['Currency Last Updated:', datetime.now().strftime('%d/%m/%Y %H:%M')]
+            ['Total Value (SAR):', f"{total_supplier_currency:.2f} {purchase_currency}"],
+            ['USD Equivalent:', f"${total_usd:.2f} USD"],
+            ['Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"]
         ]
         
-        currency_table = Table(currency_data, colWidths=[2.5*inch, 3.2*inch])
+        currency_table = Table(currency_data, colWidths=[2.5*inch, 4*inch])
         currency_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.1, 0.5, 0.1)),
+            ('BACKGROUND', (0, 0), (0, -1), geant_accent),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1.5, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95), colors.Color(0.90, 1.0, 0.90)]),
+            ('GRID', (0, 0), (-1, -1), 1, geant_green),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95)]),
             ('PADDING', (0, 0), (-1, -1), 8),
-            # Highlight USD row
-            ('BACKGROUND', (0, 3), (-1, 3), colors.Color(0.8, 0.95, 0.8)),
-            ('FONTSIZE', (0, 1), (-1, 1), 11),
-            ('FONTSIZE', (0, 3), (-1, 3), 11)
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
+            # Highlight main amounts
+            ('FONTSIZE', (0, 0), (-1, 1), 12),
         ]))
         
         story.append(currency_table)
-        story.append(Spacer(1, 25))
+        story.append(Spacer(1, 0.3*inch))
         
         # Enhanced Approvals & Signatures Workflow
         story.append(Paragraph("Approvals & Signatures Workflow", styles['Heading3']))
