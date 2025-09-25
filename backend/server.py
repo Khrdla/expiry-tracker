@@ -2704,15 +2704,15 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(header_table)
         story.append(Spacer(1, 0.15*inch))  # Reduced from 0.3*inch
         
-        # Define section style
+        # Optimized section style for single-page fit
         section_style = ParagraphStyle(
             'SectionHeader',
             parent=styles['Heading3'],
-            fontSize=12,
+            fontSize=10,    # Reduced from 12
             fontName='Helvetica-Bold',
             textColor=geant_green,
-            spaceAfter=8,
-            spaceBefore=5
+            spaceAfter=4,   # Reduced from 8
+            spaceBefore=3   # Reduced from 5
         )
         
         # ===== FORM DETAILS SECTION =====
