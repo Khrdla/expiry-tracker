@@ -3422,25 +3422,25 @@ async def export_return_form_pdf(
             ['Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"]
         ]
         
-        currency_table = Table(currency_data, colWidths=[2.5*inch, 4*inch])
+        currency_table = Table(currency_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         currency_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),   # Reduced from 11
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_accent),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, geant_green),
             ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95)]),
-            ('PADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (0, -1), 12),
-            # Highlight main amounts
-            ('FONTSIZE', (0, 0), (-1, 1), 12),
+            ('PADDING', (0, 0), (-1, -1), 4),    # Reduced from 8
+            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
+            # Highlight main amounts with smaller font
+            ('FONTSIZE', (0, 0), (-1, 1), 10),   # Reduced from 12
         ]))
         
         story.append(currency_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.15*inch))  # Reduced from 0.3*inch
         
         # ===== APPROVALS & SIGNATURES SECTION =====
         story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
