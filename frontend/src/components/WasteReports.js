@@ -86,10 +86,21 @@ const EnhancedWasteReports = () => {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [wasteQuantity, setWasteQuantity] = useState('');
   const [wasteReason, setWasteReason] = useState('damaged');
   const [pendingEntries, setPendingEntries] = useState([]);
+  
+  // Enhanced barcode scanning states
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Barcode scanning refs
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const scannerActiveRef = useRef(false);
   
   const [filterOptions, setFilterOptions] = useState({
     departments: [],
