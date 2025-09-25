@@ -2811,7 +2811,12 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         pdf.cell(0, 4, "This form requires manual signatures for Department Head and Finance after printing", 0, 0, 'C')
         
         # Generate PDF content
-        pdf_content = pdf.output(dest='S').encode('latin1')
+        pdf_content = pdf.output(dest='S')
+        # Handle both string and bytes output from different fpdf2 versions
+        if isinstance(pdf_content, str):
+            pdf_content = pdf_content.encode('latin1')
+        elif isinstance(pdf_content, bytearray):
+            pdf_content = bytes(pdf_content)
         
         # Validate PDF
         if len(pdf_content) < 2000:
