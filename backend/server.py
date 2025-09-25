@@ -3275,57 +3275,36 @@ async def export_return_form_pdf(
         story.append(ref_table)
         story.append(Spacer(1, 0.25*inch))
         
-        # Supervisor Selection Section (NEW - From Dropdown)
-        story.append(Paragraph("Supervisor Selection", styles['Heading3']))
-        supervisor_data = [
-            ['Selected Supervisor:', return_form.get('selected_supervisor', 'Not Selected')],
-            ['Prepared by Supervisor:', return_form.get('prepared_by_supervisor', 'Auto-filled from selection')],
-            ['Available Options:', 'Mahmoud Badr, Abdelhamed Mostafa']
-        ]
+        # ===== PRODUCT INFORMATION SECTION =====
+        story.append(Paragraph("PRODUCT INFORMATION", section_style))
         
-        supervisor_table = Table(supervisor_data, colWidths=[2.2*inch, 3.5*inch])
-        supervisor_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.2, 0.4, 0.8)),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 0.97, 1.0)]),
-            ('PADDING', (0, 0), (-1, -1), 6)
-        ]))
-        
-        story.append(supervisor_table)
-        story.append(Spacer(1, 20))
-        
-        # Product Information Section
-        story.append(Paragraph("Product Information", styles['Heading3']))
         item_data = [
             ['Product Code:', return_form.get('product_code', '')],
             ['Product Name:', return_form.get('product_name', '')],
             ['Barcode:', return_form.get('barcode', '') or 'N/A'],
-            ['Quantity:', str(return_form.get('quantity', 0))],
             ['Supplier:', return_form.get('supplier', '')],
-            ['Department/Section:', f"{return_form.get('department', '')} / {return_form.get('section', '')}"],
+            ['Quantity:', str(return_form.get('quantity', 0))],
+            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}"],
             ['Reason for Return:', return_form.get('reason_for_return', '')]
         ]
         
-        item_table = Table(item_data, colWidths=[2.2*inch, 3.5*inch])
+        item_table = Table(item_data, colWidths=[2.5*inch, 4*inch])
         item_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), colors.Color(*branding['pdf_accent_color'])),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.Color(*branding['pdf_primary_color'])),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 0.99, 0.98)]),
-            ('PADDING', (0, 0), (-1, -1), 6)
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
         ]))
         
         story.append(item_table)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 0.25*inch))
         
         # Enhanced Currency Display Section (DUAL CURRENCY)
         story.append(Paragraph("Return Value (Dual Currency Display)", styles['Heading3']))
