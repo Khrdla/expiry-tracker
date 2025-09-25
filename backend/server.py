@@ -3740,157 +3740,211 @@ async def generate_waste_report_excel(report_data: dict, period: str):
         )
 
 async def generate_waste_report_pdf(report_data: dict, period: str):
-    """Generate guaranteed working minimal PDF - no complex libraries"""
+    """Generate PDF using fpdf2 library for maximum compatibility"""
     try:
-        # Create the most basic PDF possible that will definitely work
-        pdf_content = f'''%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/Resources <<
-/Font <<
-/F1 4 0 R
->>
->>
-/MediaBox [0 0 612 792]
-/Contents 5 0 R
->>
-endobj
-
-4 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
-
-5 0 obj
-<<
-/Length 400
->>
-stream
-BT
-/F1 16 Tf
-72 720 Td
-(GEANT HYPERMARKET) Tj
-0 -20 Td
-/F1 14 Tf
-(WASTE REPORT - {period.upper()}) Tj
-0 -40 Td
-/F1 12 Tf
-(Generated: {datetime.now().strftime('%d/%m/%Y %H:%M')}) Tj
-0 -20 Td
-(Report Period: {period.title()}) Tj
-0 -40 Td
-/F1 14 Tf
-(CURRENCY TOTALS:) Tj
-0 -20 Td
-/F1 12 Tf'''
-
-        # Add currency data safely
+        # Try using fpdf2 for better compatibility
         try:
+            from fpdf import FPDF
+            
+            # Create PDF using fpdf2 (more compatible than ReportLab)
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font('Arial', 'B', 16)
+            
+            # Company header
+            pdf.cell(0, 10, 'GEANT HYPERMARKET', 0, 1, 'C')
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 10, f'WASTE REPORT - {period.upper()}', 0, 1, 'C')
+            pdf.ln(10)
+            
+            # Report details
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 8, 'Report Details:', 0, 1)
+            pdf.set_font('Arial', '', 10)
+            
+            current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
+            pdf.cell(0, 6, f'Report Period: {period.title()}', 0, 1)
+            pdf.cell(0, 6, f'Generated: {current_time}', 0, 1)
+            pdf.cell(0, 6, 'Report Type: Waste Management', 0, 1)
+            
+            # Add department/section if available
+            if report_data.get('department') and str(report_data['department']) != 'all':
+                pdf.cell(0, 6, f'Department: {str(report_data["department"])}', 0, 1)
+            
+            if report_data.get('section') and str(report_data['section']) != 'all':
+                pdf.cell(0, 6, f'Section: {str(report_data["section"])}', 0, 1)
+            
+            pdf.ln(10)
+            
+            # Currency totals
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 8, 'Waste Value Summary:', 0, 1)
+            pdf.set_font('Arial', '', 10)
+            
+            # Get exchange rates safely
+            try:
+                rates_response = await fetch_current_exchange_rates()
+                exchange_rates = rates_response.get('exchange_rates', {
+                    'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+                })
+            except:
+                exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
+            
+            # Process currency totals
             currency_totals = report_data.get('currency_totals', {})
-            y_pos = -20
+            if not currency_totals:
+                currency_totals = {'USD': 0}
+            
+            total_usd = 0
             for currency, amount in currency_totals.items():
                 if amount and float(amount) > 0:
-                    pdf_content += f'''
-{y_pos} Td
-({currency}: {float(amount):,.2f} {currency}) Tj'''
-                    y_pos -= 15
-        except:
-            pdf_content += '''
--20 Td
-(No currency data available) Tj'''
-
-        pdf_content += f'''
-0 -40 Td
-/F1 10 Tf
-(Total Entries: {report_data.get('total_entries', 0)}) Tj
-0 -15 Td
-(Total Quantity: {report_data.get('total_quantity_wasted', 0)}) Tj
-ET
-endstream
-endobj
-
-xref
-0 6
-0000000000 65535 f 
-0000000010 00000 n 
-0000000053 00000 n 
-0000000125 00000 n 
-0000000348 00000 n 
-0000000565 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-{len(pdf_content.encode('utf-8')) + 50}
-%%EOF'''
-
-        # Convert to bytes
-        pdf_bytes = pdf_content.encode('utf-8')
-        
-        print(f"Generated PDF size: {len(pdf_bytes)} bytes")
-        print(f"PDF starts correctly: {pdf_bytes.startswith(b'%PDF')}")
-        print(f"PDF ends correctly: {pdf_bytes.endswith(b'%%EOF')}")
+                    try:
+                        amount_float = float(amount)
+                        rate = float(exchange_rates.get(currency, 1.0))
+                        usd_amount = amount_float * rate
+                        total_usd += usd_amount
+                        
+                        pdf.cell(0, 6, f'{currency}: {amount_float:,.2f} {currency} = ${usd_amount:,.2f} USD', 0, 1)
+                    except (ValueError, TypeError):
+                        pdf.cell(0, 6, f'{currency}: {amount} {currency} (Invalid amount)', 0, 1)
+            
+            if total_usd > 0:
+                pdf.ln(5)
+                pdf.set_font('Arial', 'B', 10)
+                pdf.cell(0, 6, f'Total USD Value: ${total_usd:,.2f}', 0, 1)
+            
+            pdf.ln(10)
+            
+            # Summary statistics
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 8, 'Summary Statistics:', 0, 1)
+            pdf.set_font('Arial', '', 10)
+            
+            pdf.cell(0, 6, f'Total Entries: {report_data.get("total_entries", 0)}', 0, 1)
+            pdf.cell(0, 6, f'Total Quantity Wasted: {report_data.get("total_quantity_wasted", 0)}', 0, 1)
+            pdf.cell(0, 6, f'Report Generated: {current_time}', 0, 1)
+            pdf.cell(0, 6, 'Status: Complete', 0, 1)
+            
+            # Footer
+            pdf.ln(20)
+            pdf.set_font('Arial', 'I', 8)
+            pdf.cell(0, 4, 'Generated by GEANT HYPERMARKET Inventory Management System', 0, 0, 'C')
+            
+            # Get PDF content as bytes
+            pdf_content = pdf.output(dest='S').encode('latin1')
+            
+            print(f"✅ FPDF2 generated PDF size: {len(pdf_content)} bytes")
+            
+        except ImportError:
+            print("❌ FPDF2 not available, falling back to manual PDF creation")
+            raise Exception("FPDF2 not available")
         
         filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         
         return Response(
-            content=pdf_bytes,
+            content=pdf_content,
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f"attachment; filename={filename}",
-                "Content-Length": str(len(pdf_bytes)),
+                "Content-Length": str(len(pdf_content)),
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
-                "Expires": "0"
+                "Expires": "0",
+                "X-Content-Type-Options": "nosniff",
+                "Content-Transfer-Encoding": "binary"
             }
         )
         
     except Exception as e:
-        print(f"❌ Even minimal PDF failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ FPDF2 failed: {e}, trying ReportLab fallback")
         
-        # Ultimate fallback - return plain text as PDF (for debugging)
-        fallback_content = f"""GEANT HYPERMARKET
+        # Fallback to ReportLab with absolute minimal approach
+        try:
+            import io
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+            
+            # Simple text-only PDF
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(72, height - 100, "GEANT HYPERMARKET")
+            
+            c.setFont("Helvetica-Bold", 14)  
+            c.drawString(72, height - 130, f"WASTE REPORT - {period.upper()}")
+            
+            c.setFont("Helvetica", 12)
+            y = height - 170
+            
+            current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
+            c.drawString(72, y, f"Generated: {current_time}")
+            y -= 20
+            c.drawString(72, y, f"Report Period: {period.title()}")
+            y -= 20
+            
+            # Add currency data
+            currency_totals = report_data.get('currency_totals', {})
+            if currency_totals:
+                y -= 20
+                c.drawString(72, y, "Currency Totals:")
+                y -= 15
+                
+                for currency, amount in currency_totals.items():
+                    if amount and float(amount) > 0:
+                        c.drawString(90, y, f"{currency}: {float(amount):,.2f} {currency}")
+                        y -= 15
+            
+            y -= 20
+            c.drawString(72, y, f"Total Entries: {report_data.get('total_entries', 0)}")
+            y -= 15
+            c.drawString(72, y, f"Total Quantity: {report_data.get('total_quantity_wasted', 0)}")
+            
+            c.save()
+            buffer.seek(0)
+            
+            pdf_content = buffer.getvalue()
+            print(f"✅ ReportLab Canvas generated PDF size: {len(pdf_content)} bytes")
+            
+            filename = f"waste_report_{period}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            
+            return Response(
+                content=pdf_content,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}",
+                    "Content-Length": str(len(pdf_content)),
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                }
+            )
+            
+        except Exception as canvas_error:
+            print(f"❌ ReportLab Canvas also failed: {canvas_error}")
+            
+            # Last resort - return debug info as text
+            debug_content = f"""GEANT HYPERMARKET
 WASTE REPORT - {period.upper()}
 
+DEBUGGING INFORMATION:
 Generated: {datetime.now().strftime('%d/%m/%Y %H:%M')}
 Report Period: {period.title()}
 
-Total Entries: {report_data.get('total_entries', 0)}
-Total Quantity Wasted: {report_data.get('total_quantity_wasted', 0)}
+FPDF2 Error: {str(e)}
+Canvas Error: {str(canvas_error)}
 
-Error: PDF generation failed - {str(e)}
-This is a fallback text response for debugging.
+Total Entries: {report_data.get('total_entries', 0)}
+Total Quantity: {report_data.get('total_quantity_wasted', 0)}
+
+This is a debug response. Please check server logs for PDF generation errors.
+Contact system administrator if this issue persists.
 """
-        
-        return Response(
-            content=fallback_content.encode('utf-8'),
-            media_type="text/plain",
-            headers={"Content-Disposition": f"attachment; filename=waste_report_{period}_error.txt"}
-        )
+            
+            return Response(
+                content=debug_content.encode('utf-8'),
+                media_type="text/plain",
+                headers={"Content-Disposition": f"attachment; filename=debug_waste_report_{period}.txt"}
+            )
 
 # =============================================================================
 # SYSTEM RESET API ENDPOINT
