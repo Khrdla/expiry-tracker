@@ -756,18 +756,21 @@ const EnhancedReturnForm = ({ user }) => {
             )}
           </div>
 
-          {/* Section Manager Approval */}
+          {/* Section Manager Approval (Default: Imad Qejji) */}
           <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
             <div className="flex-1 mr-4">
-              <div className="font-medium text-gray-800 mb-2">Section Manager</div>
+              <div className="font-medium text-gray-800 mb-2">Section Manager (Digital Signature)</div>
               <input
                 type="text"
-                placeholder="Enter Section Manager name"
                 value={returnData.section_manager_name}
                 onChange={(e) => setReturnData({...returnData, section_manager_name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-blue-50"
+                placeholder="Default: Imad Qejji"
                 disabled={returnData.section_manager_approved}
               />
+              <div className="text-xs text-blue-600 mt-1">
+                ✅ Digital signature allowed for Section Manager
+              </div>
               {returnData.section_manager_approved && (
                 <>
                   <div className="text-sm text-green-600 font-medium mt-2">
@@ -780,8 +783,7 @@ const EnhancedReturnForm = ({ user }) => {
             {!returnData.section_manager_approved ? (
               <button
                 onClick={approveBySectionManager}
-                disabled={!returnData.supervisor_approved}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 <CheckCircle size={16} className="inline mr-1" />
                 Approve
