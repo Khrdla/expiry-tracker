@@ -2708,188 +2708,232 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(header_table)
         story.append(Spacer(1, 0.3*inch))
         
-        # Create PDF using fpdf2 for better compatibility
-        pdf = FPDF()
-        pdf.add_page()
+        # Define section style
+        section_style = ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Heading3'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            textColor=geant_green,
+            spaceAfter=8,
+            spaceBefore=5
+        )
         
-        # Company Branding Header
-        pdf.set_font('Arial', 'B', 18)
-        pdf.set_text_color(27, 67, 50)  # Company green color
-        pdf.cell(0, 12, 'GEANT HYPERMARKET', 0, 1, 'C')
+        # ===== FORM DETAILS SECTION =====
+        story.append(Paragraph("FORM DETAILS", section_style))
         
-        pdf.set_font('Arial', 'B', 14)
-        pdf.cell(0, 10, 'SUPPLIER RETURN FORM', 0, 1, 'C')
-        pdf.ln(5)
-        
-        # Form Reference Information
-        pdf.set_font('Arial', 'B', 12)
-        pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 8, 'FORM DETAILS', 0, 1)
-        pdf.set_font('Arial', '', 10)
-        
-        current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
-        form_details = [
-            f"Reference Number: {return_form.get('reference_number', 'N/A')}",
-            f"Return Date: {return_form.get('return_date', 'N/A')}",
-            f"Generated: {current_time}"
+        ref_data = [
+            ['Reference Number:', return_form.get('reference_number', '')],
+            ['Return Date:', return_form.get('return_date', '')],
+            ['Generated On:', datetime.now().strftime('%d/%m/%Y %H:%M')]
         ]
         
-        for detail in form_details:
-            pdf.cell(0, 6, detail, 0, 1)
-        pdf.ln(5)
+        ref_table = Table(ref_data, colWidths=[2.5*inch, 4*inch])
+        ref_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
+        ]))
         
-        # Supervisor Information Section
-        pdf.set_font('Arial', 'B', 12)
-        pdf.set_text_color(0, 102, 204)  # Blue color
-        pdf.cell(0, 8, 'SUPERVISOR SELECTION', 0, 1)
-        pdf.set_font('Arial', '', 10)
-        pdf.set_text_color(0, 0, 0)
+        story.append(ref_table)
+        story.append(Spacer(1, 0.25*inch))
         
-        selected_supervisor = return_form.get('selected_supervisor', 'Not Selected')
-        prepared_by = return_form.get('prepared_by_supervisor', 'N/A')
+        # ===== PRODUCT INFORMATION SECTION =====
+        story.append(Paragraph("PRODUCT INFORMATION", section_style))
         
-        supervisor_info = [
-            f"Selected Supervisor: {selected_supervisor}",
-            f"Prepared by: {prepared_by}"
+        item_data = [
+            ['Product Code:', return_form.get('product_code', '')],
+            ['Product Name:', return_form.get('product_name', '')],
+            ['Barcode:', return_form.get('barcode', '') or 'N/A'],
+            ['Supplier:', return_form.get('supplier', '')],
+            ['Quantity:', str(return_form.get('quantity', 0))],
+            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}"],
+            ['Reason for Return:', return_form.get('reason_for_return', '')]
         ]
         
-        for info in supervisor_info:
-            pdf.cell(0, 6, info, 0, 1)
-        pdf.ln(5)
+        item_table = Table(item_data, colWidths=[2.5*inch, 4*inch])
+        item_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+            ('PADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
+        ]))
         
-        # Product Information Section
-        pdf.set_font('Arial', 'B', 12)
-        pdf.set_text_color(0, 102, 204)
-        pdf.cell(0, 8, 'PRODUCT INFORMATION', 0, 1)
-        pdf.set_font('Arial', '', 10)
-        pdf.set_text_color(0, 0, 0)
+        story.append(item_table)
+        story.append(Spacer(1, 0.25*inch))
         
-        product_info = [
-            f"Product Code: {return_form.get('product_code', 'N/A')}",
-            f"Product Name: {return_form.get('product_name', 'N/A')}",
-            f"Barcode: {return_form.get('barcode', 'N/A')}",
-            f"Supplier: {return_form.get('supplier', 'N/A')}",
-            f"Quantity: {return_form.get('quantity', 'N/A')}",
-            f"Purchase Price: {return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}",
-            f"Reason for Return: {return_form.get('reason_for_return', 'N/A')}"
-        ]
+        # ===== RETURN VALUE CALCULATION SECTION =====
+        story.append(Paragraph("RETURN VALUE CALCULATION", section_style))
         
-        for info in product_info:
-            pdf.cell(0, 6, info, 0, 1)
-        pdf.ln(3)
+        # Calculate values safely
+        purchase_price = float(return_form.get('purchase_price', 0))
+        quantity = float(return_form.get('quantity', 0))
+        purchase_currency = return_form.get('purchase_currency', 'SAR')
         
-        # Enhanced Currency Display Section
-        pdf.set_font('Arial', 'B', 11)
-        pdf.set_text_color(0, 150, 0)  # Green color
-        pdf.cell(0, 8, 'RETURN VALUE CALCULATION', 0, 1)
-        pdf.set_font('Arial', '', 10)
+        # Calculate totals
+        total_supplier_currency = purchase_price * quantity
         
-        # Calculate USD value safely with current exchange rates
+        # Get exchange rates
         try:
-            rates_response = await fetch_current_exchange_rates()
-            rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
-            
-            price = float(return_form.get('purchase_price', 0))
-            quantity = float(return_form.get('quantity', 0))
-            currency = return_form.get('purchase_currency', 'YER')
-            rate = rates.get(currency, 1.0)
-            
-            total_original = price * quantity
-            total_usd = total_original * rate
-            
-            # Display both currencies prominently
-            pdf.set_text_color(0, 0, 150)  # Blue
-            pdf.set_font('Arial', 'B', 10)
-            pdf.cell(0, 7, f"Total Value (Supplier Currency): {total_original:.2f} {currency}", 0, 1)
-            
-            pdf.set_text_color(0, 150, 0)  # Green
-            pdf.cell(0, 7, f"USD Equivalent (Reporting): ${total_usd:.2f} USD", 0, 1)
-            
-            pdf.set_text_color(0, 0, 0)  # Black
-            pdf.set_font('Arial', '', 9)
-            pdf.cell(0, 6, f"Exchange Rate: 1 {currency} = {rate:.4f} USD", 0, 1)
+            rates_response = await get_current_exchange_rates()
+            exchange_rates = rates_response.get('exchange_rates', {
+                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+            })
+            exchange_rate = exchange_rates.get(purchase_currency, 1.0)
+            total_usd = total_supplier_currency * exchange_rate
         except:
-            pdf.set_text_color(200, 0, 0)  # Red for error
-            pdf.cell(0, 6, "Currency calculation error - please verify rates", 0, 1)
-            pdf.set_text_color(0, 0, 0)
+            exchange_rate = 0.267 if purchase_currency == 'SAR' else 1.0
+            total_usd = total_supplier_currency * exchange_rate
         
-        pdf.ln(8)
+        currency_data = [
+            ['Total Value (SAR):', f"{total_supplier_currency:.2f} {purchase_currency}"],
+            ['USD Equivalent:', f"${total_usd:.2f} USD"],
+            ['Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"]
+        ]
         
-        # Enhanced Approvals & Signatures Section
-        pdf.set_font('Arial', 'B', 12)
-        pdf.set_text_color(150, 0, 0)  # Red color
-        pdf.cell(0, 8, 'APPROVALS & SIGNATURES WORKFLOW', 0, 1)
-        pdf.set_font('Arial', '', 10)
-        pdf.set_text_color(0, 0, 0)
+        currency_table = Table(currency_data, colWidths=[2.5*inch, 4*inch])
+        currency_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), geant_accent),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, geant_green),
+            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95)]),
+            ('PADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (0, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, 1), 12),
+        ]))
+        
+        story.append(currency_table)
+        story.append(Spacer(1, 0.3*inch))
+        
+        # ===== APPROVALS & SIGNATURES SECTION =====
+        story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
         
         # Digital Signatures Section
-        pdf.set_font('Arial', 'B', 10)
-        pdf.cell(0, 6, 'DIGITAL SIGNATURES (Completed):', 0, 1)
-        pdf.set_font('Arial', '', 9)
+        digital_title_style = ParagraphStyle(
+            'DigitalTitle', 
+            parent=styles['Normal'], 
+            fontSize=10, 
+            fontName='Helvetica-Bold',
+            textColor=geant_green,
+            spaceAfter=5
+        )
         
-        # Supervisor from dropdown
-        if return_form.get('supervisor_approved'):
-            pdf.cell(0, 5, f"Supervisor: {return_form.get('selected_supervisor', 'N/A')}", 0, 1)
-            pdf.cell(0, 5, f"Signature: {return_form.get('supervisor_signature', 'N/A')}", 0, 1)
-            pdf.cell(0, 5, f"Timestamp: {return_form.get('supervisor_timestamp', 'N/A')}", 0, 1)
-            pdf.ln(3)
+        story.append(Paragraph("Digital Signatures:", digital_title_style))
         
-        # Section Manager (Imad Qejji)
-        if return_form.get('section_manager_approved'):
-            pdf.cell(0, 5, f"Section Manager: {return_form.get('section_manager_name', 'N/A')}", 0, 1)
-            pdf.cell(0, 5, f"Signature: {return_form.get('section_manager_signature', 'N/A')}", 0, 1)
-            pdf.cell(0, 5, f"Timestamp: {return_form.get('section_manager_timestamp', 'N/A')}", 0, 1)
-            pdf.ln(5)
+        # Clean digital signatures without system messages
+        digital_sigs = [
+            ['Supervisor:', return_form.get('selected_supervisor', '')],
+            ['Signature:', return_form.get('supervisor_signature', '')],
+            ['Date/Time:', return_form.get('supervisor_timestamp', '')],
+            ['', ''],  # Spacer row
+            ['Section Manager:', return_form.get('section_manager_name', 'Imad Qejji')],
+            ['Signature:', return_form.get('section_manager_signature', '')],
+            ['Date/Time:', return_form.get('section_manager_timestamp', '')],
+        ]
         
-        # Manual Signatures Section (For after printing)
-        pdf.set_font('Arial', 'B', 10)
-        pdf.cell(0, 6, 'MANUAL SIGNATURES (To be completed after printing):', 0, 1)
-        pdf.set_font('Arial', '', 9)
-        pdf.ln(3)
+        digital_table = Table(digital_sigs, colWidths=[2*inch, 4.5*inch])
+        digital_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+            ('GRID', (0, 0), (-1, -1), 0.5, geant_accent),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            # Remove border from spacer row
+            ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
+            ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
+        ]))
         
-        # Department Head - Manual
-        pdf.cell(0, 5, 'Department Head:', 0, 1)
-        pdf.cell(0, 5, 'Status: PENDING - Manual signature required after printing', 0, 1)
-        pdf.cell(0, 8, 'Signature: ____________________  Date: __________', 0, 1)
-        pdf.ln(5)
+        story.append(digital_table)
+        story.append(Spacer(1, 0.2*inch))
         
-        # Finance Department - Manual + Stamp
-        pdf.cell(0, 5, 'Finance Department:', 0, 1)
-        pdf.cell(0, 5, 'Status: PENDING - Manual signature + official stamp required', 0, 1)
-        pdf.cell(0, 8, 'Signature: ____________________  Official Stamp: ________', 0, 1)
-        pdf.cell(0, 5, 'Date: __________', 0, 1)
-        pdf.ln(8)
+        # Manual Signatures Section - Clean and Professional
+        story.append(Paragraph("Manual Signatures:", digital_title_style))
+        
+        manual_sigs = [
+            ['Department Head', ''],
+            ['Name: _________________________________', 'Date: _______________'],
+            ['Signature: _____________________________', ''],
+            ['', ''],  # Spacer
+            ['Finance Department', ''],
+            ['Name: _________________________________', 'Date: _______________'],
+            ['Signature: _____________________________', 'Official Stamp:'],
+            ['', '_______________'],
+        ]
+        
+        manual_table = Table(manual_sigs, colWidths=[4*inch, 2.5*inch])
+        manual_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
+            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (0, -1), 8),
+            # Remove border from spacer row
+            ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
+            ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
+            # Add box for stamp
+            ('BOX', (1, 7), (1, 7), 1, geant_green),
+        ]))
+        
+        story.append(manual_table)
+        story.append(Spacer(1, 0.2*inch))
         
         # Professional Footer
-        pdf.ln(5)
-        pdf.set_font('Arial', 'I', 8)
-        pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 4, f"Generated by GEANT HYPERMARKET Inventory Management System | {current_time}", 0, 0, 'C')
-        pdf.ln(4)
-        pdf.cell(0, 4, "This form requires manual signatures for Department Head and Finance after printing", 0, 0, 'C')
+        footer_style = ParagraphStyle(
+            'FooterStyle',
+            parent=styles['Normal'],
+            fontSize=8,
+            fontName='Helvetica-Oblique',
+            textColor=colors.Color(0.5, 0.5, 0.5),
+            alignment=TA_CENTER,
+            spaceAfter=5
+        )
         
-        # Generate PDF content
-        pdf_content = pdf.output(dest='S')
-        # Handle both string and bytes output from different fpdf2 versions
-        if isinstance(pdf_content, str):
-            pdf_content = pdf_content.encode('latin1')
-        elif isinstance(pdf_content, bytearray):
-            pdf_content = bytes(pdf_content)
+        footer_text = f"GEANT HYPERMARKET Inventory Management System | Generated: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        story.append(Paragraph(footer_text, footer_style))
         
-        # Validate PDF
-        if len(pdf_content) < 2000:
-            raise Exception("Generated PDF is too small")
+        # Build the PDF
+        doc.build(story)
+        output.seek(0)
         
-        filename = f"enhanced_return_form_{return_form.get('reference_number', 'unknown')}.pdf"
+        filename = f"GEANT_Return_Form_{return_form.get('reference_number', 'unknown')}.pdf"
+        
+        from fastapi.responses import Response
         
         return Response(
-            content=pdf_content,
-            media_type="application/pdf",
+            content=output.getvalue(),
+            media_type='application/pdf',
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
-                "Content-Length": str(len(pdf_content)),
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "X-Content-Type-Options": "nosniff"
+                'Content-Disposition': f'attachment; filename="{filename}"'
             }
         )
         
