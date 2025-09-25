@@ -19,7 +19,7 @@ const ReturnForm = ({ user }) => {
     // Signatures & Approvals
     prepared_by_supervisor: user?.full_name || user?.username || '',
     supervisor_signature: '',
-    section_manager_name: '',
+    section_manager_name: user?.full_name || user?.username || 'Imad Qejji', // Auto-fill with current user
     section_manager_signature: '',
     department_head_name: '',
     department_head_signature: '',
