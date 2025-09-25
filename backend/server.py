@@ -2552,101 +2552,452 @@ async def export_expiry_tracker_data(
         raise HTTPException(status_code=500, detail=f"Error generating expiry tracker export: {str(e)}")
 
 # Return Forms Export
-@api_router.get("/export/return-forms")
-async def export_return_forms(
+@api_router.get("/export/return-form/{form_id}")
+async def export_return_form_with_approvals(
+    form_id: str,
+    format: str = "pdf",
     current_user: User = Depends(get_current_user)
 ):
-    """Export return forms data with enhanced formatting"""
+    """Export return form with enhanced approvals and signatures"""
     try:
-        from enhanced_export_system import EnhancedOtherReportsExporter
+        # Get return form data
+        return_form = await db.return_forms.find_one({"id": form_id})
+        if not return_form:
+            raise HTTPException(status_code=404, detail="Return form not found")
         
-        # Get return forms data
-        return_forms = await db.return_forms.find().to_list(length=None)
+        # Check approval requirements
+        if not return_form.get("supervisor_approved") or not return_form.get("section_manager_approved"):
+            raise HTTPException(
+                status_code=400, 
+                detail="Both Supervisor and Section Manager approvals required before export"
+            )
         
-        # Use enhanced exporter
-        exporter = EnhancedOtherReportsExporter(db)
-        excel_data = await exporter.generate_return_forms_excel(return_forms)
+        if format.lower() == "pdf":
+            return await generate_enhanced_return_form_pdf(return_form)
+        elif format.lower() == "excel":
+            return await generate_enhanced_return_form_excel(return_form)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid format. Use 'pdf' or 'excel'")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+async def generate_enhanced_return_form_pdf(return_form: dict):
+    """Generate enhanced PDF with approvals, signatures and proper formatting"""
+    try:
+        import io
+        from reportlab.lib.pagesizes import A4, letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+        from reportlab.lib import colors
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
         
-        filename = f"return_forms_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+        
+        # Get company branding
+        branding = get_company_branding()
+        
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.Color(*branding['pdf_primary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceAfter=10,
+            textColor=colors.Color(*branding['pdf_secondary_color']),
+            fontName='Helvetica-Bold'
+        )
+        
+        normal_style = styles['Normal']
+        
+        # Build story
+        story = []
+        
+        # Add company logo
+        try:
+            if os.path.exists('/app/frontend/public/geant-logo.jpeg'):
+                logo = Image('/app/frontend/public/geant-logo.jpeg', width=1*inch, height=1*inch)
+                story.append(logo)
+                story.append(Spacer(1, 12))
+        except:
+            # Add company name if logo fails
+            story.append(Paragraph(branding['company_name'], title_style))
+        
+        # Title and reference
+        story.append(Paragraph("SUPPLIER RETURN FORM", title_style))
+        story.append(Spacer(1, 20))
+        
+        # Form header information
+        header_data = [
+            ["Reference Number:", return_form.get('reference_number', 'N/A')],
+            ["Return Date:", return_form.get('return_date', 'N/A')],
+            ["Prepared by:", return_form.get('prepared_by_supervisor', 'N/A')]
+        ]
+        
+        header_table = Table(header_data, colWidths=[2*inch, 4*inch])
+        header_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
+        ]))
+        
+        story.append(header_table)
+        story.append(Spacer(1, 20))
+        
+        # Product details section
+        story.append(Paragraph("Product Information", subtitle_style))
+        
+        # Calculate USD value
+        try:
+            # Get current exchange rates
+            rates_response = await fetch_current_exchange_rates()
+            rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
+            
+            price = float(return_form.get('purchase_price', 0))
+            quantity = float(return_form.get('quantity', 0))
+            currency = return_form.get('purchase_currency', 'YER')
+            rate = rates.get(currency, 1.0)
+            
+            total_original = price * quantity
+            total_usd = total_original * rate
+        except:
+            total_original = 0
+            total_usd = 0
+            currency = return_form.get('purchase_currency', 'YER')
+        
+        product_data = [
+            ["Product Code:", return_form.get('product_code', 'N/A')],
+            ["Product Name:", return_form.get('product_name', 'N/A')],
+            ["Barcode:", return_form.get('barcode', 'N/A')],
+            ["Supplier:", return_form.get('supplier', 'N/A')],
+            ["Quantity:", return_form.get('quantity', 'N/A')],
+            ["Purchase Price:", f"{return_form.get('purchase_price', 0)} {currency}"],
+            ["Total Value:", f"{total_original:.2f} {currency}"],
+            ["USD Equivalent:", f"${total_usd:.2f} USD"],
+            ["Reason for Return:", return_form.get('reason_for_return', 'N/A')],
+        ]
+        
+        product_table = Table(product_data, colWidths=[2*inch, 4*inch])
+        product_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
+            # Highlight USD value
+            ('TEXTCOLOR', (1, -2), (1, -1), colors.Color(0.8, 0.2, 0.2)),
+            ('FONTNAME', (1, -2), (1, -1), 'Helvetica-Bold'),
+        ]))
+        
+        story.append(product_table)
+        story.append(Spacer(1, 30))
+        
+        # Enhanced Approvals & Signatures Section
+        story.append(Paragraph("Approvals & Signatures", subtitle_style))
+        story.append(Spacer(1, 10))
+        
+        # Digital signatures with timestamps
+        approval_data = [
+            ["Role", "Name", "Digital Signature", "Timestamp"],
+            [
+                "Prepared by Supervisor",
+                return_form.get('prepared_by_supervisor', 'N/A'),
+                return_form.get('supervisor_signature', 'N/A'),
+                return_form.get('supervisor_timestamp', 'N/A')
+            ],
+            [
+                "Section Manager",
+                return_form.get('section_manager_name', 'N/A'),
+                return_form.get('section_manager_signature', 'N/A'),
+                return_form.get('section_manager_timestamp', 'N/A')
+            ]
+        ]
+        
+        approval_table = Table(approval_data, colWidths=[1.5*inch, 1.5*inch, 2*inch, 1.5*inch])
+        approval_table.setStyle(TableStyle([
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(*branding['pdf_primary_color'])),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            
+            # Data rows
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            
+            # Highlight timestamps
+            ('TEXTCOLOR', (3, 1), (3, -1), colors.Color(0.2, 0.6, 0.2)),
+            ('FONTNAME', (3, 1), (3, -1), 'Helvetica-Bold'),
+        ]))
+        
+        story.append(approval_table)
+        story.append(Spacer(1, 20))
+        
+        # Manual signature lines (empty for manual signing after printing)
+        story.append(Paragraph("Manual Signatures (to be signed after printing)", subtitle_style))
+        
+        manual_sig_data = [
+            ["Department Head", "", "Finance Department", ""],
+            ["", "", "", ""],
+            ["Signature: ____________________", "Date: __________", "Signature: ____________________", "Date: __________"],
+            ["", "", "", ""],
+            ["Print Name: ____________________", "", "Print Name: ____________________", ""],
+        ]
+        
+        manual_table = Table(manual_sig_data, colWidths=[2.5*inch, 1*inch, 2.5*inch, 1*inch])
+        manual_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
+        ]))
+        
+        story.append(manual_table)
+        story.append(Spacer(1, 20))
+        
+        # Footer note
+        footer_text = f"Generated on {datetime.now().strftime('%d/%m/%Y – %H:%M')} | Export authorized after required approvals"
+        story.append(Paragraph(footer_text, styles['Normal']))
+        
+        # Build PDF
+        doc.build(story)
+        
+        buffer.seek(0)
+        filename = f"return_form_{return_form.get('reference_number', 'unknown')}.pdf"
         
         return Response(
-            content=excel_data,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            content=buffer.getvalue(),
+            media_type="application/pdf",
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
         
     except Exception as e:
-        print(f"Enhanced return forms export failed: {e}")
-        # Fallback to original implementation
-        import xlsxwriter
-        from io import BytesIO
+        print(f"PDF generation error: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+
+async def generate_enhanced_return_form_excel(return_form: dict):
+    """Generate enhanced Excel with approvals, signatures and proper formatting"""
+    try:
+        import io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
         
-        output = BytesIO()
-        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        worksheet = workbook.add_worksheet('Return Forms')
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Return Form"
         
-        # Formats
-        title_format = workbook.add_format({
-            'bold': True,
-            'font_size': 16,
-            'align': 'center',
-            'bg_color': '#DC143C'  # Red theme for Return Forms
-        })
+        # Get company branding
+        branding = get_company_branding()
         
-        header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': '#FFE4E1',
-            'border': 1,
-            'align': 'center'
-        })
+        # Styles
+        header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color=branding['excel_header_color'], end_color=branding['excel_header_color'], fill_type='solid')
+        subheader_font = Font(name='Arial', size=12, bold=True, color=branding['excel_header_color'])
+        company_font = Font(name='Arial', size=16, bold=True, color=branding['excel_header_color'])
+        signature_font = Font(name='Arial', size=10, bold=True, color='008000')  # Green for timestamps
+        border = Border(
+            left=Side(border_style='thin'),
+            right=Side(border_style='thin'),
+            top=Side(border_style='thin'),
+            bottom=Side(border_style='thin')
+        )
         
-        cell_format = workbook.add_format({
-            'border': 1,
-            'align': 'left'
-        })
+        current_row = 1
         
-        # Title
-        worksheet.merge_range('A1:M1', 'Geant Hypermarket - Return Forms Export', title_format)
-        worksheet.write('A2', f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        # Add logo placeholder
+        ws.merge_cells(f'A{current_row}:B{current_row + 2}')
+        ws[f'A{current_row}'] = "LOGO"
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
         
-        # Headers
-        headers = [
-            'Reference Number', 'Return Date', 'Product Code', 'Product Name', 'Quantity',
-            'Value (Original Currency)', 'Reason for Return', 'Status',
-            'Prepared By', 'Section Manager', 'Department Head'
+        # Company header
+        ws.merge_cells(f'C{current_row}:F{current_row}')
+        ws[f'C{current_row}'] = branding['company_name']
+        ws[f'C{current_row}'].font = company_font
+        ws[f'C{current_row}'].alignment = Alignment(horizontal='center')
+        
+        current_row += 1
+        ws.merge_cells(f'C{current_row}:F{current_row}')
+        ws[f'C{current_row}'] = "SUPPLIER RETURN FORM"
+        ws[f'C{current_row}'].font = header_font
+        ws[f'C{current_row}'].fill = header_fill
+        ws[f'C{current_row}'].alignment = Alignment(horizontal='center')
+        
+        current_row += 3
+        
+        # Form information
+        ws[f'A{current_row}'] = "Reference Number:"
+        ws[f'B{current_row}'] = return_form.get('reference_number', 'N/A')
+        ws[f'A{current_row}'].font = subheader_font
+        
+        current_row += 1
+        ws[f'A{current_row}'] = "Return Date:"
+        ws[f'B{current_row}'] = return_form.get('return_date', 'N/A')
+        ws[f'A{current_row}'].font = subheader_font
+        
+        current_row += 1
+        ws[f'A{current_row}'] = "Prepared by:"
+        ws[f'B{current_row}'] = return_form.get('prepared_by_supervisor', 'N/A')
+        ws[f'A{current_row}'].font = subheader_font
+        
+        current_row += 3
+        
+        # Product Information
+        ws.merge_cells(f'A{current_row}:F{current_row}')
+        ws[f'A{current_row}'] = "PRODUCT INFORMATION"
+        ws[f'A{current_row}'].font = header_font
+        ws[f'A{current_row}'].fill = header_fill
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
+        
+        current_row += 1
+        
+        # Product details
+        product_fields = [
+            ("Product Code:", return_form.get('product_code', 'N/A')),
+            ("Product Name:", return_form.get('product_name', 'N/A')),
+            ("Barcode:", return_form.get('barcode', 'N/A')),
+            ("Supplier:", return_form.get('supplier', 'N/A')),
+            ("Quantity:", return_form.get('quantity', 'N/A')),
+            ("Purchase Price:", f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}"),
+            ("Reason for Return:", return_form.get('reason_for_return', 'N/A')),
         ]
         
-        for col, header in enumerate(headers):
-            worksheet.write(3, col, header, header_format)
-        
-        # Get return forms from database
-        returns = await db.return_forms.find({}).sort("created_at", -1).to_list(length=None)
-        
-        # Write data
-        for row, return_form in enumerate(returns, start=4):
-            value = return_form.get('purchase_price', 0) * return_form.get('quantity', 0)
-            currency = return_form.get('purchase_currency', 'USD')
+        # Calculate USD value
+        try:
+            rates_response = await fetch_current_exchange_rates()
+            rates = rates_response.get('exchange_rates', {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0})
             
-            worksheet.write(row, 0, return_form.get('reference_number', ''), cell_format)
-            worksheet.write(row, 1, return_form.get('return_date', return_form.get('created_at', '')[:10] if return_form.get('created_at') else ''), cell_format)
-            worksheet.write(row, 2, return_form.get('product_code', return_form.get('item_number', '')), cell_format)
-            worksheet.write(row, 3, return_form.get('product_name', ''), cell_format)
-            worksheet.write(row, 4, return_form.get('quantity', 0), cell_format)
-            worksheet.write(row, 5, f"{value:,.2f} {currency}", cell_format)
-            worksheet.write(row, 6, return_form.get('reason_for_return', ''), cell_format)
-            worksheet.write(row, 7, return_form.get('status', 'pending'), cell_format)
-            worksheet.write(row, 8, return_form.get('prepared_by_supervisor', return_form.get('created_by', '')), cell_format)
-            worksheet.write(row, 9, return_form.get('section_manager_name', ''), cell_format)
-            worksheet.write(row, 10, return_form.get('department_head_name', ''), cell_format)
+            price = float(return_form.get('purchase_price', 0))
+            quantity = float(return_form.get('quantity', 0))
+            currency = return_form.get('purchase_currency', 'YER')
+            rate = rates.get(currency, 1.0)
+            
+            total_original = price * quantity
+            total_usd = total_original * rate
+            
+            product_fields.append(("Total Value (Original):", f"{total_original:.2f} {currency}"))
+            product_fields.append(("Total Value (USD):", f"${total_usd:.2f} USD"))
+        except:
+            product_fields.append(("Total Value:", f"{return_form.get('total_value', '0.00')} {return_form.get('purchase_currency', 'YER')}"))
+        
+        for label, value in product_fields:
+            ws[f'A{current_row}'] = label
+            ws[f'B{current_row}'] = value
+            ws[f'A{current_row}'].font = subheader_font
+            current_row += 1
+        
+        current_row += 2
+        
+        # Enhanced Approvals & Signatures
+        ws.merge_cells(f'A{current_row}:F{current_row}')
+        ws[f'A{current_row}'] = "APPROVALS & SIGNATURES"
+        ws[f'A{current_row}'].font = header_font
+        ws[f'A{current_row}'].fill = header_fill
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
+        
+        current_row += 2
+        
+        # Digital signatures with timestamps
+        digital_approvals = [
+            ("Prepared by Supervisor", return_form.get('prepared_by_supervisor', 'N/A'), 
+             return_form.get('supervisor_signature', 'N/A'), return_form.get('supervisor_timestamp', 'N/A')),
+            ("Section Manager", return_form.get('section_manager_name', 'N/A'), 
+             return_form.get('section_manager_signature', 'N/A'), return_form.get('section_manager_timestamp', 'N/A')),
+        ]
+        
+        # Headers
+        ws[f'A{current_row}'] = "Role"
+        ws[f'B{current_row}'] = "Name"
+        ws[f'C{current_row}'] = "Digital Signature"
+        ws[f'D{current_row}'] = "Timestamp"
+        
+        for col in ['A', 'B', 'C', 'D']:
+            ws[f'{col}{current_row}'].font = header_font
+            ws[f'{col}{current_row}'].fill = header_fill
+        
+        current_row += 1
+        
+        for role, name, signature, timestamp in digital_approvals:
+            ws[f'A{current_row}'] = role
+            ws[f'B{current_row}'] = name
+            ws[f'C{current_row}'] = signature
+            ws[f'D{current_row}'] = timestamp
+            ws[f'D{current_row}'].font = signature_font  # Green timestamp
+            current_row += 1
+        
+        current_row += 2
+        
+        # Manual signature section
+        ws.merge_cells(f'A{current_row}:F{current_row}')
+        ws[f'A{current_row}'] = "MANUAL SIGNATURES (To be signed after printing)"
+        ws[f'A{current_row}'].font = subheader_font
+        
+        current_row += 2
+        
+        # Manual signature table
+        ws[f'A{current_row}'] = "Department Head"
+        ws[f'D{current_row}'] = "Finance Department"
+        
+        current_row += 2
+        ws[f'A{current_row}'] = "Signature: ____________________"
+        ws[f'B{current_row}'] = "Date: __________"
+        ws[f'D{current_row}'] = "Signature: ____________________"
+        ws[f'E{current_row}'] = "Date: __________"
+        
+        current_row += 2
+        ws[f'A{current_row}'] = "Print Name: ____________________"
+        ws[f'D{current_row}'] = "Print Name: ____________________"
+        
+        # Apply borders
+        for row_num in range(1, current_row + 1):
+            for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+                cell = ws[f'{col}{row_num}']
+                if cell.value:
+                    cell.border = border
         
         # Auto-adjust columns
-        worksheet.set_column('A:K', 15)
-        worksheet.set_column('F:F', 25)  # Value column wider
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            
+            for cell in column:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = max(adjusted_width, 12)
         
-        workbook.close()
+        # Save to bytes
+        output = io.BytesIO()
+        wb.save(output)
         output.seek(0)
         
-        filename = f"return_forms_export_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        filename = f"return_form_{return_form.get('reference_number', 'unknown')}.xlsx"
         
         return Response(
             content=output.getvalue(),
@@ -2655,7 +3006,35 @@ async def export_return_forms(
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating return forms export: {str(e)}")
+        print(f"Excel generation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Excel generation failed: {str(e)}")
+
+async def fetch_current_exchange_rates():
+    """Helper function to get current exchange rates"""
+    try:
+        settings = await db.currency_settings.find_one(
+            {"is_active": True}, 
+            sort=[("last_updated", -1)]
+        )
+        
+        if settings and "exchange_rates" in settings:
+            return {
+                "base_currency": settings["base_currency"],
+                "exchange_rates": settings["exchange_rates"]
+            }
+    except Exception:
+        pass
+    
+    # Fallback rates
+    return {
+        "base_currency": "USD",
+        "exchange_rates": {
+            "YER": 0.004,
+            "SAR": 0.267,
+            "EUR": 1.10,
+            "USD": 1.0
+        }
+    }
 
 # Return Form PDF Export (Individual)
 @api_router.get("/export/return-form/{return_id}/pdf")
