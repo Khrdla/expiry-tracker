@@ -13,33 +13,46 @@ const EnhancedReturnForm = ({ user }) => {
     purchase_price: '',
     purchase_currency: 'YER',
     total_value: '0.00',
+    total_value_usd: '0.00',
     supplier: '',
     department: '',
     section: '',
     expiry_date: '',
     reason_for_return: '',
     
-    // Enhanced Approvals & Signatures with Timestamps
-    prepared_by_supervisor: user?.full_name || user?.username || '',
+    // Enhanced Supervisor Selection (Dropdown)
+    selected_supervisor: '', // This will be selected from dropdown
+    prepared_by_supervisor: '', // This will be auto-filled from selected_supervisor
     supervisor_signature: '',
     supervisor_timestamp: '',
-    section_manager_name: user?.full_name || user?.username || 'Imad Qejji', // Auto-fill with current user
+    
+    // Section Manager (Default: Imad Qejji)
+    section_manager_name: user?.full_name || user?.username || 'Imad Qejji',
     section_manager_signature: '',
     section_manager_timestamp: '',
-    department_head_name: '',
-    department_head_signature: '', // Empty - manual signing after print
-    finance_signature: '', // Empty - manual signing after print
     
-    // Status tracking
+    // Manual Signatures (Remain blank for after-printing)
+    department_head_name: '', // Blank for manual signature
+    department_head_signature: '', // Blank for manual signature
+    finance_signature: '', // Blank for manual signature + stamp
+    
+    // Status tracking with enhanced validation
     supervisor_approved: false,
     section_manager_approved: false,
-    ready_for_export: false,
+    ready_for_export: false, // Only true when both supervisor selected and section manager approved
     
     // Additional Fields
     return_date: new Date().toISOString().split('T')[0],
     reference_number: `RTN-${Date.now()}`,
     notes: ''
   });
+
+  // Supervisor options for dropdown
+  const supervisorOptions = [
+    { value: '', label: 'Select Supervisor...' },
+    { value: 'Mahmoud Badr', label: 'Mahmoud Badr' },
+    { value: 'Abdelhamed Mostafa', label: 'Abdelhamed Mostafa' }
+  ];
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
