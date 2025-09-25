@@ -2676,11 +2676,11 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         # ===== HEADER SECTION WITH LOGO =====
         header_data = []
         
-        # Try to add company logo
+        # Optimized company logo for single-page fit
         logo_path = '/app/frontend/public/geant-logo.jpeg'
         if os.path.exists(logo_path):
             try:
-                logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+                logo = Image(logo_path, width=1.1*inch, height=1.1*inch)  # Reduced from 1.5"
                 header_data = [
                     [logo, '', 'GEANT HYPERMARKET\nSupplier Return Form'],
                 ]
@@ -2689,20 +2689,20 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         else:
             header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
         
-        header_table = Table(header_data, colWidths=[2*inch, 1*inch, 4*inch])
+        header_table = Table(header_data, colWidths=[1.7*inch, 1*inch, 4*inch])  # Adjusted for smaller logo
         header_table.setStyle(TableStyle([
             ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (2, 0), (2, 0), 16),
+            ('FONTSIZE', (2, 0), (2, 0), 14),  # Reduced from 16
             ('TEXTCOLOR', (2, 0), (2, 0), geant_green),
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),   # Reduced from 10
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6), # Reduced from 10
         ]))
         
         story.append(header_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.15*inch))  # Reduced from 0.3*inch
         
         # Define section style
         section_style = ParagraphStyle(
@@ -3305,11 +3305,11 @@ async def export_return_form_pdf(
         # ===== HEADER SECTION WITH LOGO =====
         header_data = []
         
-        # Try to add company logo
+        # Optimized company logo for single-page fit
         logo_path = '/app/frontend/public/geant-logo.jpeg'
         if os.path.exists(logo_path):
             try:
-                logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+                logo = Image(logo_path, width=1.1*inch, height=1.1*inch)  # Reduced from 1.5"
                 header_data = [
                     [logo, '', 'GEANT HYPERMARKET\nSupplier Return Form'],
                 ]
@@ -3318,20 +3318,20 @@ async def export_return_form_pdf(
         else:
             header_data = [['', '', 'GEANT HYPERMARKET\nSupplier Return Form']]
         
-        header_table = Table(header_data, colWidths=[2*inch, 1*inch, 4*inch])
+        header_table = Table(header_data, colWidths=[1.7*inch, 1*inch, 4*inch])  # Adjusted for smaller logo
         header_table.setStyle(TableStyle([
             ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (2, 0), (2, 0), 16),
+            ('FONTSIZE', (2, 0), (2, 0), 14),  # Reduced from 16
             ('TEXTCOLOR', (2, 0), (2, 0), geant_green),
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),   # Reduced from 10
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6), # Reduced from 10
         ]))
         
         story.append(header_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.15*inch))  # Reduced from 0.3*inch
         
         # ===== FORM DETAILS SECTION =====
         section_style = ParagraphStyle(
