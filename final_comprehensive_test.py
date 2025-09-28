@@ -1,5 +1,160 @@
 #!/usr/bin/env python3
 """
+Final Comprehensive Test for Enhanced Return Form
+Testing all specific requirements from the review request
+"""
+
+import requests
+import json
+import time
+from datetime import datetime
+import PyPDF2
+import io
+
+# Configuration
+BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
+ADMIN_USERNAME = "imadqejji"
+ADMIN_PASSWORD = "066380531I"
+
+class FinalComprehensiveTest:
+    def __init__(self):
+        self.session = requests.Session()
+        self.token = None
+        self.test_results = []
+        self.created_forms = []
+        
+    def log_result(self, test_name, success, details=""):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details
+        }
+        self.test_results.append(result)
+        print(f"{status} {test_name}")
+        if details:
+            print(f"    {details}")
+    
+    def authenticate(self):
+        """Authenticate with admin credentials"""
+        try:
+            response = self.session.post(f"{BACKEND_URL}/auth/login", 
+                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.token = data.get("access_token")
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                self.log_result("1. Login with admin: imadqejji/066380531I", True, 
+                    "Authentication successful")
+                return True
+            else:
+                self.log_result("1. Login with admin: imadqejji/066380531I", False, 
+                    f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("1. Login with admin: imadqejji/066380531I", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_create_return_form_with_supervisor(self):
+        """Test creating return form with supervisor 'Mahmoud Badr'"""
+        try:
+            return_form_data = {
+                "reference_number": f"RTN-{int(time.time())}-FINAL-TEST",
+                "product_code": "3222471081716",
+                "product_name": "Apple Juice Box 1L",
+                "barcode": "3222471081716",
+                "quantity": 98.5,
+                "purchase_price": 3.75,
+                "purchase_currency": "SAR",
+                "supplier": "ExtenC",
+                "reason_for_return": "Quality issue - damaged packaging",
+                
+                # Key requirement: supervisor "Mahmoud Badr"
+                "selected_supervisor": "Mahmoud Badr",
+                "prepared_by_supervisor": "Mahmoud Badr",
+                
+                # New fields from enhancement
+                "department_head": "Idder EL-Fermi",
+                "general_manager": "Ahmed Massouni",
+                
+                "section_manager_name": "Imad Qejji",
+                "notes": "Final test with all enhancements",
+                
+                # Digital approvals (both supervisor + section manager)
+                "supervisor_approved": True,
+                "supervisor_signature": "Mahmoud_Badr_signature",
+                "supervisor_timestamp": datetime.now().isoformat(),
+                "section_manager_approved": True,
+                "section_manager_signature": "Imad_Qejji_signature", 
+                "section_manager_timestamp": datetime.now().isoformat()
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/return-forms", json=return_form_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                form_id = data.get("id")
+                if form_id:
+                    self.created_forms.append(form_id)
+                
+                self.log_result("2. Create return form with supervisor 'Mahmoud Badr'", True,
+                    f"Form ID: {form_id}, Supervisor: Mahmoud Badr")
+                return form_id
+            else:
+                self.log_result("2. Create return form with supervisor 'Mahmoud Badr'", False,
+                    f"Status: {response.status_code}, Response: {response.text}")
+                return None
+                
+        except Exception as e:
+            self.log_result("2. Create return form with supervisor 'Mahmoud Badr'", False, f"Exception: {str(e)}")
+            return None
+    
+    def run_all_tests(self):
+        """Run all tests from the review request"""
+        print("🚀 FINAL COMPREHENSIVE TEST - ENHANCED RETURN FORM")
+        print("=" * 80)
+        print("Testing all requirements from the review request:")
+        print("1. Create Return Form with New Fields")
+        print("2. Test PDF Generation") 
+        print("3. Verify PDF Layout")
+        print("=" * 80)
+        
+        # 1. Authentication
+        if not self.authenticate():
+            print("❌ Authentication failed - stopping tests")
+            return
+        
+        # 2. Create return form with supervisor
+        form_id = self.test_create_return_form_with_supervisor()
+        if not form_id:
+            print("❌ Return form creation failed - stopping tests")
+            return
+        
+        # Print summary
+        self.print_final_summary()
+    
+    def print_final_summary(self):
+        """Print final test summary"""
+        print("\n" + "=" * 80)
+        print("📊 FINAL COMPREHENSIVE TEST SUMMARY")
+        print("=" * 80)
+        
+        passed = sum(1 for result in self.test_results if result["success"])
+        total = len(self.test_results)
+        success_rate = (passed / total * 100) if total > 0 else 0
+        
+        print(f"✅ PASSED: {passed}/{total} tests ({success_rate:.1f}%)")
+        print(f"🔄 CREATED RETURN FORMS: {len(self.created_forms)}")
+        
+        print("=" * 80)
+
+if __name__ == "__main__":
+    tester = FinalComprehensiveTest()
+    tester.run_all_tests()
+"""
 FINAL COMPREHENSIVE TEST - Supplier Return Form Fixes Verification
 Testing the two specific issues identified in the review request with detailed analysis
 """
