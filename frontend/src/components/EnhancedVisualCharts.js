@@ -60,6 +60,13 @@ const EnhancedVisualCharts = () => {
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Set safe default values on error
+      setDashboardData({
+        departmentBreakdown: [],
+        stockLevels: {},
+        supplierPerformance: [],
+        wasteData: []
+      });
     } finally {
       setLoading(false);
     }
