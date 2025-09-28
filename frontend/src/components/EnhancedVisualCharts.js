@@ -132,7 +132,7 @@ const EnhancedVisualCharts = () => {
       
       {/* Department Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-        {dashboardData.departmentBreakdown.slice(0, 4).map((dept, index) => (
+        {(dashboardData.departmentBreakdown || []).slice(0, 4).map((dept, index) => (
           <div key={dept._id} className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
             <div className="text-sm font-medium text-gray-600">{dept._id}</div>
             <div className="text-lg font-bold text-gray-800">{formatNumber(dept.total_products)}</div>
