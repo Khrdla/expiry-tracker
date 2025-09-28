@@ -922,7 +922,9 @@ const EnhancedReturnForm = ({ user }) => {
                 <strong>After Export:</strong>
               </div>
               <div className="ml-4">
-                • Department Head: Manual signature on printed form
+                • Department Head (Idder EL-Fermi): Manual signature on printed form
+                <br />
+                • General Manager (Ahmed Massouni): Manual signature on printed form
                 <br />
                 • Finance: Manual signature + official stamp on printed form
               </div>
