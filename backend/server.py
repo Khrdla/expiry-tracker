@@ -2789,20 +2789,19 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}"]
         ]
         
-        currency_table = Table(currency_data, colWidths=[2.5*inch, 4*inch])
+        currency_table = Table(currency_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         currency_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),  # Slightly larger since only one row
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_accent),
             ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, geant_green),
             ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.Color(0.95, 1.0, 0.95)]),
-            ('PADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (0, -1), 12),
-            ('FONTSIZE', (0, 0), (-1, 1), 12),
+            ('PADDING', (0, 0), (-1, -1), 6),    # Increased padding for single row
+            ('LEFTPADDING', (0, 0), (0, -1), 8),
         ]))
         
         story.append(currency_table)
