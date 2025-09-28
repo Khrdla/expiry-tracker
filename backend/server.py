@@ -2873,22 +2873,27 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         
         manual_table = Table(manual_sigs, colWidths=[4*inch, 2.5*inch])
         manual_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),  # Department Head
+            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),  # General Manager  
+            ('FONTNAME', (0, 8), (0, 8), 'Helvetica-Bold'),  # Finance Department
             ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
-            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
+            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),    # Department Head header
+            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),    # General Manager header
+            ('BACKGROUND', (0, 8), (-1, 8), geant_accent),    # Finance Department header
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
+            ('TEXTCOLOR', (0, 8), (-1, 8), colors.white),
             ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
             ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
-            # Remove border from spacer row
+            # Remove border from spacer rows
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
-            # Add box for stamp
-            ('BOX', (1, 7), (1, 7), 1, geant_green),
+            ('LINEABOVE', (0, 7), (-1, 7), 0, colors.white),
+            ('LINEBELOW', (0, 7), (-1, 7), 0, colors.white),
+            # Add box for stamp (now at row 11)
+            ('BOX', (1, 11), (1, 11), 1, geant_green),
         ]))
         
         story.append(manual_table)
@@ -3493,22 +3498,27 @@ async def export_return_form_pdf(
         
         manual_table = Table(manual_sigs, colWidths=[4*inch, 2.5*inch])
         manual_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),  # Department Head
+            ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),  # General Manager  
+            ('FONTNAME', (0, 8), (0, 8), 'Helvetica-Bold'),  # Finance Department
             ('FONTSIZE', (0, 0), (-1, -1), 8),   # Reduced from 9
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
-            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),
+            ('BACKGROUND', (0, 0), (-1, 0), geant_accent),    # Department Head header
+            ('BACKGROUND', (0, 4), (-1, 4), geant_accent),    # General Manager header
+            ('BACKGROUND', (0, 8), (-1, 8), geant_accent),    # Finance Department header
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 4), (-1, 4), colors.white),
+            ('TEXTCOLOR', (0, 8), (-1, 8), colors.white),
             ('PADDING', (0, 0), (-1, -1), 2),    # Reduced from 4
             ('LEFTPADDING', (0, 0), (0, -1), 6), # Reduced from 8
-            # Remove border from spacer row
+            # Remove border from spacer rows
             ('LINEABOVE', (0, 3), (-1, 3), 0, colors.white),
             ('LINEBELOW', (0, 3), (-1, 3), 0, colors.white),
-            # Add box for stamp
-            ('BOX', (1, 7), (1, 7), 1, geant_green),
+            ('LINEABOVE', (0, 7), (-1, 7), 0, colors.white),
+            ('LINEBELOW', (0, 7), (-1, 7), 0, colors.white),
+            # Add box for stamp (now at row 11)
+            ('BOX', (1, 11), (1, 11), 1, geant_green),
         ]))
         
         story.append(manual_table)
