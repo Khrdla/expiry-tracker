@@ -2796,9 +2796,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             total_usd = total_supplier_currency * exchange_rate
         
         currency_data = [
-            ['Total Value (SAR):', f"{total_supplier_currency:.2f} {purchase_currency}"],
-            ['USD Equivalent:', f"${total_usd:.2f} USD"],
-            ['Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"]
+            ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}"]
         ]
         
         currency_table = Table(currency_data, colWidths=[2.5*inch, 4*inch])
@@ -3417,9 +3415,7 @@ async def export_return_form_pdf(
         
         # Professional currency display with clean formatting
         currency_data = [
-            ['Total Value (SAR):', f"{total_supplier_currency:.2f} {purchase_currency}"],
-            ['USD Equivalent:', f"${total_usd:.2f} USD"],
-            ['Exchange Rate:', f"1 {purchase_currency} = {exchange_rate:.4f} USD"]
+            ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}"]
         ]
         
         currency_table = Table(currency_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
