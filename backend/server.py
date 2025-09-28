@@ -2858,7 +2858,11 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         
         manual_sigs = [
             ['Department Head', ''],
-            ['Name: _________________________________', 'Date: _______________'],
+            [f"Name: {return_form.get('department_head_name', 'Idder EL-Fermi')}", 'Date: _______________'],
+            ['Signature: _____________________________', ''],
+            ['', ''],  # Spacer
+            ['General Manager', ''],
+            [f"Name: {return_form.get('general_manager_name', 'Ahmed Massouni')}", 'Date: _______________'],
             ['Signature: _____________________________', ''],
             ['', ''],  # Spacer
             ['Finance Department', ''],
@@ -3474,7 +3478,11 @@ async def export_return_form_pdf(
         
         manual_sigs = [
             ['Department Head', ''],
-            ['Name: _________________________________', 'Date: _______________'],
+            [f"Name: {return_form.get('department_head_name', 'Idder EL-Fermi')}", 'Date: _______________'],
+            ['Signature: _____________________________', ''],
+            ['', ''],  # Spacer
+            ['General Manager', ''],
+            [f"Name: {return_form.get('general_manager_name', 'Ahmed Massouni')}", 'Date: _______________'],
             ['Signature: _____________________________', ''],
             ['', ''],  # Spacer
             ['Finance Department', ''],
