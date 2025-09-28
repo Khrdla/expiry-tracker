@@ -798,20 +798,50 @@ const EnhancedReturnForm = ({ user }) => {
           </div>
 
           {/* Manual Signature Lines (For After-Printing) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
               <div className="font-medium text-orange-800 flex items-center">
                 <AlertTriangle size={16} className="mr-2" />
                 Department Head
               </div>
-              <div className="text-sm text-orange-700 mt-1">
-                ⏳ Manual signature required after printing
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-orange-700 mb-2">Select Department Head:</label>
+                <select
+                  value={returnData.department_head_name}
+                  onChange={(e) => setReturnData({...returnData, department_head_name: e.target.value})}
+                  className="w-full px-3 py-2 border border-orange-300 bg-white rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="Idder EL-Fermi">Idder EL-Fermi</option>
+                </select>
               </div>
-              <div className="text-xs text-orange-600 mt-2 p-2 bg-orange-100 rounded">
-                Remains blank for manual signing after form is printed
+              <div className="text-sm text-orange-700 mt-3">
+                ⏳ Manual signature required after printing
               </div>
               <div className="mt-3 border-b-2 border-dashed border-orange-300 w-full h-8"></div>
               <div className="text-xs text-orange-600 mt-1">Signature & Date Line</div>
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="font-medium text-purple-800 flex items-center">
+                <AlertTriangle size={16} className="mr-2" />
+                General Manager
+              </div>
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-purple-700 mb-2">General Manager:</label>
+                <input
+                  type="text"
+                  value={returnData.general_manager_name}
+                  onChange={(e) => setReturnData({...returnData, general_manager_name: e.target.value})}
+                  className="w-full px-3 py-2 border border-purple-300 bg-purple-50 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Ahmed Massouni"
+                  readOnly
+                />
+              </div>
+              <div className="text-sm text-purple-700 mt-3">
+                ⏳ Manual signature required after printing
+              </div>
+              <div className="mt-3 border-b-2 border-dashed border-purple-300 w-full h-8"></div>
+              <div className="text-xs text-purple-600 mt-1">Signature & Date Line</div>
             </div>
             
             <div className="p-4 bg-red-50 rounded-lg border border-red-200">
@@ -819,7 +849,7 @@ const EnhancedReturnForm = ({ user }) => {
                 <AlertTriangle size={16} className="mr-2" />
                 Finance Department
               </div>
-              <div className="text-sm text-red-700 mt-1">
+              <div className="text-sm text-red-700 mt-3">
                 ⏳ Manual signature + official stamp after printing
               </div>
               <div className="text-xs text-red-600 mt-2 p-2 bg-red-100 rounded">
