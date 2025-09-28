@@ -2783,17 +2783,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         # Calculate totals
         total_supplier_currency = purchase_price * quantity
         
-        # Get exchange rates
-        try:
-            rates_response = await get_current_exchange_rates()
-            exchange_rates = rates_response.get('exchange_rates', {
-                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
-            })
-            exchange_rate = exchange_rates.get(purchase_currency, 1.0)
-            total_usd = total_supplier_currency * exchange_rate
-        except:
-            exchange_rate = 0.267 if purchase_currency == 'SAR' else 1.0
-            total_usd = total_supplier_currency * exchange_rate
+        # Note: USD conversion removed as per user request - showing only supplier currency
         
         currency_data = [
             ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}"]
