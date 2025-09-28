@@ -280,7 +280,7 @@ const EnhancedVisualCharts = () => {
       
       {/* Supplier Performance Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {dashboardData.supplierPerformance.slice(0, 6).map((supplier, index) => (
+        {(dashboardData.supplierPerformance || []).slice(0, 6).map((supplier, index) => (
           <div key={supplier._id} className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg">
             <div className="text-sm font-medium text-gray-600 truncate" title={supplier._id}>
               {supplier._id}
