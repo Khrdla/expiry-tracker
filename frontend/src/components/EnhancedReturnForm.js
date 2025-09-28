@@ -31,9 +31,11 @@ const EnhancedReturnForm = ({ user }) => {
     section_manager_signature: '',
     section_manager_timestamp: '',
     
-    // Manual Signatures (Remain blank for after-printing)
-    department_head_name: '', // Blank for manual signature
+    // Manual Signatures (With default names)
+    department_head_name: 'Idder EL-Fermi', // Default name with dropdown option
+    general_manager_name: 'Ahmed Massouni', // Default name
     department_head_signature: '', // Blank for manual signature
+    general_manager_signature: '', // Blank for manual signature
     finance_signature: '', // Blank for manual signature + stamp
     
     // Status tracking with enhanced validation
