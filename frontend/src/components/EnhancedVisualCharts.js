@@ -359,7 +359,7 @@ const EnhancedVisualCharts = () => {
             
             {/* Waste Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              {wasteChartData.slice(0, 4).map((dept, index) => (
+              {(wasteChartData || []).slice(0, 4).map((dept, index) => (
                 <div key={dept.department} className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-lg">
                   <div className="text-sm font-medium text-gray-600">{dept.department}</div>
                   <div className="text-lg font-bold text-gray-800">{formatNumber(dept.total_waste)}</div>
