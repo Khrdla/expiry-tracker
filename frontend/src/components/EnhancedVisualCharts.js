@@ -100,7 +100,7 @@ const EnhancedVisualCharts = () => {
       </div>
       
       <ResponsiveContainer width="100%" height={400}>
-        <BarChart data={dashboardData.departmentBreakdown}>
+        <BarChart data={dashboardData.departmentBreakdown || []}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="_id" tick={{ fontSize: 12 }} />
           <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
