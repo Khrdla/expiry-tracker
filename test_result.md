@@ -640,6 +640,18 @@ backend:
         agent: "testing"
         comment: "🚨 URGENT SAR CURRENCY INVESTIGATION AND FIX COMPLETED - SUCCESS RATE: 100% (17/17 tests passed). ✅ CRITICAL ISSUE IDENTIFIED AND RESOLVED: User reported 369.36 SAR showing as $369.36 USD (wrong 1:1 conversion) instead of correct $98.50 USD. Root cause: Currency settings had base_currency='INVALID' with only 'FAKE': 999 rate, causing SAR to default to 1.0 rate. ✅ COMPREHENSIVE FIX APPLIED: Updated currency settings with correct rates - YER: 0.004 (1 USD = 250 YER), SAR: 0.2667 (1 USD = 3.75 SAR), EUR: 1.10, USD: 1.0 (base). Changed base_currency from 'INVALID' to 'USD'. ✅ VERIFICATION COMPLETED: All currency APIs working correctly (GET /api/currency/rates, GET /api/currency/settings, PUT /api/currency/settings). User's exact scenario verified: 369.36 SAR now correctly converts to $98.51 USD (was $369.36). Additional test values confirmed: 375 SAR = $100.01 USD, 750 SAR = $200.03 USD, 1875 SAR = $500.06 USD. ✅ RETURN FORM INTEGRATION: Created test return forms with SAR currency - conversion working correctly in PDF exports and system calculations. The SAR currency conversion issue is completely resolved - no more 1:1 conversion error."
 
+  - task: "Return Form Currency Display Simplification - Remove USD Equivalent and Exchange Rate"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 RETURN FORM CURRENCY DISPLAY SIMPLIFICATION TESTING COMPLETED - SUCCESS RATE: 100% (7/7 tests passed). ✅ ALL REVIEW REQUIREMENTS VERIFIED: 1) Login with imadqejji/066380531I: Authentication successful with JWT token. 2) Create Return Form with SAR Currency: Successfully created form with Apple Juice Box 1L, quantity 98.5, price 3.75 SAR, calculated total 369.375 SAR. 3) PDF Generation: GET /api/export/return-form/{form_id}?format=pdf generates valid 50KB+ PDFs with proper content-type. 4) Currency Simplification Verified: PDF shows ONLY 'Total Value: 369.38 SAR' - NO USD Equivalent ($98.51 USD) or Exchange Rate (1 SAR = 0.2667 USD) displayed. 5) Clean Layout Confirmed: Return Value Calculation section has single row, professional GEANT branding maintained, single-page format preserved. ✅ CRITICAL SUCCESS: The currency simplification works exactly as requested - PDF displays only supplier currency total without USD conversion or exchange rate information, maintaining clean professional layout. The modification successfully removes USD equivalent and exchange rate while preserving all other functionality."
+
   - task: "SAR Currency Conversion Rate Investigation and Fix"
     implemented: true
     working: true
