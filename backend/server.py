@@ -3398,9 +3398,7 @@ async def export_return_form_pdf(
         # Calculate totals
         total_supplier_currency = purchase_price * quantity
         
-        # Convert to USD
-        exchange_rate = exchange_rates.get(purchase_currency, 1.0)
-        total_usd = total_supplier_currency * exchange_rate
+        # Note: USD conversion removed as per user request - showing only supplier currency
         
         # Professional currency display with clean formatting
         currency_data = [
