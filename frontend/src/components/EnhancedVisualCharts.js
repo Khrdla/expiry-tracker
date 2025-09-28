@@ -52,9 +52,9 @@ const EnhancedVisualCharts = () => {
       const wasteData = await wasteResponse.json();
 
       setDashboardData({
-        departmentBreakdown,
+        departmentBreakdown: Array.isArray(departmentBreakdown) ? departmentBreakdown : [],
         stockLevels,
-        supplierPerformance,
+        supplierPerformance: Array.isArray(supplierPerformance) ? supplierPerformance : [],
         wasteData: wasteData.waste_entries || []
       });
       
