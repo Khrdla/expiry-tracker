@@ -20,6 +20,10 @@ const EnhancedReturnForm = ({ user }) => {
     expiry_date: '',
     reason_for_return: '',
     
+    // FOC (Free of Cost) functionality
+    is_foc: false, // FOC checkbox state
+    foc_reason: '', // Reason for FOC (optional)
+    
     // Enhanced Supervisor Selection (Dropdown)
     selected_supervisor: '', // This will be selected from dropdown
     prepared_by_supervisor: '', // This will be auto-filled from selected_supervisor
