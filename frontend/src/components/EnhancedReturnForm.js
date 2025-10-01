@@ -70,6 +70,16 @@ const EnhancedReturnForm = ({ user }) => {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [currencyRates, setCurrencyRates] = useState({});
   const [usdValue, setUsdValue] = useState(0);
+  
+  // FOC (Free of Cost) related state
+  const [focFilterActive, setFocFilterActive] = useState(false);
+  const [returnItems, setReturnItems] = useState([]); // For managing multiple items
+  const [focSummary, setFocSummary] = useState({
+    focItemCount: 0,
+    focTotalQuantity: 0,
+    nonFocTotalValue: 0,
+    nonFocItemCount: 0
+  });
 
   // Barcode scanning refs
   const videoRef = useRef(null);
