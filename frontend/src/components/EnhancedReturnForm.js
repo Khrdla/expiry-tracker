@@ -5,24 +5,10 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const EnhancedReturnForm = ({ user }) => {
   const [returnData, setReturnData] = useState({
-    // Item Details
-    product_code: '',
-    product_name: '',
-    barcode: '',
-    quantity: '',
-    purchase_price: '',
-    purchase_currency: 'YER',
-    total_value: '0.00',
-    total_value_usd: '0.00',
+    // Return Form Metadata (not item-specific)
     supplier: '',
     department: '',
     section: '',
-    expiry_date: '',
-    reason_for_return: '',
-    
-    // FOC (Free of Cost) functionality
-    is_foc: false, // FOC checkbox state
-    foc_reason: '', // Reason for FOC (optional)
     
     // Enhanced Supervisor Selection (Dropdown)
     selected_supervisor: '', // This will be selected from dropdown
