@@ -792,6 +792,18 @@ backend:
 
     -agent: "testing"
     -message: "COMPREHENSIVE ENHANCED INVENTORY SYSTEM TESTING COMPLETED - SUCCESS RATE: 71.4% (15/21 tests passed). ✅ CRITICAL REQUIREMENTS VERIFIED: 1) Enhanced Product Search: 100% working - barcode search (3222471081716 → Apple Juice Box 1L), product name search (Apple → 10 results), auto-suggestions functional. 2) Currency Management: 80% working - all CRUD endpoints functional, database integration working, minor validation issue with invalid currencies. 3) Stock Value Calculations: 100% working - dashboard shows $42,742.74 total across 3 departments, formula verification confirmed. 4) Waste Reports Integration: 75% working - entry creation, currency breakdown (YER/SAR/EUR), USD conversion exports all functional. 5) Export System: 50% working - waste reports export perfectly (38,880 bytes), return forms need approval workflow completion. 6) Data Integrity: 67% working - missing price handling and auth controls working, currency validation needs improvement. 7) Approval Workflow: 100% working - admin access and return form creation with dual approval functional. ✅ SYSTEM STATUS: Enhanced inventory features are largely functional with minor validation and approval workflow issues."
+  - task: "Multi-Item Return Form with FOC Support - Backend Implementation"
+    implemented: false
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🚨 CRITICAL MULTI-ITEM FOC BACKEND ISSUE IDENTIFIED - SUCCESS RATE: 60% (6/10 tests passed). ✅ WORKING COMPONENTS: 1) Multi-Item Data Handling: Backend accepts new multi-item data structure with items array, item_summary, and totals (POST /api/return-forms working). 2) FOC/Normal Item Separation: Items correctly stored with is_foc flags and foc_reason fields. 3) Total Value Calculation: Accurate calculations (187.50 SAR from normal items only, FOC excluded). 4) Excel Export: Multi-item Excel export working (5886 bytes with proper structure). ❌ CRITICAL FAILURES: 1) PDF Generation: generate_enhanced_return_form_pdf() function still uses single-item logic - looks for 'product_name', 'quantity', 'purchase_price' directly in form instead of processing 'items' array. 2) Multi-Item PDF Content: PDFs don't show multiple products (Apple Juice, Orange Juice), FOC indicators, or proper multi-item structure. 3) Investigation Confirmed: Single-item forms work in PDF (51KB), multi-item forms fail to display items correctly despite being stored properly. ROOT CAUSE: PDF generation function needs complete rewrite to iterate through items array and handle FOC logic per item. Backend data storage is perfect, but PDF export is broken for multi-item functionality."
+
   - task: "Fix ProductDetailsModal and product cards image URL format - remove /api prefix"
     implemented: true
     working: true
