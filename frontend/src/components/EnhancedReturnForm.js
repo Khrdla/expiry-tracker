@@ -307,11 +307,11 @@ const EnhancedReturnForm = ({ user }) => {
     }
   };
 
-  // Auto-fill form with selected product
+  // Auto-fill current item with selected product
   const selectProduct = (product) => {
-    console.log('📦 Auto-filling Return Form with Master Data:', product);
+    console.log('📦 Auto-filling Current Item with Master Data:', product);
     
-    setReturnData(prev => ({
+    setCurrentItem(prev => ({
       ...prev,
       product_code: product.item_number || product.barcode || '',
       product_name: product.product_name || '',
@@ -319,9 +319,15 @@ const EnhancedReturnForm = ({ user }) => {
       purchase_price: product.purchase_price ? product.purchase_price.toString() : '',
       purchase_currency: product.purchase_currency || product.currency || 'YER',
       supplier: product.supplier || 'Unknown Supplier',
+      expiry_date: product.expiry_date ? product.expiry_date.split('T')[0] : '',
+    }));
+
+    // Also update return data supplier/department info
+    setReturnData(prev => ({
+      ...prev,
+      supplier: product.supplier || 'Unknown Supplier',
       department: product.department || '',
       section: product.section || '',
-      expiry_date: product.expiry_date ? product.expiry_date.split('T')[0] : '',
     }));
 
     setSearchQuery(product.product_name || '');
