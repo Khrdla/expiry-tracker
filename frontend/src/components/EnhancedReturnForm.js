@@ -727,8 +727,183 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
       </div>
 
-      {/* Product Details Form */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {/* Multi-Item Return Form */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          <Package size={24} className="mr-2 text-blue-600" />
+          Return Items Management
+          <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+            {returnItems.length}/10 items per supplier
+          </span>
+        </h2>
+
+        {/* Current Item Entry Form */}
+        <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-800">Add New Item</h3>
+            {returnItems.length > 0 && (
+              <div className="text-sm text-gray-600">
+                Supplier: {returnData.supplier || 'Not selected'}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Code</label>
+              <input
+                type="text"
+                value={currentItem.product_code}
+                onChange={(e) => setCurrentItem({...currentItem, product_code: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Auto-filled from search"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+              <input
+                type="text"
+                value={currentItem.product_name}
+                onChange={(e) => setCurrentItem({...currentItem, product_name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Auto-filled from search"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Barcode</label>
+              <input
+                type="text"
+                value={currentItem.barcode}
+                onChange={(e) => setCurrentItem({...currentItem, barcode: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Auto-filled from search"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <input
+                type="number"
+                value={currentItem.quantity}
+                onChange={(e) => setCurrentItem({...currentItem, quantity: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter quantity"
+                min="0"
+                step="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Price</label>
+              <div className="flex">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={currentItem.purchase_price}
+                  onChange={(e) => setCurrentItem({...currentItem, purchase_price: e.target.value})}
+                  className={`flex-1 px-3 py-2 border rounded-l-lg focus:ring-2 ${
+                    currentItem.is_foc 
+                      ? 'border-orange-300 bg-orange-50 text-orange-600 cursor-not-allowed' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
+                  placeholder={currentItem.is_foc ? "0 (FOC)" : "Unit price"}
+                  disabled={currentItem.is_foc}
+                />
+                <select
+                  value={currentItem.purchase_currency}
+                  onChange={(e) => setCurrentItem({...currentItem, purchase_currency: e.target.value})}
+                  className="px-3 py-2 bg-white border-t border-r border-b border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="YER">YER</option>
+                  <option value="SAR">SAR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Total Value</label>
+              <div className={`px-3 py-2 rounded-lg border ${
+                currentItem.is_foc 
+                  ? 'bg-orange-50 border-orange-200 text-orange-800' 
+                  : 'bg-gray-50 border-gray-300 text-gray-800'
+              }`}>
+                {currentItem.total_value} {currentItem.purchase_currency}
+                {currentItem.is_foc && (
+                  <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-1 py-0.5 rounded">FREE</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={addItemToList}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2"
+              >
+                <Plus size={16} />
+                <span>Add Item</span>
+              </button>
+            </div>
+          </div>
+
+          {/* FOC Toggle and Controls */}
+          <div className={`p-4 rounded-lg border-2 ${currentItem.is_foc ? 'bg-orange-50 border-orange-300' : 'bg-blue-50 border-blue-200'}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="current-item-foc"
+                  checked={currentItem.is_foc}
+                  onChange={(e) => handleFOCToggle(e.target.checked)}
+                  className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                />
+                <label htmlFor="current-item-foc" className="ml-3 text-sm font-medium text-gray-700">
+                  FOC (Free of Cost)
+                </label>
+                {currentItem.is_foc && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    🆓 FOC
+                  </span>
+                )}
+              </div>
+              
+              {currentItem.is_foc && (
+                <div className="text-sm text-orange-600 font-medium">
+                  Unit Price: 0 • Total Value: 0
+                </div>
+              )}
+            </div>
+            
+            {currentItem.is_foc && (
+              <div>
+                <label className="block text-sm font-medium text-orange-700 mb-1">FOC Reason</label>
+                <input
+                  type="text"
+                  value={currentItem.foc_reason}
+                  onChange={(e) => setCurrentItem({...currentItem, foc_reason: e.target.value})}
+                  className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white"
+                  placeholder="e.g., Promotional item, Sample, Expired promotion..."
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">Reason for Return</label>
+            <textarea
+              value={currentItem.reason_for_return}
+              onChange={(e) => setCurrentItem({...currentItem, reason_for_return: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe the reason for returning this item..."
+              rows="2"
+            />
+          </div>
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Product Code</label>
           <input
