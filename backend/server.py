@@ -2741,45 +2741,140 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(ref_table)
         story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
         
-        # ===== PRODUCT INFORMATION SECTION =====
-        story.append(Paragraph("PRODUCT INFORMATION", section_style))
+        # ===== MULTI-ITEM RETURN INFORMATION SECTION =====
+        items = return_form.get('items', [])
         
-        # Check if item is FOC
-        is_foc = return_form.get('is_foc', False)
-        foc_reason = return_form.get('foc_reason', '')
+        if items:
+            # Multi-item display
+            story.append(Paragraph("RETURN ITEMS INFORMATION", section_style))
+            
+            # Create items table header
+            items_table_data = [['#', 'Product Name', 'Qty', 'Price', 'Total', 'FOC Status']]
+            
+            total_normal_value = 0
+            normal_items_count = 0
+            foc_items_count = 0
+            
+            for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
+                is_foc = item.get('is_foc', False)
+                quantity = item.get('quantity', 0)
+                price = float(item.get('price', 0)) if not is_foc else 0
+                total_value = price * quantity if not is_foc else 0
+                currency = item.get('currency', 'SAR')
+                
+                if is_foc:
+                    foc_items_count += 1
+                    status_text = '🆓 FOC'
+                    price_text = f"0 {currency} (FREE)"
+                    total_text = f"0 {currency}"
+                else:
+                    normal_items_count += 1
+                    total_normal_value += total_value
+                    status_text = 'Normal'
+                    price_text = f"{price} {currency}"
+                    total_text = f"{total_value:.2f} {currency}"
+                
+                items_table_data.append([
+                    str(idx),
+                    item.get('product_name', 'Unknown Product')[:25],  # Truncate long names
+                    str(quantity),
+                    price_text,
+                    total_text,
+                    status_text
+                ])
+                
+                # Add FOC reason as sub-row if applicable
+                if is_foc and item.get('foc_reason'):
+                    items_table_data.append([
+                        '', 
+                        f"  FOC Reason: {item.get('foc_reason', '')[:35]}", 
+                        '', '', '', ''
+                    ])
+            
+            # Create items table with compact styling
+            items_table = Table(items_table_data, colWidths=[0.3*inch, 2.2*inch, 0.5*inch, 1.0*inch, 1.0*inch, 0.8*inch])
+            items_table.setStyle(TableStyle([
+                # Header styling
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                # Data styling
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 7),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, geant_green),
+                ('PADDING', (0, 0), (-1, -1), 2),
+                # Alternating row colors
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+            ]))
+            
+            story.append(items_table)
+            story.append(Spacer(1, 0.1*inch))
+            
+            # Items summary
+            summary_data = [
+                ['Total Items:', f"{len(items)} items ({normal_items_count} normal, {foc_items_count} FOC)"],
+                ['Supplier:', return_form.get('supplier', 'Unknown Supplier')],
+                ['Reason for Return:', return_form.get('reason_for_return', 'Mixed items return')]
+            ]
+            
+            summary_table = Table(summary_data, colWidths=[2.0*inch, 4.5*inch])
+            summary_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+                ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+                ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+                ('PADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ]))
+            
+            story.append(summary_table)
+        else:
+            # Fallback to single-item display (backward compatibility)
+            story.append(Paragraph("PRODUCT INFORMATION", section_style))
+            
+            # Check if item is FOC
+            is_foc = return_form.get('is_foc', False)
+            foc_reason = return_form.get('foc_reason', '')
+            
+            item_data = [
+                ['Product Code:', return_form.get('product_code', '')],
+                ['Product Name:', return_form.get('product_name', '')],
+                ['Barcode:', return_form.get('barcode', '') or 'N/A'],
+                ['Supplier:', return_form.get('supplier', '')],
+                ['Quantity:', str(return_form.get('quantity', 0))],
+                ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}" + (' (FOC - FREE)' if is_foc else '')],
+                ['FOC Status:', 'Yes - Free of Cost' if is_foc else 'No - Regular Item'],
+                ['Reason for Return:', return_form.get('reason_for_return', '')]
+            ]
+            
+            if is_foc and foc_reason:
+                item_data.append(['FOC Reason:', foc_reason])
+            
+            item_table = Table(item_data, colWidths=[2.2*inch, 4.3*inch])
+            item_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+                ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+                ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+                ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+                ('PADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ]))
+            
+            story.append(item_table)
         
-        item_data = [
-            ['Product Code:', return_form.get('product_code', '')],
-            ['Product Name:', return_form.get('product_name', '')],
-            ['Barcode:', return_form.get('barcode', '') or 'N/A'],
-            ['Supplier:', return_form.get('supplier', '')],
-            ['Quantity:', str(return_form.get('quantity', 0))],
-            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}" + (' (FOC - FREE)' if is_foc else '')],
-            ['FOC Status:', 'Yes - Free of Cost' if is_foc else 'No - Regular Item'],
-            ['Reason for Return:', return_form.get('reason_for_return', '')]
-        ]
-        
-        # Add FOC reason if applicable
-        if is_foc and foc_reason:
-            item_data.append(['FOC Reason:', foc_reason])
-        
-        item_table = Table(item_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
-        item_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
-            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
-            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
-            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
-            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
-        ]))
-        
-        story.append(item_table)
-        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
+        story.append(Spacer(1, 0.1*inch))
         
         # ===== RETURN VALUE CALCULATION SECTION =====
         section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
@@ -3382,45 +3477,140 @@ async def export_return_form_pdf(
         story.append(ref_table)
         story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
         
-        # ===== PRODUCT INFORMATION SECTION =====
-        story.append(Paragraph("PRODUCT INFORMATION", section_style))
+        # ===== MULTI-ITEM RETURN INFORMATION SECTION =====
+        items = return_form.get('items', [])
         
-        # Check if item is FOC
-        is_foc = return_form.get('is_foc', False)
-        foc_reason = return_form.get('foc_reason', '')
+        if items:
+            # Multi-item display
+            story.append(Paragraph("RETURN ITEMS INFORMATION", section_style))
+            
+            # Create items table header
+            items_table_data = [['#', 'Product Name', 'Qty', 'Price', 'Total', 'FOC Status']]
+            
+            total_normal_value = 0
+            normal_items_count = 0
+            foc_items_count = 0
+            
+            for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
+                is_foc = item.get('is_foc', False)
+                quantity = item.get('quantity', 0)
+                price = float(item.get('price', 0)) if not is_foc else 0
+                total_value = price * quantity if not is_foc else 0
+                currency = item.get('currency', 'SAR')
+                
+                if is_foc:
+                    foc_items_count += 1
+                    status_text = '🆓 FOC'
+                    price_text = f"0 {currency} (FREE)"
+                    total_text = f"0 {currency}"
+                else:
+                    normal_items_count += 1
+                    total_normal_value += total_value
+                    status_text = 'Normal'
+                    price_text = f"{price} {currency}"
+                    total_text = f"{total_value:.2f} {currency}"
+                
+                items_table_data.append([
+                    str(idx),
+                    item.get('product_name', 'Unknown Product')[:25],  # Truncate long names
+                    str(quantity),
+                    price_text,
+                    total_text,
+                    status_text
+                ])
+                
+                # Add FOC reason as sub-row if applicable
+                if is_foc and item.get('foc_reason'):
+                    items_table_data.append([
+                        '', 
+                        f"  FOC Reason: {item.get('foc_reason', '')[:35]}", 
+                        '', '', '', ''
+                    ])
+            
+            # Create items table with compact styling
+            items_table = Table(items_table_data, colWidths=[0.3*inch, 2.2*inch, 0.5*inch, 1.0*inch, 1.0*inch, 0.8*inch])
+            items_table.setStyle(TableStyle([
+                # Header styling
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                # Data styling
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 7),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, geant_green),
+                ('PADDING', (0, 0), (-1, -1), 2),
+                # Alternating row colors
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+            ]))
+            
+            story.append(items_table)
+            story.append(Spacer(1, 0.1*inch))
+            
+            # Items summary
+            summary_data = [
+                ['Total Items:', f"{len(items)} items ({normal_items_count} normal, {foc_items_count} FOC)"],
+                ['Supplier:', return_form.get('supplier', 'Unknown Supplier')],
+                ['Reason for Return:', return_form.get('reason_for_return', 'Mixed items return')]
+            ]
+            
+            summary_table = Table(summary_data, colWidths=[2.0*inch, 4.5*inch])
+            summary_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+                ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+                ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+                ('PADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ]))
+            
+            story.append(summary_table)
+        else:
+            # Fallback to single-item display (backward compatibility)
+            story.append(Paragraph("PRODUCT INFORMATION", section_style))
+            
+            # Check if item is FOC
+            is_foc = return_form.get('is_foc', False)
+            foc_reason = return_form.get('foc_reason', '')
+            
+            item_data = [
+                ['Product Code:', return_form.get('product_code', '')],
+                ['Product Name:', return_form.get('product_name', '')],
+                ['Barcode:', return_form.get('barcode', '') or 'N/A'],
+                ['Supplier:', return_form.get('supplier', '')],
+                ['Quantity:', str(return_form.get('quantity', 0))],
+                ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}" + (' (FOC - FREE)' if is_foc else '')],
+                ['FOC Status:', 'Yes - Free of Cost' if is_foc else 'No - Regular Item'],
+                ['Reason for Return:', return_form.get('reason_for_return', '')]
+            ]
+            
+            if is_foc and foc_reason:
+                item_data.append(['FOC Reason:', foc_reason])
+            
+            item_table = Table(item_data, colWidths=[2.2*inch, 4.3*inch])
+            item_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
+                ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
+                ('GRID', (0, 0), (-1, -1), 1, geant_accent),
+                ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+                ('PADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (0, -1), 8),
+            ]))
+            
+            story.append(item_table)
         
-        item_data = [
-            ['Product Code:', return_form.get('product_code', '')],
-            ['Product Name:', return_form.get('product_name', '')],
-            ['Barcode:', return_form.get('barcode', '') or 'N/A'],
-            ['Supplier:', return_form.get('supplier', '')],
-            ['Quantity:', str(return_form.get('quantity', 0))],
-            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}" + (' (FOC - FREE)' if is_foc else '')],
-            ['FOC Status:', 'Yes - Free of Cost' if is_foc else 'No - Regular Item'],
-            ['Reason for Return:', return_form.get('reason_for_return', '')]
-        ]
-        
-        # Add FOC reason if applicable
-        if is_foc and foc_reason:
-            item_data.append(['FOC Reason:', foc_reason])
-        
-        item_table = Table(item_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
-        item_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
-            ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
-            ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('ROWBACKGROUNDS', (1, 0), (1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
-            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
-            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
-        ]))
-        
-        story.append(item_table)
-        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
+        story.append(Spacer(1, 0.1*inch))
         
         # ===== RETURN VALUE CALCULATION SECTION =====
         section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
