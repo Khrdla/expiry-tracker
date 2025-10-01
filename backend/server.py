@@ -3042,15 +3042,24 @@ async def generate_enhanced_return_form_excel(return_form: dict):
         current_row += 1
         
         # Product details safely
+        # Check if item is FOC
+        is_foc = return_form.get('is_foc', False)
+        foc_reason = return_form.get('foc_reason', '')
+        
         product_fields = [
             ("Product Code:", return_form.get('product_code', 'N/A')),
             ("Product Name:", return_form.get('product_name', 'N/A')),
             ("Barcode:", return_form.get('barcode', 'N/A')),
             ("Supplier:", return_form.get('supplier', 'N/A')),
             ("Quantity:", return_form.get('quantity', 'N/A')),
-            ("Purchase Price:", f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}"),
+            ("Purchase Price:", f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'YER')}" + (' (FOC - FREE)' if is_foc else '')),
+            ("FOC Status:", 'Yes - Free of Cost' if is_foc else 'No - Regular Item'),
             ("Reason for Return:", return_form.get('reason_for_return', 'N/A')),
         ]
+        
+        # Add FOC reason if applicable
+        if is_foc and foc_reason:
+            product_fields.append(("FOC Reason:", foc_reason))
         
         # Calculate USD value safely
         try:
