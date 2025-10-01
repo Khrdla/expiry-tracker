@@ -706,6 +706,57 @@ const EnhancedReturnForm = ({ user }) => {
           </div>
         </div>
 
+        {/* FOC (Free of Cost) Toggle */}
+        <div className="col-span-2">
+          <div className={`p-4 rounded-lg border-2 ${returnData.is_foc ? 'bg-orange-50 border-orange-300' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="foc-toggle"
+                  checked={returnData.is_foc}
+                  onChange={(e) => handleFOCToggle(e.target.checked)}
+                  className="w-5 h-5 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                />
+                <label htmlFor="foc-toggle" className="ml-3 text-sm font-medium text-gray-700">
+                  FOC (Free of Cost)
+                </label>
+                {returnData.is_foc && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    🆓 FOC
+                  </span>
+                )}
+              </div>
+              
+              {returnData.is_foc && (
+                <div className="text-sm text-orange-600 font-medium">
+                  Unit Price: 0 • Total Value: 0
+                </div>
+              )}
+            </div>
+            
+            {returnData.is_foc && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-orange-700 mb-1">FOC Reason (Optional)</label>
+                <input
+                  type="text"
+                  value={returnData.foc_reason}
+                  onChange={(e) => setReturnData({...returnData, foc_reason: e.target.value})}
+                  className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white"
+                  placeholder="e.g., Promotional item, Sample, Expired promotion..."
+                />
+              </div>
+            )}
+            
+            <div className="text-xs text-gray-500 mt-2">
+              {returnData.is_foc 
+                ? "💡 FOC items are excluded from total cost calculation but remain visible in reports"
+                : "💰 Check this box if the item is Free of Cost (no monetary value)"
+              }
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Return Value</label>
           <div className="space-y-3">
