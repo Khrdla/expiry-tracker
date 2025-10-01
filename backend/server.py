@@ -2877,20 +2877,45 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(Spacer(1, 0.1*inch))
         
         # ===== RETURN VALUE CALCULATION SECTION =====
-        section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
-        story.append(Paragraph(section_title, section_style))
-        
-        # Calculate values safely with FOC logic
-        purchase_price = float(return_form.get('purchase_price', 0))
-        quantity = float(return_form.get('quantity', 0))
-        purchase_currency = return_form.get('purchase_currency', 'SAR')
-        
-        # Calculate totals (FOC items have 0 value)
-        total_supplier_currency = 0.0 if is_foc else (purchase_price * quantity)
-        
-        currency_data = [
-            ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}" + (' (FREE - No Cost)' if is_foc else '')]
-        ]
+        if items:
+            # Multi-item calculation
+            has_foc_items = any(item.get('is_foc', False) for item in items)
+            section_title = "RETURN VALUE CALCULATION" + (" (MIXED FOC/NORMAL ITEMS)" if has_foc_items else "")
+            story.append(Paragraph(section_title, section_style))
+            
+            # Calculate multi-item totals
+            total_normal_value = sum(
+                float(item.get('price', 0)) * float(item.get('quantity', 0))
+                for item in items if not item.get('is_foc', False)
+            )
+            total_foc_quantity = sum(
+                float(item.get('quantity', 0))
+                for item in items if item.get('is_foc', False)
+            )
+            currency = items[0].get('currency', 'SAR') if items else 'SAR'
+            
+            currency_data = [
+                ['Total Value (Non-FOC Items):', f"{total_normal_value:.2f} {currency}"],
+                ['Total FOC Items:', f"{foc_items_count} items ({total_foc_quantity} qty) - FREE"],
+                ['Total Items:', f"{len(items)} items ({normal_items_count} normal + {foc_items_count} FOC)"]
+            ]
+        else:
+            # Single-item calculation (backward compatibility)
+            is_foc = return_form.get('is_foc', False)
+            section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
+            story.append(Paragraph(section_title, section_style))
+            
+            # Calculate values safely with FOC logic
+            purchase_price = float(return_form.get('purchase_price', 0))
+            quantity = float(return_form.get('quantity', 0))
+            purchase_currency = return_form.get('purchase_currency', 'SAR')
+            
+            # Calculate totals (FOC items have 0 value)
+            total_supplier_currency = 0.0 if is_foc else (purchase_price * quantity)
+            
+            currency_data = [
+                ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}" + (' (FREE - No Cost)' if is_foc else '')]
+            ]
         
         currency_table = Table(currency_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         currency_table.setStyle(TableStyle([
