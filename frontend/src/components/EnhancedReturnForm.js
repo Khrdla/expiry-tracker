@@ -824,6 +824,66 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
       </div>
 
+      {/* FOC Summary & Controls */}
+      <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+        <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
+          🆓 FOC (Free of Cost) Summary
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Current Item FOC Status */}
+          <div className="p-4 bg-white rounded-lg border border-orange-200">
+            <div className="text-sm font-medium text-orange-700">Current Item</div>
+            <div className="text-lg font-bold text-orange-900">
+              {returnData.is_foc ? 'FOC Item' : 'Regular Item'}
+            </div>
+            <div className="text-xs text-orange-600">
+              {returnData.is_foc ? 'Excluded from cost total' : 'Included in cost calculation'}
+            </div>
+          </div>
+          
+          {/* Item Value */}
+          <div className="p-4 bg-white rounded-lg border border-orange-200">
+            <div className="text-sm font-medium text-orange-700">Item Value</div>
+            <div className="text-lg font-bold text-orange-900">
+              {returnData.is_foc ? '0.00' : returnData.total_value} {returnData.purchase_currency}
+            </div>
+            <div className="text-xs text-orange-600">
+              Qty: {returnData.quantity || 0}
+            </div>
+          </div>
+          
+          {/* FOC Reason */}
+          <div className="p-4 bg-white rounded-lg border border-orange-200">
+            <div className="text-sm font-medium text-orange-700">FOC Reason</div>
+            <div className="text-sm text-orange-900">
+              {returnData.foc_reason || (returnData.is_foc ? 'Not specified' : 'N/A - Regular item')}
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => handleFOCToggle(!returnData.is_foc)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              returnData.is_foc
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            }`}
+          >
+            {returnData.is_foc ? '💰 Convert to Regular Item' : '🆓 Mark as FOC'}
+          </button>
+          
+          {returnData.is_foc && (
+            <div className="flex items-center text-sm text-orange-600">
+              <span className="ml-2">💡 FOC items appear in reports but don't affect financial totals</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Approvals & Signatures Section */}
       <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
