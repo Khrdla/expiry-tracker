@@ -766,12 +766,25 @@ const EnhancedReturnForm = ({ user }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Return Value</label>
           <div className="space-y-3">
             {/* Supplier Currency (Primary) */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-sm font-medium text-blue-800 mb-1">
-                Total Value (Supplier Currency)
+            <div className={`p-3 border rounded-lg ${
+              returnData.is_foc 
+                ? 'bg-orange-50 border-orange-200' 
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <div className={`text-sm font-medium mb-1 ${
+                returnData.is_foc ? 'text-orange-800' : 'text-blue-800'
+              }`}>
+                Total Value (Supplier Currency) {returnData.is_foc && '• FOC'}
               </div>
-              <div className="text-lg font-bold text-blue-900">
+              <div className={`text-lg font-bold ${
+                returnData.is_foc ? 'text-orange-900' : 'text-blue-900'
+              }`}>
                 {returnData.total_value} {returnData.purchase_currency}
+                {returnData.is_foc && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    🆓 FREE
+                  </span>
+                )}
               </div>
             </div>
             
