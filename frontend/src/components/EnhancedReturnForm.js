@@ -915,6 +915,129 @@ const EnhancedReturnForm = ({ user }) => {
           />
         </div>
 
+        {/* Return Items List */}
+        {returnItems.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-800">Return Items List</h3>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setFocFilterActive(!focFilterActive)}
+                  className={`px-3 py-1 rounded-lg text-sm ${
+                    focFilterActive 
+                      ? 'bg-orange-100 text-orange-800 border border-orange-300' 
+                      : 'bg-gray-100 text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  {focFilterActive ? '🆓 Show FOC Only' : '📋 Show All'}
+                </button>
+                <span className="text-sm text-gray-600">
+                  {returnItems.filter(item => focFilterActive ? item.is_foc : true).length} items
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {returnItems
+                    .filter(item => focFilterActive ? item.is_foc : true)
+                    .map((item, index) => (
+                    <tr key={item.id} className={`${item.is_foc ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{item.product_name}</div>
+                            <div className="text-sm text-gray-500">{item.product_code} • {item.barcode}</div>
+                            {item.is_foc && item.foc_reason && (
+                              <div className="text-xs text-orange-600 mt-1">FOC Reason: {item.foc_reason}</div>
+                            )}
+                          </div>
+                          {item.is_foc && (
+                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              🆓 FOC
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.quantity}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.is_foc ? '0.00' : item.purchase_price} {item.purchase_currency}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className={`text-sm font-medium ${item.is_foc ? 'text-orange-600' : 'text-gray-900'}`}>
+                          {item.total_value} {item.purchase_currency}
+                          {item.is_foc && (
+                            <span className="ml-1 text-xs text-orange-500">FREE</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          item.is_foc 
+                            ? 'bg-orange-100 text-orange-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {item.is_foc ? 'FOC Stock' : 'System Stock'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => editItem(item)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Multi-Item Summary Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{itemSummary.totalItems}</div>
+            <div className="text-sm text-blue-800">Total Items</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{itemSummary.totalNormalQty}</div>
+            <div className="text-sm text-green-800">Normal Qty</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{itemSummary.totalFocQty}</div>
+            <div className="text-sm text-orange-800">FOC Qty</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">{itemSummary.totalNormalValue.toFixed(2)}</div>
+            <div className="text-sm text-purple-800">Total Value (Non-FOC)</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Continue with previous form structure */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style={{display: 'none'}}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
           <input
