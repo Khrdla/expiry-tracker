@@ -483,83 +483,110 @@ const EnhancedReturnForm = ({ user }) => {
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
 
-  // Enhanced export function with strict validation
+  // Enhanced export function for multi-item return forms
   const handleExport = async (format) => {
-    // Enhanced validation rules
+    // Multi-item validation rules
+    if (returnItems.length === 0) {
+      setMessage({ 
+        type: 'error', 
+        text: '❌ Please add at least one item to the return form before export!' 
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      return;
+    }
+
     if (!returnData.selected_supervisor) {
       setMessage({ 
         type: 'error', 
         text: '❌ Please select a supervisor from the dropdown before export!' 
       });
-      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       return;
     }
 
-    if (!returnData.section_manager_name.trim()) {
+    if (!returnData.section_manager_approved) {
       setMessage({ 
         type: 'error', 
-        text: '❌ Section Manager field must be filled before export!' 
+        text: '❌ Section Manager approval required before export!' 
       });
-      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       return;
     }
 
-    if (!returnData.supervisor_approved || !returnData.section_manager_approved) {
+    // Check for supplier consistency
+    const suppliers = [...new Set(returnItems.map(item => item.supplier))];
+    if (suppliers.length > 1) {
       setMessage({ 
         type: 'error', 
-        text: '❌ Both Supervisor and Section Manager digital approvals required before export!' 
+        text: `❌ Multiple suppliers detected (${suppliers.join(', ')}). Please create separate forms per supplier.` 
       });
-      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       return;
     }
 
     setLoading(true);
+    
     try {
-      const token = localStorage.getItem('token');
-      
-      // First save the return form
-      const saveResponse = await fetch(`${BACKEND_URL}/api/return-forms`, {
+      // Create export data with multiple items
+      const exportData = {
+        ...returnData,
+        supplier: returnItems[0]?.supplier || returnData.supplier,
+        items: returnItems,
+        item_summary: itemSummary,
+        total_items: itemSummary.totalItems,
+        normal_items_count: itemSummary.normalItems,
+        foc_items_count: itemSummary.focItems,
+        total_normal_qty: itemSummary.totalNormalQty,
+        total_foc_qty: itemSummary.totalFocQty,
+        total_normal_value: itemSummary.totalNormalValue,
+        // For backward compatibility, use first item data
+        product_code: returnItems[0]?.product_code || '',
+        product_name: returnItems[0]?.product_name || '',
+        barcode: returnItems[0]?.barcode || '',
+        quantity: itemSummary.totalNormalQty + itemSummary.totalFocQty,
+        purchase_price: returnItems[0]?.purchase_price || '0',
+        purchase_currency: returnItems[0]?.purchase_currency || 'YER',
+        total_value: itemSummary.totalNormalValue.toFixed(2),
+        is_foc: itemSummary.focItems > 0 && itemSummary.normalItems === 0, // All FOC
+        reason_for_return: returnItems.map(item => item.reason_for_return).join('; ') || ''
+      };
+
+      const response = await fetch(`${BACKEND_URL}/api/export/return-form/${formId}?format=${format}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${user.token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(returnData)
+        body: JSON.stringify(exportData)
       });
 
-      if (saveResponse.ok) {
-        const savedForm = await saveResponse.json();
-        const formId = savedForm.id || savedForm._id;
-
-        // Then export with approvals
-        const exportResponse = await fetch(`${BACKEND_URL}/api/export/return-form/${formId}?format=${format}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (exportResponse.ok) {
-          const blob = await exportResponse.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `return_form_${returnData.reference_number}.${format}`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-
-          setMessage({ 
-            type: 'success', 
-            text: `✅ Return form exported as ${format.toUpperCase()} with all approvals and signatures!` 
-          });
-        } else {
-          setMessage({ type: 'error', text: 'Export failed. Please try again.' });
-        }
-      } else {
-        setMessage({ type: 'error', text: 'Failed to save return form before export.' });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Export failed: ${errorText}`);
       }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      link.href = url;
+      link.download = `multi_item_return_form_${returnData.reference_number}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setMessage({ 
+        type: 'success', 
+        text: `✅ Multi-item return form exported successfully as ${format.toUpperCase()}! (${returnItems.length} items)` 
+      });
     } catch (error) {
       console.error('Export error:', error);
-      setMessage({ type: 'error', text: 'Network error during export.' });
+      setMessage({ 
+        type: 'error', 
+        text: `❌ Export failed: ${error.message}` 
+      });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage({ type: '', text: '' }), 5000);
