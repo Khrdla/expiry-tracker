@@ -1246,7 +1246,7 @@ mobile_app_comprehensive_fixes:
 
 test_plan:
   current_focus: 
-    - "Professional GEANT PDF Layout with Fixed Sanitization - COMPLETED"
+    - "FOC (Free of Cost) Return Form Functionality - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -1280,6 +1280,9 @@ test_plan:
   fixed_sanitization_working: true
   no_updates_issue_resolved: true
   geant_pdf_layout_design_testing_completed: true
+  foc_return_form_testing_completed: true
+  foc_return_form_success_rate: "85.7%"
+  foc_all_critical_requirements_verified: true
 
 agent_communication:
   - agent: "main"
