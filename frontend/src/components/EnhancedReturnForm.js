@@ -551,13 +551,31 @@ const EnhancedReturnForm = ({ user }) => {
         reason_for_return: returnItems.map(item => item.reason_for_return).join('; ') || ''
       };
 
-      const response = await fetch(`${BACKEND_URL}/api/export/return-form/${formId}?format=${format}`, {
+      // First save the return form with multi-item data
+      const token = localStorage.getItem('token');
+      const saveResponse = await fetch(`${BACKEND_URL}/api/return-forms`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(exportData)
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save return form before export');
+      }
+
+      const savedForm = await saveResponse.json();
+      const formId = savedForm.id || savedForm._id;
+
+      // Then export the saved form
+      const response = await fetch(`${BACKEND_URL}/api/export/return-form/${formId}?format=${format}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
