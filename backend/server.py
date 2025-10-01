@@ -2744,15 +2744,24 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         # ===== PRODUCT INFORMATION SECTION =====
         story.append(Paragraph("PRODUCT INFORMATION", section_style))
         
+        # Check if item is FOC
+        is_foc = return_form.get('is_foc', False)
+        foc_reason = return_form.get('foc_reason', '')
+        
         item_data = [
             ['Product Code:', return_form.get('product_code', '')],
             ['Product Name:', return_form.get('product_name', '')],
             ['Barcode:', return_form.get('barcode', '') or 'N/A'],
             ['Supplier:', return_form.get('supplier', '')],
             ['Quantity:', str(return_form.get('quantity', 0))],
-            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}"],
+            ['Purchase Price:', f"{return_form.get('purchase_price', 0)} {return_form.get('purchase_currency', 'SAR')}" + (' (FOC - FREE)' if is_foc else '')],
+            ['FOC Status:', 'Yes - Free of Cost' if is_foc else 'No - Regular Item'],
             ['Reason for Return:', return_form.get('reason_for_return', '')]
         ]
+        
+        # Add FOC reason if applicable
+        if is_foc and foc_reason:
+            item_data.append(['FOC Reason:', foc_reason])
         
         item_table = Table(item_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
         item_table.setStyle(TableStyle([
