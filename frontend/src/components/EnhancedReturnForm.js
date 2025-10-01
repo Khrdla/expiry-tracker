@@ -169,9 +169,9 @@ const EnhancedReturnForm = ({ user }) => {
     setItemSummary(summary);
   };
 
-  // Handle FOC toggle and update pricing logic
+  // Handle FOC toggle for current item
   const handleFOCToggle = (checked) => {
-    setReturnData(prev => ({
+    setCurrentItem(prev => ({
       ...prev,
       is_foc: checked,
       // Clear purchase price when FOC is enabled, restore when disabled
@@ -194,6 +194,64 @@ const EnhancedReturnForm = ({ user }) => {
     }
     
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
+  // Add item to the return items list
+  const addItemToList = () => {
+    // Validation
+    if (!currentItem.product_code || !currentItem.product_name || !currentItem.quantity) {
+      setMessage({ type: 'error', text: 'Please fill in Product Code, Product Name, and Quantity before adding item' });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      return;
+    }
+
+    // Check 10-item limit per supplier
+    const sameSupplierItems = returnItems.filter(item => item.supplier === currentItem.supplier);
+    if (sameSupplierItems.length >= 10) {
+      setMessage({ type: 'error', text: `⚠️ Maximum 10 items per supplier reached for ${currentItem.supplier}` });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      return;
+    }
+
+    const newItem = {
+      ...currentItem,
+      id: Date.now(), // Simple ID generation
+    };
+
+    setReturnItems(prev => [...prev, newItem]);
+    
+    // Reset current item form (but keep supplier and currency)
+    setCurrentItem({
+      id: null,
+      product_code: '',
+      product_name: '',
+      barcode: '',
+      quantity: '',
+      purchase_price: '',
+      purchase_currency: currentItem.purchase_currency,
+      total_value: '0.00',
+      expiry_date: '',
+      reason_for_return: '',
+      is_foc: false,
+      foc_reason: '',
+      supplier: currentItem.supplier
+    });
+
+    setMessage({ type: 'success', text: `✅ Item added successfully! ${newItem.is_foc ? '(FOC)' : '(Normal)'}` });
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
+  // Remove item from list
+  const removeItem = (itemId) => {
+    setReturnItems(prev => prev.filter(item => item.id !== itemId));
+    setMessage({ type: 'info', text: 'Item removed from return list' });
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
+  // Edit existing item
+  const editItem = (item) => {
+    setCurrentItem(item);
+    removeItem(item.id);
   };
 
   // Handle supervisor selection and auto-fill prepared_by field
