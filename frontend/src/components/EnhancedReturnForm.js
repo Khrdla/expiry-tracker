@@ -690,8 +690,13 @@ const EnhancedReturnForm = ({ user }) => {
               step="0.01"
               value={returnData.purchase_price}
               onChange={(e) => setReturnData({...returnData, purchase_price: e.target.value})}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Unit price"
+              className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 ${
+                returnData.is_foc 
+                  ? 'border-orange-300 bg-orange-50 text-orange-600 cursor-not-allowed' 
+                  : 'border-gray-300 focus:ring-blue-500'
+              }`}
+              placeholder={returnData.is_foc ? "0 (FOC)" : "Unit price"}
+              disabled={returnData.is_foc}
             />
             <select
               value={returnData.purchase_currency}
