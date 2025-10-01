@@ -92,6 +92,7 @@ class MultiItemFOCTester:
             multi_item_form_data = {
                 "reference_number": f"RTN-MULTI-{int(time.time())}",
                 "supplier": "ExtenC",
+                "selected_supervisor": "Mahmoud Badr",
                 "prepared_by_supervisor": "Mahmoud Badr",
                 "section_manager_name": "Imad Qejji",
                 "reason_for_return": "Mixed FOC and normal items return",
