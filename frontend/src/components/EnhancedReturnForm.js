@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Download, Upload, Signature, User, Building, Search, Camera, CheckCircle, XCircle, Clock, DollarSign, AlertTriangle, Scan, QrCode } from 'lucide-react';
+import { FileText, Download, Upload, Signature, User, Building, Search, Camera, CheckCircle, XCircle, Clock, DollarSign, AlertTriangle, Scan, QrCode, Package, Plus } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
