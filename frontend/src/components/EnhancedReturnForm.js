@@ -114,26 +114,55 @@ const EnhancedReturnForm = ({ user }) => {
     }
   };
 
-  const calculateUSDValue = () => {
-    const price = parseFloat(returnData.purchase_price) || 0;
-    const quantity = parseFloat(returnData.quantity) || 0;
-    const currency = returnData.purchase_currency;
+  const calculateItemValue = () => {
+    const price = parseFloat(currentItem.purchase_price) || 0;
+    const quantity = parseFloat(currentItem.quantity) || 0;
+    const currency = currentItem.purchase_currency;
     const rate = currencyRates[currency] || 1;
     
     // FOC Logic: If item is FOC, set price to 0 and total value to 0
-    const effectivePrice = returnData.is_foc ? 0 : price;
-    const totalOriginal = returnData.is_foc ? 0 : (effectivePrice * quantity);
+    const effectivePrice = currentItem.is_foc ? 0 : price;
+    const totalOriginal = currentItem.is_foc ? 0 : (effectivePrice * quantity);
     const totalUSD = totalOriginal * rate;
     
-    setReturnData(prev => ({
+    setCurrentItem(prev => ({
       ...prev,
       total_value: totalOriginal.toFixed(2),
-      total_value_usd: totalUSD.toFixed(2),
       // Auto-set purchase_price to 0 when FOC is enabled
-      purchase_price: returnData.is_foc ? '0' : prev.purchase_price
+      purchase_price: currentItem.is_foc ? '0' : prev.purchase_price
     }));
     
     setUsdValue(totalUSD);
+  };
+
+  // Calculate summary from all items
+  const calculateSummary = () => {
+    const summary = returnItems.reduce((acc, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const value = parseFloat(item.total_value) || 0;
+      
+      acc.totalItems += 1;
+      if (item.is_foc) {
+        acc.focItems += 1;
+        acc.totalFocQty += qty;
+      } else {
+        acc.normalItems += 1;
+        acc.totalNormalQty += qty;
+        acc.totalNormalValue += value;
+      }
+      
+      return acc;
+    }, {
+      totalItems: 0,
+      normalItems: 0,
+      focItems: 0,
+      totalNormalQty: 0,
+      totalFocQty: 0,
+      totalNormalValue: 0,
+      supplierCount: new Set(returnItems.map(item => item.supplier)).size
+    });
+    
+    setItemSummary(summary);
   };
 
   // Handle FOC toggle and update pricing logic
