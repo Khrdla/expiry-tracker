@@ -114,13 +114,17 @@ const EnhancedReturnForm = ({ user }) => {
     const currency = returnData.purchase_currency;
     const rate = currencyRates[currency] || 1;
     
-    const totalOriginal = price * quantity;
+    // FOC Logic: If item is FOC, set price to 0 and total value to 0
+    const effectivePrice = returnData.is_foc ? 0 : price;
+    const totalOriginal = returnData.is_foc ? 0 : (effectivePrice * quantity);
     const totalUSD = totalOriginal * rate;
     
     setReturnData(prev => ({
       ...prev,
       total_value: totalOriginal.toFixed(2),
-      total_value_usd: totalUSD.toFixed(2)
+      total_value_usd: totalUSD.toFixed(2),
+      // Auto-set purchase_price to 0 when FOC is enabled
+      purchase_price: returnData.is_foc ? '0' : prev.purchase_price
     }));
     
     setUsdValue(totalUSD);
