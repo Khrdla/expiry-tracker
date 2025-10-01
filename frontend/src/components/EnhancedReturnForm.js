@@ -1036,8 +1036,18 @@ const EnhancedReturnForm = ({ user }) => {
         </div>
       </div>
 
-      {/* Continue with previous form structure */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style={{display: 'none'}}>
+      {/* Validation Warning for Empty Items */}
+      {returnItems.length === 0 && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center text-yellow-800">
+            <AlertTriangle size={20} className="mr-2" />
+            <span className="font-medium">No items added yet</span>
+          </div>
+          <p className="text-sm text-yellow-700 mt-1">
+            Please add at least one item to proceed with the return form.
+          </p>
+        </div>
+      )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
           <input
