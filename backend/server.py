@@ -2782,20 +2782,19 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
         
         # ===== RETURN VALUE CALCULATION SECTION =====
-        story.append(Paragraph("RETURN VALUE CALCULATION", section_style))
+        section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
+        story.append(Paragraph(section_title, section_style))
         
-        # Calculate values safely
+        # Calculate values safely with FOC logic
         purchase_price = float(return_form.get('purchase_price', 0))
         quantity = float(return_form.get('quantity', 0))
         purchase_currency = return_form.get('purchase_currency', 'SAR')
         
-        # Calculate totals
-        total_supplier_currency = purchase_price * quantity
-        
-        # Note: USD conversion removed as per user request - showing only supplier currency
+        # Calculate totals (FOC items have 0 value)
+        total_supplier_currency = 0.0 if is_foc else (purchase_price * quantity)
         
         currency_data = [
-            ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}"]
+            ['Total Value:', f"{total_supplier_currency:.2f} {purchase_currency}" + (' (FREE - No Cost)' if is_foc else '')]
         ]
         
         currency_table = Table(currency_data, colWidths=[2.2*inch, 4.3*inch])  # Optimized widths
