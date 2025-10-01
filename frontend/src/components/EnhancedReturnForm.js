@@ -99,8 +99,12 @@ const EnhancedReturnForm = ({ user }) => {
 
   // Calculate USD value when price or currency changes
   useEffect(() => {
-    calculateUSDValue();
-  }, [returnData.purchase_price, returnData.purchase_currency, returnData.quantity, returnData.is_foc, currencyRates]);
+    calculateItemValue();
+  }, [currentItem.purchase_price, currentItem.purchase_currency, currentItem.quantity, currentItem.is_foc, currencyRates]);
+
+  useEffect(() => {
+    calculateSummary();
+  }, [returnItems]);
 
   const fetchCurrencyRates = async () => {
     try {
