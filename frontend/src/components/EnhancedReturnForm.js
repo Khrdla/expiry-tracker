@@ -130,6 +130,33 @@ const EnhancedReturnForm = ({ user }) => {
     setUsdValue(totalUSD);
   };
 
+  // Handle FOC toggle and update pricing logic
+  const handleFOCToggle = (checked) => {
+    setReturnData(prev => ({
+      ...prev,
+      is_foc: checked,
+      // Clear purchase price when FOC is enabled, restore when disabled
+      purchase_price: checked ? '0' : prev.purchase_price,
+      // Clear FOC reason when unchecking
+      foc_reason: checked ? prev.foc_reason : ''
+    }));
+    
+    // Show appropriate message
+    if (checked) {
+      setMessage({ 
+        type: 'info', 
+        text: '🆓 FOC Mode Enabled: Unit price set to 0, item excluded from total cost calculation' 
+      });
+    } else {
+      setMessage({ 
+        type: 'info', 
+        text: '💰 Normal Pricing Mode: Regular cost calculation applied' 
+      });
+    }
+    
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
   // Handle supervisor selection and auto-fill prepared_by field
   const handleSupervisorChange = (selectedValue) => {
     setReturnData(prev => ({
