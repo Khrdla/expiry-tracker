@@ -57,14 +57,34 @@ const EnhancedReturnForm = ({ user }) => {
   const [currencyRates, setCurrencyRates] = useState({});
   const [usdValue, setUsdValue] = useState(0);
   
-  // FOC (Free of Cost) related state
+  // Multi-Item Management State
+  const [returnItems, setReturnItems] = useState([]);
+  const [currentItem, setCurrentItem] = useState({
+    id: null,
+    product_code: '',
+    product_name: '',
+    barcode: '',
+    quantity: '',
+    purchase_price: '',
+    purchase_currency: 'YER',
+    total_value: '0.00',
+    expiry_date: '',
+    reason_for_return: '',
+    is_foc: false,
+    foc_reason: '',
+    supplier: ''
+  });
+  
+  // FOC and Summary Management
   const [focFilterActive, setFocFilterActive] = useState(false);
-  const [returnItems, setReturnItems] = useState([]); // For managing multiple items
-  const [focSummary, setFocSummary] = useState({
-    focItemCount: 0,
-    focTotalQuantity: 0,
-    nonFocTotalValue: 0,
-    nonFocItemCount: 0
+  const [itemSummary, setItemSummary] = useState({
+    totalItems: 0,
+    normalItems: 0,
+    focItems: 0,
+    totalNormalQty: 0,
+    totalFocQty: 0,
+    totalNormalValue: 0,
+    supplierCount: 0
   });
 
   // Barcode scanning refs
