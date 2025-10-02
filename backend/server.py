@@ -2799,20 +2799,20 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             # Create ultra-compact items table with optimized column widths
             items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
             items_table.setStyle(TableStyle([
-                # Header styling
+                # Header styling - more compact
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('FONTSIZE', (0, 0), (-1, 0), 7),  # Reduced font size
                 ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                # Data styling
+                # Data styling - ultra compact
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 7),
+                ('FONTSIZE', (0, 1), (-1, -1), 6),  # Further reduced
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('GRID', (0, 0), (-1, -1), 0.5, geant_green),
-                ('PADDING', (0, 0), (-1, -1), 2),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Changed to TOP for barcode display
+                ('GRID', (0, 0), (-1, -1), 0.3, geant_green),  # Thinner grid
+                ('PADDING', (0, 0), (-1, -1), 1),  # Minimal padding
                 # Alternating row colors
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.99, 1.0, 0.99)]),
             ]))
             
             story.append(items_table)
@@ -3566,20 +3566,20 @@ async def export_return_form_pdf(
             # Create ultra-compact items table with optimized column widths
             items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
             items_table.setStyle(TableStyle([
-                # Header styling
+                # Header styling - more compact
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('FONTSIZE', (0, 0), (-1, 0), 7),  # Reduced font size
                 ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                # Data styling
+                # Data styling - ultra compact
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 7),
+                ('FONTSIZE', (0, 1), (-1, -1), 6),  # Further reduced
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('GRID', (0, 0), (-1, -1), 0.5, geant_green),
-                ('PADDING', (0, 0), (-1, -1), 2),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Changed to TOP for barcode display
+                ('GRID', (0, 0), (-1, -1), 0.3, geant_green),  # Thinner grid
+                ('PADDING', (0, 0), (-1, -1), 1),  # Minimal padding
                 # Alternating row colors
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.98, 1.0, 0.98)]),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.99, 1.0, 0.99)]),
             ]))
             
             story.append(items_table)
