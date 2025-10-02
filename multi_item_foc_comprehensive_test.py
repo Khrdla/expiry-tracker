@@ -429,6 +429,7 @@ class MultiItemFOCTester:
                 "purchase_currency": "SAR",
                 "supplier": "ExtenC",
                 "reason_for_return": "Single item return - backward compatibility test",
+                "selected_supervisor": "Mahmoud Badr",
                 "prepared_by_supervisor": "Mahmoud Badr",
                 "section_manager_name": "Imad Qejji",
                 "supervisor_approved": True,
