@@ -2984,7 +2984,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing  # Reduced from 0.2*inch
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
@@ -3727,7 +3727,7 @@ async def export_return_form_pdf(
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing  # Reduced from 0.2*inch
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
