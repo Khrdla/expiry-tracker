@@ -3032,20 +3032,22 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(manual_table)
         story.append(Spacer(1, 0.08*inch))  # Reduced from 0.2*inch
         
-        # Ultra-compact footer for single-page fit
-        footer_style = ParagraphStyle(
-            'FooterStyle',
-            parent=styles['Normal'],
-            fontSize=5,  # Very small for single-page fit
-            fontName='Helvetica-Oblique',
-            textColor=colors.Color(0.6, 0.6, 0.6),
-            alignment=TA_CENTER,
-            spaceAfter=0,  # No spacing after
-            spaceBefore=0  # No spacing before
-        )
-        
-        footer_text = f"GEANT HYPERMARKET | {datetime.now().strftime('%d/%m/%Y %H:%M')}"  # Shortened
-        story.append(Paragraph(footer_text, footer_style))
+        # Skip footer for multi-item forms to ensure single-page fit
+        if not items or len(items) <= 1:
+            # Only add footer for single-item forms
+            footer_style = ParagraphStyle(
+                'FooterStyle',
+                parent=styles['Normal'],
+                fontSize=5,
+                fontName='Helvetica-Oblique',
+                textColor=colors.Color(0.6, 0.6, 0.6),
+                alignment=TA_CENTER,
+                spaceAfter=0,
+                spaceBefore=0
+            )
+            
+            footer_text = f"GEANT HYPERMARKET | {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+            story.append(Paragraph(footer_text, footer_style))
         
         # Build the PDF
         doc.build(story)
