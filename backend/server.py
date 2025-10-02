@@ -3401,7 +3401,8 @@ async def export_return_form_pdf(
             )
         
         # Additional validation for supervisor selection
-        if not return_form.get("selected_supervisor"):
+        supervisor = return_form.get("selected_supervisor") or return_form.get("prepared_by_supervisor")
+        if not supervisor:
             raise HTTPException(
                 status_code=400,
                 detail="Supervisor must be selected from dropdown (Mahmoud Badr or Abdelhamed Mostafa) before export"
