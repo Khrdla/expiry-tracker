@@ -2796,8 +2796,8 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                         '', '', '', ''
                     ])
             
-            # Create items table with compact styling
-            items_table = Table(items_table_data, colWidths=[0.3*inch, 2.2*inch, 0.5*inch, 1.0*inch, 1.0*inch, 0.8*inch])
+            # Create ultra-compact items table with optimized column widths
+            items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
             items_table.setStyle(TableStyle([
                 # Header styling
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -3563,8 +3563,8 @@ async def export_return_form_pdf(
                         '', '', '', ''
                     ])
             
-            # Create items table with compact styling
-            items_table = Table(items_table_data, colWidths=[0.3*inch, 2.2*inch, 0.5*inch, 1.0*inch, 1.0*inch, 0.8*inch])
+            # Create ultra-compact items table with optimized column widths
+            items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
             items_table.setStyle(TableStyle([
                 # Header styling
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
