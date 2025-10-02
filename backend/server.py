@@ -2757,7 +2757,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             
             for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
                 is_foc = item.get('is_foc', False)
-                quantity = item.get('quantity', 0)
+                quantity = float(item.get('quantity', 0))
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
                 currency = item.get('purchase_currency', 'SAR')
