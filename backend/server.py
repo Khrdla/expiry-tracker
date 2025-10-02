@@ -2776,8 +2776,8 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                     normal_items_count += 1
                     total_normal_value += total_value
                     status_text = 'Normal'
-                    price_text = f"{price} {currency}"
-                    total_text = f"{total_value:.2f} {currency}"
+                    price_text = f"{price:.2f}"  # Removed currency for space
+                    total_text = f"{total_value:.2f}"
                 
                 items_table_data.append([
                     str(idx),
@@ -3543,8 +3543,8 @@ async def export_return_form_pdf(
                     normal_items_count += 1
                     total_normal_value += total_value
                     status_text = 'Normal'
-                    price_text = f"{price} {currency}"
-                    total_text = f"{total_value:.2f} {currency}"
+                    price_text = f"{price:.2f}"  # Removed currency for space
+                    total_text = f"{total_value:.2f}"
                 
                 items_table_data.append([
                     str(idx),
