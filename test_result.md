@@ -1147,6 +1147,14 @@ metadata:
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+
+  - task: "Multi-Item Return Form with FOC Support - Complete Backend Validation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
