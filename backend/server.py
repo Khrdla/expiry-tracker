@@ -2788,11 +2788,11 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                     status_text
                 ])
                 
-                # Add FOC reason as sub-row if applicable
+                # Add FOC reason as compact sub-row if applicable
                 if is_foc and item.get('foc_reason'):
                     items_table_data.append([
                         '', 
-                        f"  FOC Reason: {item.get('foc_reason', '')[:35]}", 
+                        f"FOC: {item.get('foc_reason', '')[:25]}", 
                         '', '', '', ''
                     ])
             
@@ -3555,11 +3555,11 @@ async def export_return_form_pdf(
                     status_text
                 ])
                 
-                # Add FOC reason as sub-row if applicable
+                # Add FOC reason as compact sub-row if applicable
                 if is_foc and item.get('foc_reason'):
                     items_table_data.append([
                         '', 
-                        f"  FOC Reason: {item.get('foc_reason', '')[:35]}", 
+                        f"FOC: {item.get('foc_reason', '')[:25]}", 
                         '', '', '', ''
                     ])
             
