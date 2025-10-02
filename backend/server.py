@@ -2755,7 +2755,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             normal_items_count = 0
             foc_items_count = 0
             
-            for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
+            for idx, item in enumerate(items[:10], 1):  # Increased to 10 items for single page
                 is_foc = item.get('is_foc', False)
                 quantity = float(item.get('quantity', 0))
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
@@ -3517,7 +3517,7 @@ async def export_return_form_pdf(
             normal_items_count = 0
             foc_items_count = 0
             
-            for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
+            for idx, item in enumerate(items[:10], 1):  # Increased to 10 items for single page
                 is_foc = item.get('is_foc', False)
                 quantity = float(item.get('quantity', 0))
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
