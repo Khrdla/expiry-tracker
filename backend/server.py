@@ -2762,6 +2762,11 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                 total_value = price * quantity if not is_foc else 0
                 currency = item.get('purchase_currency', 'SAR')
                 
+                # Format product name with barcode for better visibility
+                product_name = item.get('product_name', 'Unknown Product')[:20]  # Shorter truncation
+                barcode = item.get('barcode', 'N/A')
+                product_with_barcode = f"{product_name}\n[{barcode}]"  # Barcode on new line
+                
                 if is_foc:
                     foc_items_count += 1
                     status_text = '🆓 FOC'
@@ -3523,6 +3528,11 @@ async def export_return_form_pdf(
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
                 currency = item.get('purchase_currency', 'SAR')
+                
+                # Format product name with barcode for better visibility
+                product_name = item.get('product_name', 'Unknown Product')[:20]  # Shorter truncation
+                barcode = item.get('barcode', 'N/A')
+                product_with_barcode = f"{product_name}\n[{barcode}]"  # Barcode on new line
                 
                 if is_foc:
                     foc_items_count += 1
