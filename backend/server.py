@@ -2938,7 +2938,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ]))
         
         story.append(currency_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact for single-page fit
         
         # ===== APPROVALS & SIGNATURES SECTION =====
         story.append(Paragraph("APPROVALS & SIGNATURES", section_style))
