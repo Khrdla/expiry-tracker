@@ -2749,7 +2749,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             story.append(Paragraph("RETURN ITEMS INFORMATION", section_style))
             
             # Create items table header
-            items_table_data = [['#', 'Product Name', 'Qty', 'Price', 'Total', 'FOC Status']]
+            items_table_data = [['#', 'Product Name & Barcode', 'Qty', 'Price', 'Total', 'FOC']]
             
             total_normal_value = 0
             normal_items_count = 0
@@ -3511,7 +3511,7 @@ async def export_return_form_pdf(
             story.append(Paragraph("RETURN ITEMS INFORMATION", section_style))
             
             # Create items table header
-            items_table_data = [['#', 'Product Name', 'Qty', 'Price', 'Total', 'FOC Status']]
+            items_table_data = [['#', 'Product Name & Barcode', 'Qty', 'Price', 'Total', 'FOC']]
             
             total_normal_value = 0
             normal_items_count = 0
