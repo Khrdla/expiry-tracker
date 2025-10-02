@@ -500,6 +500,7 @@ class MultiItemFOCTester:
                     "supplier": "ExtenC"
                 },
                 "reason_for_return": "All FOC items return - edge case test",
+                "selected_supervisor": "Mahmoud Badr",
                 "prepared_by_supervisor": "Mahmoud Badr",
                 "section_manager_name": "Imad Qejji",
                 "supervisor_approved": True,
