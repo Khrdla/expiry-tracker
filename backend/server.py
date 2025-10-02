@@ -2781,8 +2781,8 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                 
                 items_table_data.append([
                     str(idx),
-                    item.get('product_name', 'Unknown Product')[:25],  # Truncate long names
-                    str(quantity),
+                    product_with_barcode,
+                    str(int(quantity)),  # Remove decimals for space
                     price_text,
                     total_text,
                     status_text
@@ -3548,8 +3548,8 @@ async def export_return_form_pdf(
                 
                 items_table_data.append([
                     str(idx),
-                    item.get('product_name', 'Unknown Product')[:25],  # Truncate long names
-                    str(quantity),
+                    product_with_barcode,
+                    str(int(quantity)),  # Remove decimals for space
                     price_text,
                     total_text,
                     status_text
