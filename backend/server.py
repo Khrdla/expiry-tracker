@@ -2816,7 +2816,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             ]))
             
             story.append(items_table)
-            story.append(Spacer(1, 0.1*inch))
+            story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
             
             # Items summary
             summary_data = [
@@ -2879,7 +2879,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             
             story.append(item_table)
         
-        story.append(Spacer(1, 0.1*inch))
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
         
         # ===== RETURN VALUE CALCULATION SECTION =====
         if items:
@@ -2984,7 +2984,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.1*inch))  # Reduced from 0.2*inch
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing  # Reduced from 0.2*inch
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
@@ -3583,7 +3583,7 @@ async def export_return_form_pdf(
             ]))
             
             story.append(items_table)
-            story.append(Spacer(1, 0.1*inch))
+            story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
             
             # Items summary
             summary_data = [
@@ -3646,7 +3646,7 @@ async def export_return_form_pdf(
             
             story.append(item_table)
         
-        story.append(Spacer(1, 0.1*inch))
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing
         
         # ===== RETURN VALUE CALCULATION SECTION =====
         section_title = "RETURN VALUE CALCULATION" + (" (FOC - FREE ITEM)" if is_foc else "")
@@ -3727,7 +3727,7 @@ async def export_return_form_pdf(
         ]))
         
         story.append(digital_table)
-        story.append(Spacer(1, 0.1*inch))  # Reduced from 0.2*inch
+        story.append(Spacer(1, 0.05*inch))  # Ultra-compact spacing  # Reduced from 0.2*inch
         
         # Manual Signatures Section - Clean and Professional
         story.append(Paragraph("Manual Signatures:", digital_title_style))
