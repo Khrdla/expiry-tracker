@@ -2758,7 +2758,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
                 is_foc = item.get('is_foc', False)
                 quantity = item.get('quantity', 0)
-                price = float(item.get('price', 0)) if not is_foc else 0
+                price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
                 currency = item.get('currency', 'SAR')
                 
@@ -2885,7 +2885,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             
             # Calculate multi-item totals
             total_normal_value = sum(
-                float(item.get('price', 0)) * float(item.get('quantity', 0))
+                float(item.get('purchase_price', 0)) * float(item.get('quantity', 0))
                 for item in items if not item.get('is_foc', False)
             )
             total_foc_quantity = sum(
@@ -3519,7 +3519,7 @@ async def export_return_form_pdf(
             for idx, item in enumerate(items[:8], 1):  # Limit to 8 items for single page
                 is_foc = item.get('is_foc', False)
                 quantity = item.get('quantity', 0)
-                price = float(item.get('price', 0)) if not is_foc else 0
+                price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
                 currency = item.get('currency', 'SAR')
                 
