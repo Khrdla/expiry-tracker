@@ -2760,7 +2760,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                 quantity = item.get('quantity', 0)
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
-                currency = item.get('currency', 'SAR')
+                currency = item.get('purchase_currency', 'SAR')
                 
                 if is_foc:
                     foc_items_count += 1
@@ -3521,7 +3521,7 @@ async def export_return_form_pdf(
                 quantity = item.get('quantity', 0)
                 price = float(item.get('purchase_price', 0)) if not is_foc else 0
                 total_value = price * quantity if not is_foc else 0
-                currency = item.get('currency', 'SAR')
+                currency = item.get('purchase_currency', 'SAR')
                 
                 if is_foc:
                     foc_items_count += 1
