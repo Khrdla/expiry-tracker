@@ -2708,11 +2708,11 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         section_style = ParagraphStyle(
             'SectionHeader',
             parent=styles['Heading3'],
-            fontSize=9,     # Further reduced from 10
+            fontSize=8,     # Further reduced for single-page fit
             fontName='Helvetica-Bold',
             textColor=geant_green,
-            spaceAfter=2,   # Further reduced from 4
-            spaceBefore=2   # Further reduced from 3
+            spaceAfter=1,   # Minimal spacing
+            spaceBefore=1   # Minimal spacing
         )
         
         # ===== FORM DETAILS SECTION =====
