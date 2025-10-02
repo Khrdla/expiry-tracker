@@ -2769,9 +2769,9 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                 
                 if is_foc:
                     foc_items_count += 1
-                    status_text = '🆓 FOC'
-                    price_text = f"0 {currency} (FREE)"
-                    total_text = f"0 {currency}"
+                    status_text = 'FOC'  # Shortened for space
+                    price_text = f"0 (FREE)"  # Shortened
+                    total_text = f"0.00"
                 else:
                     normal_items_count += 1
                     total_normal_value += total_value
@@ -3536,9 +3536,9 @@ async def export_return_form_pdf(
                 
                 if is_foc:
                     foc_items_count += 1
-                    status_text = '🆓 FOC'
-                    price_text = f"0 {currency} (FREE)"
-                    total_text = f"0 {currency}"
+                    status_text = 'FOC'  # Shortened for space
+                    price_text = f"0 (FREE)"  # Shortened
+                    total_text = f"0.00"
                 else:
                     normal_items_count += 1
                     total_normal_value += total_value
