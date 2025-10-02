@@ -2739,7 +2739,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ]))
         
         story.append(ref_table)
-        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
+        story.append(Spacer(1, 0.06*inch))  # Ultra-compact spacing
         
         # ===== MULTI-ITEM RETURN INFORMATION SECTION =====
         items = return_form.get('items', [])
@@ -3506,7 +3506,7 @@ async def export_return_form_pdf(
         ]))
         
         story.append(ref_table)
-        story.append(Spacer(1, 0.12*inch))  # Reduced from 0.25*inch
+        story.append(Spacer(1, 0.06*inch))  # Ultra-compact spacing
         
         # ===== MULTI-ITEM RETURN INFORMATION SECTION =====
         items = return_form.get('items', [])
