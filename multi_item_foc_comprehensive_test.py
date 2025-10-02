@@ -133,6 +133,7 @@ class MultiItemFOCTester:
                 "items": MULTI_ITEM_TEST_DATA["items"],
                 "summary": MULTI_ITEM_TEST_DATA["expected_summary"],
                 "reason_for_return": "Mixed return - normal items + FOC samples",
+                "selected_supervisor": "Mahmoud Badr",
                 "prepared_by_supervisor": "Mahmoud Badr",
                 "section_manager_name": "Imad Qejji",
                 "supervisor_approved": True,
