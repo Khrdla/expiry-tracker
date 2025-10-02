@@ -2728,14 +2728,14 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Further reduced for single-page fit
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
-            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
+            ('PADDING', (0, 0), (-1, -1), 2),    # Further reduced for compact layout
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Further reduced for compact layout
         ]))
         
         story.append(ref_table)
@@ -3495,14 +3495,14 @@ async def export_return_form_pdf(
         ref_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reduced from 10
+            ('FONTSIZE', (0, 0), (-1, -1), 8),   # Further reduced for single-page fit
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('BACKGROUND', (0, 0), (0, -1), geant_light_green),
             ('TEXTCOLOR', (0, 0), (0, -1), geant_green),
             ('GRID', (0, 0), (-1, -1), 1, geant_accent),
-            ('PADDING', (0, 0), (-1, -1), 3),    # Reduced from 6
-            ('LEFTPADDING', (0, 0), (0, -1), 8), # Reduced from 12
+            ('PADDING', (0, 0), (-1, -1), 2),    # Further reduced for compact layout
+            ('LEFTPADDING', (0, 0), (0, -1), 6), # Further reduced for compact layout
         ]))
         
         story.append(ref_table)
