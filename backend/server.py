@@ -5287,25 +5287,72 @@ async def get_supplier_performance(
 ):
     """Get supplier performance analytics"""
     try:
-        pipeline = [
-            {
-                "$group": {
-                    "_id": "$supplier",
-                    "total_products": {"$sum": 1},
-                    "total_stock_value": {"$sum": "$stock_value_yer"},
-                    "avg_price": {"$avg": "$purchase_price"},
-                    "departments": {"$addToSet": "$department"},
-                    "out_of_stock_count": {
-                        "$sum": {"$cond": [{"$eq": ["$status", "out_of_stock"]}, 1, 0]}
-                    }
-                }
-            },
-            {"$sort": {"total_stock_value": -1}},
-            {"$limit": 20}  # Top 20 suppliers
-        ]
+        # Get exchange rates for USD conversion
+        try:
+            rates_response = await get_current_exchange_rates()
+            exchange_rates = rates_response.get('exchange_rates', {
+                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+            })
+        except:
+            exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
-        result = await db.products.aggregate(pipeline).to_list(None)
-        return result
+        # Get accessible departments
+        accessible_departments = get_accessible_departments(current_user)
+        dept_filter = {"department": {"$in": [d.value for d in accessible_departments]}}
+        
+        # Get products and calculate supplier performance manually
+        products = await db.products.find(dept_filter).to_list(None)
+        
+        supplier_data = {}
+        
+        for product in products:
+            supplier = product.get('supplier', 'Unknown')
+            
+            if supplier not in supplier_data:
+                supplier_data[supplier] = {
+                    "total_products": 0,
+                    "total_stock_value": 0.0,
+                    "total_price_sum": 0.0,
+                    "departments": set(),
+                    "out_of_stock_count": 0
+                }
+            
+            # Calculate stock value
+            quantity = product.get('quantity', 0)
+            purchase_price = product.get('purchase_price', 0)
+            purchase_currency = product.get('purchase_currency', 'YER')
+            
+            stock_value = quantity * purchase_price
+            conversion_rate = exchange_rates.get(purchase_currency, 1.0)
+            stock_value_usd = stock_value * conversion_rate
+            
+            supplier_data[supplier]["total_products"] += 1
+            supplier_data[supplier]["total_stock_value"] += stock_value_usd
+            supplier_data[supplier]["total_price_sum"] += purchase_price
+            supplier_data[supplier]["departments"].add(product.get("department", "Unknown"))
+            
+            # Check if out of stock
+            status = await calculate_product_status(product)
+            if status == ProductStatus.OUT_OF_STOCK.value:
+                supplier_data[supplier]["out_of_stock_count"] += 1
+        
+        # Format result for frontend
+        result = []
+        for supplier, data in supplier_data.items():
+            avg_price = data["total_price_sum"] / data["total_products"] if data["total_products"] > 0 else 0
+            
+            result.append({
+                "_id": supplier,
+                "total_products": data["total_products"],
+                "total_stock_value": data["total_stock_value"],
+                "avg_price": avg_price,
+                "departments": list(data["departments"]),
+                "out_of_stock_count": data["out_of_stock_count"]
+            })
+        
+        # Sort by total stock value (descending) and limit to top 20
+        result.sort(key=lambda x: x["total_stock_value"], reverse=True)
+        return result[:20]
         
     except Exception as e:
         logger.error(f"Failed to get supplier performance: {str(e)}")
