@@ -272,7 +272,7 @@ const EnhancedVisualCharts = () => {
           <Bar 
             dataKey="total_stock_value" 
             fill="#8B5CF6" 
-            name="Stock Value (YER)"
+            name="Stock Value (USD)"
             radius={[0, 4, 4, 0]}
           />
         </BarChart>
