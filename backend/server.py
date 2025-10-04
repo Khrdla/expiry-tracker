@@ -2654,7 +2654,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         from io import BytesIO
         import os
         
-        # Optimized A4 layout with reduced margins for single-page fit
+        # ENFORCE SINGLE-PAGE A4 LAYOUT - Minimal margins (5mm all sides)
         output = BytesIO()
         doc = SimpleDocTemplate(
             output, 
@@ -3427,7 +3427,7 @@ async def export_return_form_pdf(
         except:
             exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
-        # Optimized A4 layout with reduced margins for single-page fit
+        # ENFORCE SINGLE-PAGE A4 LAYOUT - Minimal margins (5mm all sides)
         output = BytesIO()
         doc = SimpleDocTemplate(
             output, 
