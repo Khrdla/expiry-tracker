@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Single-Page PDF Layout Optimization Testing
-Testing comprehensive optimizations to fit Return Form PDF entirely on one page
+Single-Page Return Form PDF Export Testing with Dynamic Scaling
+Testing comprehensive single-page enforcement with automatic scaling for Return Form PDF exports
 """
 
 import requests
@@ -17,10 +17,51 @@ BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-# Test data from review request
-SUPERVISOR_NAME = "Mahmoud Badr"
-PRODUCT_BARCODE = "3222471081716"  # Apple Juice Box 1L
-TEST_CURRENCY = "SAR"
+# Test data for maximum content scenarios
+TEST_PRODUCTS = [
+    {
+        "product_name": "Apple Juice Box 1L Premium Quality Fresh Natural",
+        "barcode": "3222471081716",
+        "purchase_price": 3.75,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    },
+    {
+        "product_name": "Orange Juice Box 1L Vitamin C Enriched Natural",
+        "barcode": "3222471052747",
+        "purchase_price": 4.25,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    },
+    {
+        "product_name": "Mango Juice Box 1L Tropical Fresh Premium",
+        "barcode": "3222471075722",
+        "purchase_price": 4.50,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    },
+    {
+        "product_name": "Grape Juice Box 1L Sweet Natural Antioxidant Rich",
+        "barcode": "3222471081273",
+        "purchase_price": 4.00,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    },
+    {
+        "product_name": "Pineapple Juice Box 1L Tropical Paradise Fresh",
+        "barcode": "3222471090022",
+        "purchase_price": 4.75,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    },
+    {
+        "product_name": "Mixed Fruit Juice Box 1L Five Fruit Blend Premium",
+        "barcode": "3222471091739",
+        "purchase_price": 5.00,
+        "purchase_currency": "SAR",
+        "supplier": "ExtenC International Trading Company Ltd"
+    }
+]
 
 class SinglePagePDFTester:
     def __init__(self):
