@@ -3554,6 +3554,19 @@ async def export_return_form_pdf(
         # ===== MULTI-ITEM RETURN INFORMATION SECTION =====
         items = return_form.get('items', [])
         
+        # DYNAMIC SCALING - Add variables for table formatting
+        item_count = len(items) if items else 1
+        
+        # Dynamic font scaling: more items = smaller fonts
+        if item_count >= 6:
+            table_font_size = 5
+        elif item_count >= 4:
+            table_font_size = 6
+        elif item_count >= 2:
+            table_font_size = 7
+        else:
+            table_font_size = 8
+        
         if items:
             # Multi-item display
             story.append(Paragraph("RETURN ITEMS INFORMATION", section_style))
