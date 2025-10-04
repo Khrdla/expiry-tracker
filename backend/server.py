@@ -2661,7 +2661,7 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             pagesize=A4,
             topMargin=0.5*cm,     # 5mm - minimal as requested
             bottomMargin=0.5*cm,  # 5mm - minimal as requested
-            leftMargin=1.3*cm,    # Reduced from 2cm
+            leftMargin=0.5*cm,    # 5mm - minimal as requested
             rightMargin=1.3*cm    # Reduced from 2cm
         )
         
@@ -3432,7 +3432,7 @@ async def export_return_form_pdf(
             pagesize=A4,
             topMargin=0.5*cm,     # 5mm - minimal as requested
             bottomMargin=0.5*cm,  # 5mm - minimal as requested
-            leftMargin=1.3*cm,    # Reduced from 2cm
+            leftMargin=0.5*cm,    # 5mm - minimal as requested
             rightMargin=1.3*cm    # Reduced from 2cm
         )
         
