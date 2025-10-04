@@ -191,7 +191,7 @@ const EnhancedDashboard = () => {
           total_items: safeNumber(item?.total_items, 0),
           expired_items: safeNumber(item?.expired_items, 0),
           low_stock_items: safeNumber(item?.low_stock_items, 0),
-          stock_value: safeNumber(item?.stock_value, 0),
+          stock_value: safeNumber(item?.total_stock_value, 0),
           department: departmentName
         };
         processedKpis[departmentName] = processedValue;
