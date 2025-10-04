@@ -5100,27 +5100,71 @@ async def get_department_breakdown(
 ):
     """Get detailed department breakdown for visual charts"""
     try:
-        pipeline = [
-            {
-                "$group": {
-                    "_id": "$department",
-                    "total_products": {"$sum": 1},
-                    "total_stock": {"$sum": "$quantity"},
-                    "total_value_yer": {"$sum": "$stock_value_yer"},
-                    "total_value_usd": {"$sum": "$stock_value_usd"},
-                    "avg_price": {"$avg": "$purchase_price"},
-                    "low_stock_items": {
-                        "$sum": {"$cond": [{"$eq": ["$status", "low_stock"]}, 1, 0]}
-                    },
-                    "out_of_stock_items": {
-                        "$sum": {"$cond": [{"$eq": ["$status", "out_of_stock"]}, 1, 0]}
-                    }
-                }
-            },
-            {"$sort": {"total_value_yer": -1}}
-        ]
+        # Get exchange rates for USD conversion
+        try:
+            rates_response = await get_current_exchange_rates()
+            exchange_rates = rates_response.get('exchange_rates', {
+                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+            })
+        except:
+            exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
-        result = await db.products.aggregate(pipeline).to_list(None)
+        # Get accessible departments
+        accessible_departments = get_accessible_departments(current_user)
+        
+        # Calculate department breakdown manually for accurate stock values
+        result = []
+        for dept in accessible_departments:
+            products = await db.products.find({"department": dept.value}).to_list(None)
+            
+            total_products = len(products)
+            total_stock = 0
+            total_value_yer = 0.0
+            total_value_usd = 0.0
+            total_price_sum = 0
+            low_stock_items = 0
+            out_of_stock_items = 0
+            
+            for product in products:
+                quantity = product.get('quantity', 0)
+                purchase_price = product.get('purchase_price', 0)
+                purchase_currency = product.get('purchase_currency', 'YER')
+                
+                total_stock += quantity
+                
+                # Calculate stock value in original currency
+                stock_value = quantity * purchase_price
+                total_value_yer += stock_value
+                
+                # Convert to USD
+                conversion_rate = exchange_rates.get(purchase_currency, 1.0)
+                stock_value_usd = stock_value * conversion_rate
+                total_value_usd += stock_value_usd
+                
+                total_price_sum += purchase_price
+                
+                # Calculate status for counting
+                status = await calculate_product_status(product)
+                if status == ProductStatus.LOW_STOCK.value:
+                    low_stock_items += 1
+                elif status == ProductStatus.OUT_OF_STOCK.value:
+                    out_of_stock_items += 1
+            
+            avg_price = total_price_sum / total_products if total_products > 0 else 0
+            
+            result.append({
+                "_id": dept.value,
+                "total_products": total_products,
+                "total_stock": total_stock,
+                "total_value_yer": total_value_yer,
+                "total_value_usd": total_value_usd,
+                "avg_price": avg_price,
+                "low_stock_items": low_stock_items,
+                "out_of_stock_items": out_of_stock_items
+            })
+        
+        # Sort by USD value (descending)
+        result.sort(key=lambda x: x["total_value_usd"], reverse=True)
         return result
         
     except Exception as e:
