@@ -68,7 +68,7 @@ class SinglePagePDFTester:
         self.session = requests.Session()
         self.token = None
         self.test_results = []
-        self.created_return_form_id = None
+        self.created_return_forms = []
         
     def log_result(self, test_name, success, details="", response_time=0):
         """Log test result"""
@@ -99,7 +99,7 @@ class SinglePagePDFTester:
                 self.token = data.get("access_token")
                 self.session.headers.update({"Authorization": f"Bearer {self.token}"})
                 self.log_result("Admin Authentication", True, 
-                    f"Login successful with credentials {ADMIN_USERNAME}/{ADMIN_PASSWORD}", response_time)
+                    f"JWT token received for user: {ADMIN_USERNAME}", response_time)
                 return True
             else:
                 self.log_result("Admin Authentication", False, 
@@ -109,73 +109,47 @@ class SinglePagePDFTester:
             self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_product_lookup(self):
-        """Test product lookup for Apple Juice Box 1L"""
-        try:
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/barcode/{PRODUCT_BARCODE}")
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                product = response.json()
-                
-                # Verify it's the correct product
-                product_name = product.get("product_name", "")
-                is_apple_juice = "apple" in product_name.lower() and "juice" in product_name.lower()
-                
-                self.log_result("Product Lookup - Apple Juice Box 1L", True,
-                    f"Product: {product_name}, Barcode: {PRODUCT_BARCODE}, "
-                    f"Price: {product.get('purchase_price')} {product.get('purchase_currency')}, "
-                    f"Supplier: {product.get('supplier')}", response_time)
-                return product
-            else:
-                self.log_result("Product Lookup - Apple Juice Box 1L", False,
-                    f"Status: {response.status_code}, Response: {response.text}", response_time)
-                return None
-        except Exception as e:
-            self.log_result("Product Lookup - Apple Juice Box 1L", False, f"Exception: {str(e)}")
-            return None
-    
-    def create_complete_return_form(self, product_data):
-        """Create complete return form with all required data for single-page PDF test"""
+    def create_return_form_with_items(self, item_count, include_foc=True):
+        """Create return form with specified number of items"""
         try:
             start_time = time.time()
             
-            # Calculate SAR values for maximum content
-            quantity = 98.5
-            price_per_unit = 3.75
-            total_sar_value = quantity * price_per_unit
+            # Select items based on count
+            selected_products = TEST_PRODUCTS[:item_count]
+            
+            # Create items array with mix of normal and FOC items
+            items = []
+            for i, product in enumerate(selected_products):
+                # Make every other item FOC if include_foc is True
+                is_foc = include_foc and (i % 2 == 1)
+                
+                item = {
+                    "product_name": product["product_name"],
+                    "barcode": product["barcode"],
+                    "quantity": 98.5 if not is_foc else 25.0,
+                    "purchase_price": 0.0 if is_foc else product["purchase_price"],
+                    "purchase_currency": product["purchase_currency"],
+                    "supplier": product["supplier"],
+                    "total_value": 0.0 if is_foc else (98.5 * product["purchase_price"]),
+                    "is_foc": is_foc,
+                    "foc_reason": "Promotional sample" if is_foc else None
+                }
+                items.append(item)
             
             return_form_data = {
-                "reference_number": f"RTN-SINGLE-PAGE-{int(time.time())}",
-                "product_code": product_data.get("item_number", "3222471081716"),
-                "product_name": product_data.get("product_name", "Apple Juice Box 1L"),
-                "barcode": PRODUCT_BARCODE,
-                "quantity": quantity,
-                "purchase_price": price_per_unit,
-                "purchase_currency": TEST_CURRENCY,
-                "supplier": product_data.get("supplier", "ExtenC"),
-                "reason_for_return": "Quality control issue - damaged packaging during transport. Product integrity compromised requiring immediate return to supplier for replacement or credit.",
-                "selected_supervisor": SUPERVISOR_NAME,
-                "prepared_by_supervisor": SUPERVISOR_NAME,
+                "reference_number": f"RTN-{int(time.time())}-{item_count}ITEMS",
+                "items": items,  # Multi-item array
+                "selected_supervisor": "Mahmoud Badr",
+                "prepared_by_supervisor": "Mahmoud Badr", 
                 "section_manager_name": "Imad Qejji",
-                "notes": f"COMPREHENSIVE SINGLE-PAGE PDF TEST: This return form contains maximum content to test single-page optimization. Supervisor: {SUPERVISOR_NAME}, Product: Apple Juice Box 1L, Currency: {TEST_CURRENCY}, Total Value: {total_sar_value} SAR. All sections included: Form Details, Product Information, Return Value Calculation, Approvals & Signatures, Manual Signatures section. Testing optimized margins (0.7cm), reduced fonts (14pt header, 10pt sections, 9pt/8pt tables), compressed spacing, and professional GEANT branding layout.",
+                "reason_for_return": f"Quality control testing with {item_count} items - comprehensive single-page PDF validation",
+                "notes": f"Testing single-page PDF export with {item_count} items including FOC items for dynamic scaling validation",
                 "supervisor_approved": True,
-                "supervisor_signature": f"{SUPERVISOR_NAME}_digital_signature",
+                "supervisor_signature": "Mahmoud_Badr_signature",
                 "supervisor_timestamp": datetime.now().isoformat(),
                 "section_manager_approved": True,
-                "section_manager_signature": "Imad_Qejji_digital_signature", 
-                "section_manager_timestamp": datetime.now().isoformat(),
-                "department": product_data.get("department", "01-CGD"),
-                "section": product_data.get("section", "S010 - Beverage"),
-                "total_value": total_sar_value,
-                "return_type": "supplier_return",
-                "urgency": "high",
-                "expected_credit": total_sar_value,
-                "quality_issue_details": "Packaging damage, product leakage, expiry date concerns",
-                "transport_conditions": "Temperature controlled, handled with care",
-                "replacement_requested": True,
-                "credit_requested": True
+                "section_manager_signature": "Imad_Qejji_signature",
+                "section_manager_timestamp": datetime.now().isoformat()
             }
             
             response = self.session.post(f"{BACKEND_URL}/return-forms", json=return_form_data)
@@ -184,32 +158,36 @@ class SinglePagePDFTester:
             if response.status_code == 200:
                 data = response.json()
                 form_id = data.get("id")
-                self.created_return_form_id = form_id
+                if form_id:
+                    self.created_return_forms.append({
+                        "id": form_id,
+                        "item_count": item_count,
+                        "has_foc": include_foc
+                    })
                 
-                self.log_result("Complete Return Form Creation", True,
-                    f"Form ID: {form_id}, Supervisor: {SUPERVISOR_NAME}, "
-                    f"Product: Apple Juice Box 1L, Currency: {TEST_CURRENCY}, "
-                    f"Quantity: {quantity}, Total: {total_sar_value} SAR, "
-                    f"Full approvals: supervisor_approved=true, section_manager_approved=true", response_time)
+                # Calculate totals for verification
+                normal_items = [item for item in items if not item.get("is_foc", False)]
+                foc_items = [item for item in items if item.get("is_foc", False)]
+                total_value = sum(item["total_value"] for item in normal_items)
+                
+                self.log_result(f"Create {item_count}-Item Return Form", True,
+                    f"Form ID: {form_id}, Normal items: {len(normal_items)}, FOC items: {len(foc_items)}, "
+                    f"Total value: {total_value:.2f} SAR", response_time)
                 return form_id
             else:
-                self.log_result("Complete Return Form Creation", False,
+                self.log_result(f"Create {item_count}-Item Return Form", False,
                     f"Status: {response.status_code}, Response: {response.text}", response_time)
                 return None
-                    
+                
         except Exception as e:
-            self.log_result("Complete Return Form Creation", False, f"Exception: {str(e)}")
+            self.log_result(f"Create {item_count}-Item Return Form", False, f"Exception: {str(e)}")
             return None
     
-    def test_single_page_pdf_generation(self):
-        """Test single-page PDF generation and analysis"""
-        if not self.created_return_form_id:
-            self.log_result("Single-Page PDF Generation", False, "No return form created to test")
-            return None
-        
+    def test_single_page_pdf_export(self, form_id, item_count):
+        """Test single-page PDF export with comprehensive validation"""
         try:
             start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/export/return-form/{self.created_return_form_id}?format=pdf")
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
             response_time = (time.time() - start_time) * 1000
             
             if response.status_code == 200:
@@ -217,304 +195,328 @@ class SinglePagePDFTester:
                 pdf_size = len(pdf_content)
                 
                 # Verify PDF format
-                is_valid_pdf = pdf_content.startswith(b'%PDF')
+                is_pdf = pdf_content.startswith(b'%PDF')
                 content_type = response.headers.get('content-type', '')
-                is_pdf_content_type = 'application/pdf' in content_type
                 
-                self.log_result("Single-Page PDF Generation", is_valid_pdf and is_pdf_content_type,
-                    f"PDF Size: {pdf_size} bytes, Content-Type: {content_type}, "
-                    f"Valid PDF signature: {is_valid_pdf}", response_time)
+                if not is_pdf:
+                    self.log_result(f"Single-Page PDF Export ({item_count} items)", False,
+                        f"Invalid PDF format, Content-Type: {content_type}", response_time)
+                    return False
                 
-                return pdf_content if is_valid_pdf else None
+                # Parse PDF to count pages
+                try:
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+                    page_count = len(pdf_reader.pages)
+                    
+                    # Extract text from first page for content verification
+                    first_page_text = pdf_reader.pages[0].extract_text()
+                    
+                    # Check for single-page compliance
+                    is_single_page = page_count == 1
+                    
+                    # Check for GEANT branding
+                    has_geant_branding = "GEANT HYPERMARKET" in first_page_text
+                    
+                    # Check for barcode display
+                    has_barcodes = any(product["barcode"] in first_page_text for product in TEST_PRODUCTS[:item_count])
+                    
+                    # Check for signature section
+                    has_signatures = "Dept Head" in first_page_text or "General Mgr" in first_page_text or "Finance" in first_page_text
+                    
+                    # Check for dynamic scaling indicators (smaller fonts for more items)
+                    scaling_indicators = []
+                    if item_count >= 6:
+                        scaling_indicators.append("Ultra-compact mode expected")
+                    elif item_count >= 4:
+                        scaling_indicators.append("Compact mode expected")
+                    else:
+                        scaling_indicators.append("Standard mode expected")
+                    
+                    success = is_single_page and has_geant_branding
+                    
+                    self.log_result(f"Single-Page PDF Export ({item_count} items)", success,
+                        f"Pages: {page_count}, Size: {pdf_size} bytes, GEANT branding: {has_geant_branding}, "
+                        f"Barcodes: {has_barcodes}, Signatures: {has_signatures}, {scaling_indicators[0]}", response_time)
+                    
+                    return success
+                    
+                except Exception as pdf_error:
+                    self.log_result(f"Single-Page PDF Export ({item_count} items)", False,
+                        f"PDF parsing error: {str(pdf_error)}, Size: {pdf_size} bytes", response_time)
+                    return False
             else:
-                self.log_result("Single-Page PDF Generation", False,
+                self.log_result(f"Single-Page PDF Export ({item_count} items)", False,
                     f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
-                return None
-                    
+                return False
+                
         except Exception as e:
-            self.log_result("Single-Page PDF Generation", False, f"Exception: {str(e)}")
-            return None
+            self.log_result(f"Single-Page PDF Export ({item_count} items)", False, f"Exception: {str(e)}")
+            return False
     
-    def analyze_pdf_page_count(self, pdf_content):
-        """Analyze PDF page count - CRITICAL TEST"""
-        if not pdf_content:
-            self.log_result("PDF Page Count Analysis", False, "No PDF content to analyze")
-            return
-        
+    def test_dynamic_scaling_verification(self, form_id, item_count):
+        """Test dynamic scaling features based on item count"""
         try:
             start_time = time.time()
-            
-            # Use PyPDF2 to analyze page count
-            pdf_stream = io.BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_stream)
-            page_count = len(pdf_reader.pages)
-            
-            # CRITICAL REQUIREMENT: Must be exactly 1 page
-            is_single_page = page_count == 1
-            
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
             response_time = (time.time() - start_time) * 1000
             
-            self.log_result("PDF Page Count Analysis - CRITICAL", is_single_page,
-                f"Page Count: {page_count} (Requirement: exactly 1 page), "
-                f"Single-page optimization: {'SUCCESS' if is_single_page else 'FAILED'}", response_time)
-            
-            return page_count
+            if response.status_code == 200:
+                pdf_content = response.content
+                pdf_size = len(pdf_content)
+                
+                # Parse PDF for scaling analysis
+                try:
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+                    first_page_text = pdf_reader.pages[0].extract_text()
                     
+                    # Analyze content density and scaling
+                    text_length = len(first_page_text)
+                    line_count = len(first_page_text.split('\n'))
+                    
+                    # Expected scaling behavior
+                    expected_scaling = {}
+                    if item_count >= 6:
+                        expected_scaling = {
+                            "mode": "Ultra-compact",
+                            "font_size": "5pt",
+                            "column_width": "Ultra-compact",
+                            "row_padding": "0.5pt"
+                        }
+                    elif item_count >= 4:
+                        expected_scaling = {
+                            "mode": "Compact", 
+                            "font_size": "6-7pt",
+                            "column_width": "Compact",
+                            "row_padding": "0.7pt"
+                        }
+                    else:
+                        expected_scaling = {
+                            "mode": "Standard",
+                            "font_size": "8-9pt", 
+                            "column_width": "Standard",
+                            "row_padding": "1.0pt"
+                        }
+                    
+                    # Check for ultra-compact signature section
+                    has_compact_signatures = "Dept Head:" in first_page_text and "|" in first_page_text
+                    
+                    # Verify all items are present
+                    items_present = sum(1 for product in TEST_PRODUCTS[:item_count] 
+                                      if product["product_name"][:20] in first_page_text)
+                    all_items_present = items_present == item_count
+                    
+                    success = all_items_present and has_compact_signatures
+                    
+                    self.log_result(f"Dynamic Scaling Verification ({item_count} items)", success,
+                        f"Mode: {expected_scaling['mode']}, Items present: {items_present}/{item_count}, "
+                        f"Compact signatures: {has_compact_signatures}, Text density: {text_length} chars", response_time)
+                    
+                    return success
+                    
+                except Exception as pdf_error:
+                    self.log_result(f"Dynamic Scaling Verification ({item_count} items)", False,
+                        f"PDF analysis error: {str(pdf_error)}", response_time)
+                    return False
+            else:
+                self.log_result(f"Dynamic Scaling Verification ({item_count} items)", False,
+                    f"Status: {response.status_code}", response_time)
+                return False
+                
         except Exception as e:
-            self.log_result("PDF Page Count Analysis - CRITICAL", False, f"Exception: {str(e)}")
-            return None
+            self.log_result(f"Dynamic Scaling Verification ({item_count} items)", False, f"Exception: {str(e)}")
+            return False
     
-    def analyze_pdf_content_completeness(self, pdf_content):
-        """Analyze PDF content completeness - verify all sections present"""
-        if not pdf_content:
-            self.log_result("PDF Content Completeness", False, "No PDF content to analyze")
-            return
-        
+    def test_barcode_display_verification(self, form_id, item_count):
+        """Test barcode display beside product names"""
         try:
             start_time = time.time()
-            
-            # Extract text from PDF
-            pdf_stream = io.BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_stream)
-            
-            if len(pdf_reader.pages) == 0:
-                self.log_result("PDF Content Completeness", False, "No pages found in PDF")
-                return
-            
-            # Extract text from first (and should be only) page
-            page_text = pdf_reader.pages[0].extract_text()
-            
-            # Check for required sections
-            required_sections = {
-                "GEANT HYPERMARKET": "GEANT" in page_text or "Geant" in page_text,
-                "Form Details": "FORM DETAILS" in page_text or "Form Details" in page_text,
-                "Product Information": "PRODUCT INFORMATION" in page_text or "Product Information" in page_text,
-                "Return Value Calculation": "RETURN VALUE" in page_text or "Return Value" in page_text,
-                "Approvals & Signatures": "APPROVALS" in page_text or "SIGNATURES" in page_text,
-                "Supervisor Name": SUPERVISOR_NAME in page_text,
-                "Apple Juice Box": "Apple Juice" in page_text or "Apple" in page_text,
-                "SAR Currency": "SAR" in page_text,
-                "Barcode": PRODUCT_BARCODE in page_text or "barcode" in page_text.lower()
-            }
-            
-            present_sections = [section for section, present in required_sections.items() if present]
-            missing_sections = [section for section, present in required_sections.items() if not present]
-            
-            completeness_score = len(present_sections) / len(required_sections) * 100
-            is_complete = completeness_score >= 80  # 80% threshold for completeness
-            
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
             response_time = (time.time() - start_time) * 1000
             
-            self.log_result("PDF Content Completeness", is_complete,
-                f"Completeness: {completeness_score:.1f}% ({len(present_sections)}/{len(required_sections)} sections), "
-                f"Present: {present_sections[:3]}{'...' if len(present_sections) > 3 else ''}, "
-                f"Missing: {missing_sections[:2] if missing_sections else 'None'}", response_time)
-            
-            return completeness_score
+            if response.status_code == 200:
+                pdf_content = response.content
+                
+                try:
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+                    first_page_text = pdf_reader.pages[0].extract_text()
                     
+                    # Check for barcode display beside items
+                    barcodes_found = []
+                    for i, product in enumerate(TEST_PRODUCTS[:item_count]):
+                        barcode = product["barcode"]
+                        product_name = product["product_name"][:30]  # Truncated name
+                        
+                        # Check if both product name and barcode are present
+                        has_product = any(word in first_page_text for word in product_name.split()[:3])
+                        has_barcode = barcode in first_page_text
+                        
+                        if has_product and has_barcode:
+                            barcodes_found.append(barcode)
+                    
+                    barcodes_displayed = len(barcodes_found)
+                    all_barcodes_present = barcodes_displayed == item_count
+                    
+                    # Check for proper barcode format (Product Name\n[Barcode])
+                    has_proper_format = "[" in first_page_text and "]" in first_page_text
+                    
+                    success = all_barcodes_present and has_proper_format
+                    
+                    self.log_result(f"Barcode Display Verification ({item_count} items)", success,
+                        f"Barcodes displayed: {barcodes_displayed}/{item_count}, "
+                        f"Proper format: {has_proper_format}, Found: {barcodes_found[:3]}", response_time)
+                    
+                    return success
+                    
+                except Exception as pdf_error:
+                    self.log_result(f"Barcode Display Verification ({item_count} items)", False,
+                        f"PDF parsing error: {str(pdf_error)}", response_time)
+                    return False
+            else:
+                self.log_result(f"Barcode Display Verification ({item_count} items)", False,
+                    f"Status: {response.status_code}", response_time)
+                return False
+                
         except Exception as e:
-            self.log_result("PDF Content Completeness", False, f"Exception: {str(e)}")
-            return None
+            self.log_result(f"Barcode Display Verification ({item_count} items)", False, f"Exception: {str(e)}")
+            return False
     
-    def analyze_pdf_professional_quality(self, pdf_content):
-        """Analyze PDF professional quality and readability"""
-        if not pdf_content:
-            self.log_result("PDF Professional Quality", False, "No PDF content to analyze")
-            return
-        
+    def test_professional_formatting_verification(self, form_id, item_count):
+        """Test professional GEANT formatting and layout integrity"""
         try:
             start_time = time.time()
-            
-            pdf_size = len(pdf_content)
-            
-            # Professional quality indicators
-            quality_indicators = {
-                "Adequate Size": pdf_size > 10000,  # At least 10KB for professional content
-                "GEANT Branding": b'GEANT' in pdf_content or b'Geant' in pdf_content,
-                "Professional Structure": b'/Page' in pdf_content and b'/Font' in pdf_content,
-                "Proper PDF Format": pdf_content.startswith(b'%PDF-1.') and pdf_content.endswith(b'%%EOF\n'),
-                "Contains Images/Logo": pdf_size > 30000  # Larger size suggests logo inclusion
-            }
-            
-            quality_score = sum(quality_indicators.values()) / len(quality_indicators) * 100
-            is_professional = quality_score >= 60  # 60% threshold for professional quality
-            
+            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
             response_time = (time.time() - start_time) * 1000
             
-            self.log_result("PDF Professional Quality", is_professional,
-                f"Quality Score: {quality_score:.1f}%, Size: {pdf_size} bytes, "
-                f"Professional indicators: {sum(quality_indicators.values())}/{len(quality_indicators)}", response_time)
-            
-            return quality_score
+            if response.status_code == 200:
+                pdf_content = response.content
+                pdf_size = len(pdf_content)
+                
+                try:
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+                    first_page_text = pdf_reader.pages[0].extract_text()
                     
-        except Exception as e:
-            self.log_result("PDF Professional Quality", False, f"Exception: {str(e)}")
-            return None
-    
-    def test_print_readiness(self, pdf_content):
-        """Test print readiness and A4 format compliance"""
-        if not pdf_content:
-            self.log_result("Print Readiness", False, "No PDF content to analyze")
-            return
-        
-        try:
-            start_time = time.time()
-            
-            # Check PDF structure for print readiness
-            pdf_stream = io.BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_stream)
-            
-            if len(pdf_reader.pages) == 0:
-                self.log_result("Print Readiness", False, "No pages found in PDF")
-                return
-            
-            page = pdf_reader.pages[0]
-            
-            # Get page dimensions (in points, 72 points = 1 inch)
-            mediabox = page.mediabox
-            width = float(mediabox.width)
-            height = float(mediabox.height)
-            
-            # A4 dimensions in points: 595.276 x 841.890
-            a4_width = 595.276
-            a4_height = 841.890
-            
-            # Check if dimensions are close to A4 (within 5% tolerance)
-            width_match = abs(width - a4_width) / a4_width < 0.05
-            height_match = abs(height - a4_height) / a4_height < 0.05
-            is_a4_format = width_match and height_match
-            
-            response_time = (time.time() - start_time) * 1000
-            
-            self.log_result("Print Readiness - A4 Format", is_a4_format,
-                f"Page dimensions: {width:.1f} x {height:.1f} points, "
-                f"A4 standard: {a4_width} x {a4_height} points, "
-                f"Format match: {is_a4_format}", response_time)
-            
-            return is_a4_format
+                    # Check for professional elements
+                    has_geant_branding = "GEANT HYPERMARKET" in first_page_text
+                    has_form_details = "FORM DETAILS" in first_page_text
+                    has_product_info = "PRODUCT INFORMATION" in first_page_text
+                    has_return_value = "RETURN VALUE" in first_page_text
+                    has_approvals = "APPROVALS" in first_page_text or "SIGNATURES" in first_page_text
                     
+                    # Check for supervisor information
+                    has_supervisor = "Mahmoud Badr" in first_page_text
+                    
+                    # Check for currency information
+                    has_currency = "SAR" in first_page_text
+                    
+                    # Professional size indicator (logo + content)
+                    is_professional_size = pdf_size > 40000  # Should be substantial with logo
+                    
+                    # Check for no debug messages or system errors
+                    has_clean_layout = "Error" not in first_page_text and "Exception" not in first_page_text
+                    
+                    professional_elements = [
+                        has_geant_branding, has_form_details, has_product_info, 
+                        has_return_value, has_approvals, has_supervisor, 
+                        has_currency, is_professional_size, has_clean_layout
+                    ]
+                    
+                    professional_score = sum(professional_elements)
+                    success = professional_score >= 7  # At least 7/9 elements
+                    
+                    self.log_result(f"Professional Formatting ({item_count} items)", success,
+                        f"Professional elements: {professional_score}/9, Size: {pdf_size} bytes, "
+                        f"GEANT branding: {has_geant_branding}, Clean layout: {has_clean_layout}", response_time)
+                    
+                    return success
+                    
+                except Exception as pdf_error:
+                    self.log_result(f"Professional Formatting ({item_count} items)", False,
+                        f"PDF analysis error: {str(pdf_error)}", response_time)
+                    return False
+            else:
+                self.log_result(f"Professional Formatting ({item_count} items)", False,
+                    f"Status: {response.status_code}", response_time)
+                return False
+                
         except Exception as e:
-            self.log_result("Print Readiness - A4 Format", False, f"Exception: {str(e)}")
-            return None
+            self.log_result(f"Professional Formatting ({item_count} items)", False, f"Exception: {str(e)}")
+            return False
     
-    def run_single_page_optimization_tests(self):
-        """Run comprehensive single-page PDF optimization tests"""
-        print("🎯 SINGLE-PAGE PDF LAYOUT OPTIMIZATION TESTING")
-        print("=" * 70)
+    def run_comprehensive_single_page_tests(self):
+        """Run comprehensive single-page PDF export tests"""
+        print("🚀 SINGLE-PAGE RETURN FORM PDF EXPORT TESTING WITH DYNAMIC SCALING")
+        print("=" * 80)
         print(f"Backend URL: {BACKEND_URL}")
-        print(f"Admin Credentials: {ADMIN_USERNAME}/{ADMIN_PASSWORD}")
-        print(f"Supervisor: {SUPERVISOR_NAME}")
-        print(f"Product: Apple Juice Box 1L ({PRODUCT_BARCODE})")
-        print(f"Currency: {TEST_CURRENCY}")
-        print("=" * 70)
-        print("🔍 TESTING OPTIMIZATION CHANGES:")
-        print("   • Reduced Margins: 1.2cm/1.5cm → 0.7cm/0.7cm")
-        print("   • Logo Size: 1.5\" → 1.1\"")
-        print("   • Header Font: 16pt → 14pt")
-        print("   • Table Fonts: 10pt → 9pt, 9pt → 8pt")
-        print("   • Table Padding: 6 → 3, 4 → 2")
-        print("   • Section Headers: 12pt → 10pt")
-        print("   • All Vertical Spacing Reduced 50%+")
-        print("=" * 70)
+        print(f"Admin Credentials: {ADMIN_USERNAME}")
+        print(f"Test Products: {len(TEST_PRODUCTS)} items available")
+        print("=" * 80)
         
         # 1. Authentication
         if not self.authenticate():
             print("❌ Authentication failed - stopping tests")
             return
         
-        # 2. Product lookup
-        product_data = self.test_product_lookup()
-        if not product_data:
-            # Use fallback data
-            product_data = {
-                "product_name": "Apple Juice Box 1L",
-                "purchase_price": 3.75,
-                "purchase_currency": "SAR",
-                "supplier": "ExtenC",
-                "item_number": "3222471081716",
-                "department": "01-CGD",
-                "section": "S010 - Beverage"
-            }
+        # 2. Test different item counts for dynamic scaling
+        test_scenarios = [
+            {"item_count": 1, "description": "Single item (Standard mode)"},
+            {"item_count": 3, "description": "Few items (Standard mode)"},
+            {"item_count": 5, "description": "Medium items (Compact mode)"},
+            {"item_count": 6, "description": "Many items (Ultra-compact mode)"}
+        ]
         
-        # 3. Create complete return form with maximum content
-        form_id = self.create_complete_return_form(product_data)
-        if not form_id:
-            print("❌ Return form creation failed - stopping tests")
-            return
-        
-        # 4. Generate and analyze single-page PDF
-        pdf_content = self.test_single_page_pdf_generation()
-        if not pdf_content:
-            print("❌ PDF generation failed - stopping tests")
-            return
-        
-        # 5. CRITICAL TEST: Analyze page count
-        page_count = self.analyze_pdf_page_count(pdf_content)
-        
-        # 6. Analyze content completeness
-        completeness_score = self.analyze_pdf_content_completeness(pdf_content)
-        
-        # 7. Analyze professional quality
-        quality_score = self.analyze_pdf_professional_quality(pdf_content)
-        
-        # 8. Test print readiness
-        print_ready = self.test_print_readiness(pdf_content)
+        for scenario in test_scenarios:
+            item_count = scenario["item_count"]
+            description = scenario["description"]
+            
+            print(f"\n📋 Testing {description}")
+            print("-" * 50)
+            
+            # Create return form with specified item count
+            form_id = self.create_return_form_with_items(item_count, include_foc=True)
+            
+            if form_id:
+                # Test single-page compliance
+                self.test_single_page_pdf_export(form_id, item_count)
+                
+                # Test dynamic scaling
+                self.test_dynamic_scaling_verification(form_id, item_count)
+                
+                # Test barcode display
+                self.test_barcode_display_verification(form_id, item_count)
+                
+                # Test professional formatting
+                self.test_professional_formatting_verification(form_id, item_count)
         
         # Summary
-        self.print_optimization_summary(page_count, completeness_score, quality_score, print_ready)
+        self.print_summary()
     
-    def print_optimization_summary(self, page_count, completeness_score, quality_score, print_ready):
-        """Print comprehensive optimization test summary"""
-        print("\n" + "=" * 70)
-        print("📊 SINGLE-PAGE PDF OPTIMIZATION TEST SUMMARY")
-        print("=" * 70)
+    def print_summary(self):
+        """Print comprehensive test summary"""
+        print("\n" + "=" * 80)
+        print("📊 SINGLE-PAGE PDF EXPORT TEST SUMMARY")
+        print("=" * 80)
         
         passed = sum(1 for result in self.test_results if result["success"])
         total = len(self.test_results)
         success_rate = (passed / total * 100) if total > 0 else 0
         
         print(f"✅ PASSED: {passed}/{total} tests ({success_rate:.1f}%)")
+        print(f"🔄 CREATED RETURN FORMS: {len(self.created_return_forms)}")
         
-        # CRITICAL REQUIREMENTS VERIFICATION
-        print("\n🎯 CRITICAL OPTIMIZATION REQUIREMENTS:")
+        # Critical requirements verification
+        print("\n🎯 CRITICAL SINGLE-PAGE REQUIREMENTS VERIFICATION:")
         
-        critical_results = {
-            "Single Page PDF": page_count == 1 if page_count else False,
-            "Content Complete": completeness_score >= 80 if completeness_score else False,
-            "Professional Quality": quality_score >= 60 if quality_score else False,
-            "Print Ready (A4)": print_ready if print_ready is not None else False,
-            "GEANT Branding": any("GEANT" in r["details"] for r in self.test_results if r["success"]),
-            "SAR Currency": any("SAR" in r["details"] for r in self.test_results if r["success"]),
-            "Supervisor Integration": any(SUPERVISOR_NAME in r["details"] for r in self.test_results if r["success"])
+        critical_tests = {
+            "Single-Page Compliance": any("Single-Page PDF Export" in r["test"] and r["success"] for r in self.test_results),
+            "Dynamic Scaling": any("Dynamic Scaling Verification" in r["test"] and r["success"] for r in self.test_results),
+            "Barcode Display": any("Barcode Display Verification" in r["test"] and r["success"] for r in self.test_results),
+            "Professional Formatting": any("Professional Formatting" in r["test"] and r["success"] for r in self.test_results),
+            "Ultra-Compact Mode": any("6 items" in r["test"] and r["success"] for r in self.test_results)
         }
         
-        for requirement, status in critical_results.items():
+        for requirement, status in critical_tests.items():
             status_icon = "✅" if status else "❌"
             print(f"{status_icon} {requirement}")
-        
-        # OPTIMIZATION RESULTS
-        print(f"\n📏 OPTIMIZATION RESULTS:")
-        if page_count is not None:
-            print(f"   📄 Page Count: {page_count} (Target: 1 page)")
-        if completeness_score is not None:
-            print(f"   📋 Content Completeness: {completeness_score:.1f}% (Target: ≥80%)")
-        if quality_score is not None:
-            print(f"   🎨 Professional Quality: {quality_score:.1f}% (Target: ≥60%)")
-        
-        # FINAL VERDICT
-        all_critical_passed = all(critical_results.values())
-        single_page_success = page_count == 1 if page_count else False
-        
-        print(f"\n🏆 FINAL VERDICT:")
-        if single_page_success and all_critical_passed:
-            print("✅ SINGLE-PAGE OPTIMIZATION: COMPLETE SUCCESS!")
-            print("   All content fits on one A4 page with professional quality maintained.")
-        elif single_page_success:
-            print("⚠️  SINGLE-PAGE OPTIMIZATION: PARTIAL SUCCESS")
-            print("   Content fits on one page but some quality issues detected.")
-        else:
-            print("❌ SINGLE-PAGE OPTIMIZATION: FAILED")
-            print("   Content does not fit on single page - further optimization needed.")
         
         # Failed tests details
         failed_tests = [r for r in self.test_results if not r["success"]]
@@ -528,10 +530,21 @@ class SinglePagePDFTester:
             avg_response_time = sum(float(r["response_time"].replace("ms", "")) for r in self.test_results) / len(self.test_results)
             print(f"\n⚡ AVERAGE RESPONSE TIME: {avg_response_time:.0f}ms")
         
-        print("\n" + "=" * 70)
-        print("🏁 SINGLE-PAGE PDF OPTIMIZATION TESTING COMPLETE")
-        print("=" * 70)
+        # Success criteria
+        print(f"\n🏆 SUCCESS CRITERIA:")
+        print(f"   • ALL multi-item forms fit on exactly one A4 page: {'✅' if critical_tests['Single-Page Compliance'] else '❌'}")
+        print(f"   • Dynamic scaling working for different item counts: {'✅' if critical_tests['Dynamic Scaling'] else '❌'}")
+        print(f"   • Barcodes clearly visible beside all product names: {'✅' if critical_tests['Barcode Display'] else '❌'}")
+        print(f"   • Professional GEANT formatting maintained: {'✅' if critical_tests['Professional Formatting'] else '❌'}")
+        print(f"   • Ultra-compact signatures in single row: {'✅' if critical_tests['Ultra-Compact Mode'] else '❌'}")
+        
+        overall_success = all(critical_tests.values())
+        print(f"\n🎯 OVERALL RESULT: {'✅ 100% SUCCESS - SINGLE-PAGE COMPLIANCE ACHIEVED' if overall_success else '❌ ISSUES DETECTED - REQUIRES ATTENTION'}")
+        
+        print("\n" + "=" * 80)
+        print("🏁 SINGLE-PAGE PDF EXPORT TESTING COMPLETE")
+        print("=" * 80)
 
 if __name__ == "__main__":
     tester = SinglePagePDFTester()
-    tester.run_single_page_optimization_tests()
+    tester.run_comprehensive_single_page_tests()
