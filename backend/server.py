@@ -2823,21 +2823,32 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
                         '', '', '', ''
                     ])
             
-            # Create ultra-compact items table with optimized column widths
-            items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
+            # DYNAMIC SCALING - Items table with automatic sizing based on item count
+            # Adjust column widths and row heights dynamically
+            if item_count >= 6:
+                col_widths = [0.2*inch, 1.7*inch, 0.3*inch, 0.7*inch, 0.7*inch, 0.5*inch]
+                row_padding = 0.5
+            elif item_count >= 4:
+                col_widths = [0.22*inch, 1.8*inch, 0.35*inch, 0.75*inch, 0.75*inch, 0.55*inch]  
+                row_padding = 0.8
+            else:
+                col_widths = [0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch]
+                row_padding = 1.0
+                
+            items_table = Table(items_table_data, colWidths=col_widths)
             items_table.setStyle(TableStyle([
-                # Header styling - more compact
+                # Header styling with dynamic fonts
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 7),  # Reduced font size
+                ('FONTSIZE', (0, 0), (-1, 0), table_font_size),
                 ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                # Data styling - ultra compact
+                # Data styling with dynamic fonts
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 6),  # Further reduced
+                ('FONTSIZE', (0, 1), (-1, -1), table_font_size - 1),  # Data slightly smaller than header
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Changed to TOP for barcode display
-                ('GRID', (0, 0), (-1, -1), 0.3, geant_green),  # Thinner grid
-                ('PADDING', (0, 0), (-1, -1), 1),  # Minimal padding
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # TOP alignment for barcode display
+                ('GRID', (0, 0), (-1, -1), 0.2, geant_green),  # Ultra-thin grid for space
+                ('PADDING', (0, 0), (-1, -1), row_padding),  # Dynamic padding
                 # Alternating row colors
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.99, 1.0, 0.99)]),
             ]))
@@ -3595,21 +3606,32 @@ async def export_return_form_pdf(
                         '', '', '', ''
                     ])
             
-            # Create ultra-compact items table with optimized column widths
-            items_table = Table(items_table_data, colWidths=[0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch])
+            # DYNAMIC SCALING - Items table with automatic sizing based on item count
+            # Adjust column widths and row heights dynamically
+            if item_count >= 6:
+                col_widths = [0.2*inch, 1.7*inch, 0.3*inch, 0.7*inch, 0.7*inch, 0.5*inch]
+                row_padding = 0.5
+            elif item_count >= 4:
+                col_widths = [0.22*inch, 1.8*inch, 0.35*inch, 0.75*inch, 0.75*inch, 0.55*inch]  
+                row_padding = 0.8
+            else:
+                col_widths = [0.25*inch, 2.0*inch, 0.4*inch, 0.8*inch, 0.8*inch, 0.6*inch]
+                row_padding = 1.0
+                
+            items_table = Table(items_table_data, colWidths=col_widths)
             items_table.setStyle(TableStyle([
-                # Header styling - more compact
+                # Header styling with dynamic fonts
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 7),  # Reduced font size
+                ('FONTSIZE', (0, 0), (-1, 0), table_font_size),
                 ('BACKGROUND', (0, 0), (-1, 0), geant_accent),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                # Data styling - ultra compact
+                # Data styling with dynamic fonts
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 6),  # Further reduced
+                ('FONTSIZE', (0, 1), (-1, -1), table_font_size - 1),  # Data slightly smaller than header
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Changed to TOP for barcode display
-                ('GRID', (0, 0), (-1, -1), 0.3, geant_green),  # Thinner grid
-                ('PADDING', (0, 0), (-1, -1), 1),  # Minimal padding
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # TOP alignment for barcode display
+                ('GRID', (0, 0), (-1, -1), 0.2, geant_green),  # Ultra-thin grid for space
+                ('PADDING', (0, 0), (-1, -1), row_padding),  # Dynamic padding
                 # Alternating row colors
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.99, 1.0, 0.99)]),
             ]))
