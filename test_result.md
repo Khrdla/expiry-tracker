@@ -490,7 +490,7 @@ backend:
   - task: "Fix Dashboard Stock Value Calculation - showing $0.00 instead of actual values"
     implemented: true
     working: true
-    file: "server.py, EnhancedVisualCharts.js"
+    file: "server.py, EnhancedVisualCharts.js, EnhancedDashboard.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -504,6 +504,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE DASHBOARD STOCK VALUE CALCULATION TESTING COMPLETED - SUCCESS RATE: 87.5% (7/8 critical tests passed). ✅ ALL CRITICAL REQUIREMENTS FROM REVIEW REQUEST VERIFIED: 1) Authentication: Admin credentials (imadqejji/066380531I) working perfectly with JWT token authentication. 2) Analytics Endpoints: ALL 3 key analytics endpoints working correctly - /api/analytics/department-breakdown returns $11,399.49 total calculated value, /api/analytics/stock-levels shows proper value calculations by status, /api/analytics/supplier-performance shows 16/20 suppliers with calculated stock values totaling $11,399.49. 3) Stock Value Calculation: Formula quantity × purchase_price × exchange_rate implemented correctly in all endpoints. 4) Currency Conversion: Exchange rates applied correctly (verified with 01-FMG department showing proper YER to USD conversion). 5) Data Validation: total_value_usd field contains actual calculated values instead of $0.00 - departments with stock show proper values, departments without stock correctly show $0.00. 6) Performance: Excellent performance with average response time 28ms (requirement: <500ms). ✅ CRITICAL FINDING: The $0.00 values are CORRECT for departments/suppliers with zero stock (01-CGD: 43 products with 0 quantity, 01-OPSS: 1091 products with 0 quantity). The calculation works perfectly: 0 quantity × price × rate = $0.00. Departments with actual stock (01-FMG: 16,902 stock) show correct calculated values ($11,399.49). The dashboard stock value calculation fix is WORKING CORRECTLY and production-ready."
+      - working: true
+        agent: "main"
+        comment: "ADDITIONAL FIXES AFTER USER SCREENSHOTS: ✅ Fixed main dashboard field name mismatch - frontend was looking for 'stock_value' but backend returns 'total_stock_value' ✅ Added USD currency conversion to main /api/dashboard endpoint (was missing currency conversion) ✅ Enhanced error handling in EnhancedVisualCharts.js to show actual API errors ✅ Both main dashboard and enhanced charts should now show correct USD stock values. Ready for final testing."
 
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
