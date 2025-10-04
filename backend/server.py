@@ -2662,7 +2662,9 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
             topMargin=0.5*cm,     # 5mm - minimal as requested
             bottomMargin=0.5*cm,  # 5mm - minimal as requested
             leftMargin=0.5*cm,    # 5mm - minimal as requested
-            rightMargin=1.3*cm    # Reduced from 2cm
+            rightMargin=0.5*cm,   # 5mm - minimal as requested
+            allowSplitting=0,     # Disable page breaks completely
+            showBoundary=0        # Clean layout
         )
         
         styles = getSampleStyleSheet()
@@ -3433,7 +3435,9 @@ async def export_return_form_pdf(
             topMargin=0.5*cm,     # 5mm - minimal as requested
             bottomMargin=0.5*cm,  # 5mm - minimal as requested
             leftMargin=0.5*cm,    # 5mm - minimal as requested
-            rightMargin=1.3*cm    # Reduced from 2cm
+            rightMargin=0.5*cm,   # 5mm - minimal as requested
+            allowSplitting=0,     # Disable page breaks completely
+            showBoundary=0        # Clean layout
         )
         
         styles = getSampleStyleSheet()
