@@ -143,7 +143,7 @@ const EnhancedVisualCharts = () => {
           <div key={dept._id} className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg">
             <div className="text-sm font-medium text-gray-600">{dept._id}</div>
             <div className="text-lg font-bold text-gray-800">{formatNumber(dept.total_products)}</div>
-            <div className="text-xs text-gray-500">{formatCurrency(dept.total_value_yer)}</div>
+            <div className="text-xs text-gray-500">{formatCurrency(dept.total_value_usd)}</div>
           </div>
         ))}
       </div>
