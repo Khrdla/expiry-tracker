@@ -82,13 +82,13 @@ const EnhancedVisualCharts = () => {
     'expired': '#DC2626'
   };
 
-  const formatCurrency = (value, currency = 'YER') => {
+  const formatCurrency = (value, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency === 'YER' ? 'USD' : currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value / (currency === 'YER' ? 516 : 1)); // Approximate YER to USD conversion
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value || 0);
   };
 
   const formatNumber = (value) => {
