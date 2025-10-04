@@ -22,7 +22,7 @@ MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'inventory_db')
 
 # API configuration
-BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 

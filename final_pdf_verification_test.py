@@ -12,7 +12,7 @@ import re
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 

@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 class MobileBarcodeAPITester:
-    def __init__(self, base_url="https://geant-inventory-2.preview.emergentagent.com"):
+    def __init__(self, base_url="https://inventory-master-78.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
@@ -244,7 +244,7 @@ class MobileBarcodeAPITester:
         url = f"{self.api_url}/barcode/{self.sample_barcodes[0]}"
         
         preflight_headers = {
-            'Origin': 'https://geant-inventory-2.preview.emergentagent.com',
+            'Origin': 'https://inventory-master-78.preview.emergentagent.com',
             'Access-Control-Request-Method': 'GET',
             'Access-Control-Request-Headers': 'authorization,content-type',
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15'
@@ -274,7 +274,7 @@ class MobileBarcodeAPITester:
             
             mobile_compatible = True
             
-            if allow_origin not in ['*', 'https://geant-inventory-2.preview.emergentagent.com']:
+            if allow_origin not in ['*', 'https://inventory-master-78.preview.emergentagent.com']:
                 print(f"   ⚠️ CORS Origin may not allow mobile requests: {allow_origin}")
                 mobile_compatible = False
             

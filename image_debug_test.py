@@ -23,7 +23,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://geant-inventory-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
@@ -264,7 +264,7 @@ class ImageDebugTester:
         
         # Test alternative URL constructions
         alternative_urls = [
-            f"https://geant-inventory-2.preview.emergentagent.com/uploads/{filename}",  # Direct static
+            f"https://inventory-master-78.preview.emergentagent.com/uploads/{filename}",  # Direct static
             f"{BACKEND_URL.replace('/api', '')}/uploads/{filename}",  # Without /api
         ]
         
@@ -359,7 +359,7 @@ class ImageDebugTester:
             return False
         
         # Simulate different URL construction methods that frontend might use
-        backend_url = "https://geant-inventory-2.preview.emergentagent.com"
+        backend_url = "https://inventory-master-78.preview.emergentagent.com"
         
         construction_methods = [
             ("Direct image_url", image_url),
