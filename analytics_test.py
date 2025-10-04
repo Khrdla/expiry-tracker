@@ -41,8 +41,12 @@ if login_response.status_code == 200:
                 for supplier in data['suppliers'][:3]:
                     print(f'  {supplier.get("supplier_name", "Unknown")}: total_value_usd=${supplier.get("total_value_usd", 0):.2f}')
             else:
-                print(f'  Response keys: {list(data.keys())}')
-                print(f'  Sample data: {str(data)[:200]}...')
+                if isinstance(data, dict):
+                    print(f'  Response keys: {list(data.keys())}')
+                    print(f'  Sample data: {str(data)[:200]}...')
+                else:
+                    print(f'  Response type: {type(data)}')
+                    print(f'  Sample data: {str(data)[:200]}...')
         else:
             print(f'  Error: {response.text[:200]}')
 else:
