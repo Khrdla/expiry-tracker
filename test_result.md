@@ -125,15 +125,20 @@
 #====================================================================================================
 
 user_problem_statement: |
-  User reported multiple issues with the current inventory system:
-  1. Company logo not appearing - showing "Geant Hypermarket" instead of proper branding
-  2. Stock value needs to be with purchase currency from uploaded file (YER, SAR, EUR)
-  3. Department and section not showing uploaded data properly
-  4. Return to supplier form not available
-  5. Supplier service level and stock value not exist
-  6. Summary and add/edit product cards not available
-  7. Products page shows "No products found" despite dashboard showing 1,807 products
-  8. WasteReports audit fixes requested - missing imports, duplicate form reset logic, potential memory leaks
+  DASHBOARD STOCK VALUE CALCULATION FIX - User reported that the "Stock Value" field consistently shows $0.00, even though the database contains valid stock quantities and prices for various items across different departments (e.g., 01-FMG, 01-CGD, 01-OPSS).
+
+  Requirements for this fix:
+  1. Data Source Verification: Ensure calculation uses live database data
+  2. Stock Value Formula: System Stock Quantity × Unit Cost (or Purchase Price)  
+  3. Currency Conversion: Include currency conversion logic, using the base currency from master data, and display the final total in USD
+  4. Dynamic Calculation: The total stock value should dynamically update with stock or price changes
+  5. Display Format: Show the total in USD ($) with proper number formatting (e.g., $12,450.75)
+  6. Validation: Test with real data to confirm manual calculations match the displayed value
+
+  FIXES IMPLEMENTED:
+  - Fixed analytics endpoints (/api/analytics/department-breakdown, /api/analytics/stock-levels, /api/analytics/supplier-performance) to calculate stock values dynamically using quantity × purchase_price × exchange_rate
+  - Updated frontend EnhancedVisualCharts.js to use total_value_usd field and display proper USD formatting
+  - Added currency conversion using exchange rates from the system (YER: 0.004, SAR: 0.267, EUR: 1.10, USD: 1.0)
 
 backend:
   - task: "Fix products API endpoint - no products showing"
