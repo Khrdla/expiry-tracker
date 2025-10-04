@@ -2706,15 +2706,40 @@ async def generate_enhanced_return_form_pdf(return_form: dict):
         story.append(header_table)
         story.append(Spacer(1, 0.15*inch))  # Reduced from 0.3*inch
         
-        # Ultra-compact section style for guaranteed single-page fit
+        # DYNAMIC SCALING - Adjust font sizes based on content amount
+        items = return_form.get('items', [])
+        item_count = len(items) if items else 1
+        
+        # Dynamic font scaling: more items = smaller fonts
+        if item_count >= 6:
+            base_font_size = 6   # Ultra-compact for 6+ items
+            section_font_size = 7
+            table_font_size = 5
+            spacing_multiplier = 0.3
+        elif item_count >= 4:
+            base_font_size = 7   # Compact for 4-5 items  
+            section_font_size = 8
+            table_font_size = 6
+            spacing_multiplier = 0.5
+        elif item_count >= 2:
+            base_font_size = 8   # Standard compact for 2-3 items
+            section_font_size = 9
+            table_font_size = 7
+            spacing_multiplier = 0.7
+        else:
+            base_font_size = 9   # Single item - slightly larger
+            section_font_size = 10
+            table_font_size = 8
+            spacing_multiplier = 1.0
+        
         section_style = ParagraphStyle(
             'SectionHeader',
             parent=styles['Heading3'],
-            fontSize=8,     # Further reduced for single-page fit
+            fontSize=section_font_size,
             fontName='Helvetica-Bold',
             textColor=geant_green,
-            spaceAfter=1,   # Minimal spacing
-            spaceBefore=1   # Minimal spacing
+            spaceAfter=int(2 * spacing_multiplier),
+            spaceBefore=int(1 * spacing_multiplier)
         )
         
         # ===== FORM DETAILS SECTION =====
