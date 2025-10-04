@@ -129,9 +129,9 @@ const EnhancedVisualCharts = () => {
           />
           <Bar 
             yAxisId="right"
-            dataKey="total_value_yer" 
+            dataKey="total_value_usd" 
             fill="#10B981" 
-            name="Stock Value (YER)"
+            name="Stock Value (USD)"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>
