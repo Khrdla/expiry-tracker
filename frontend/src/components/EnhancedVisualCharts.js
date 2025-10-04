@@ -46,10 +46,35 @@ const EnhancedVisualCharts = () => {
         })
       ]);
 
+      // Check response status and handle errors
+      if (!deptResponse.ok) {
+        console.error('Department breakdown failed:', deptResponse.status, deptResponse.statusText);
+        throw new Error(`Department breakdown API failed: ${deptResponse.status}`);
+      }
+      if (!stockResponse.ok) {
+        console.error('Stock levels failed:', stockResponse.status, stockResponse.statusText);
+        throw new Error(`Stock levels API failed: ${stockResponse.status}`);
+      }
+      if (!supplierResponse.ok) {
+        console.error('Supplier performance failed:', supplierResponse.status, supplierResponse.statusText);
+        throw new Error(`Supplier performance API failed: ${supplierResponse.status}`);
+      }
+      if (!wasteResponse.ok) {
+        console.error('Waste data failed:', wasteResponse.status, wasteResponse.statusText);
+        // Don't throw error for waste data as it's not critical
+      }
+
       const departmentBreakdown = await deptResponse.json();
       const stockLevels = await stockResponse.json();
       const supplierPerformance = await supplierResponse.json();
-      const wasteData = await wasteResponse.json();
+      const wasteData = wasteResponse.ok ? await wasteResponse.json() : { waste_entries: [] };
+
+      console.log('📊 Analytics data loaded:', {
+        departmentBreakdown: departmentBreakdown.length,
+        stockLevels: Object.keys(stockLevels).length,
+        supplierPerformance: supplierPerformance.length,
+        wasteData: wasteData.waste_entries?.length || 0
+      });
 
       setDashboardData({
         departmentBreakdown: Array.isArray(departmentBreakdown) ? departmentBreakdown : [],
