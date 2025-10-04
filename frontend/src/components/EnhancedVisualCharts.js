@@ -352,7 +352,7 @@ const EnhancedVisualCharts = () => {
                   stroke="#F59E0B" 
                   fill="#F59E0B" 
                   fillOpacity={0.6}
-                  name="Waste Value (YER)"
+                  name="Waste Value (USD)"
                 />
               </AreaChart>
             </ResponsiveContainer>
