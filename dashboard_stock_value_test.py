@@ -266,7 +266,13 @@ class DashboardStockValueTester:
             
             # Compare values
             analytics_values = {}
-            if "departments" in analytics_data:
+            if isinstance(analytics_data, list):
+                # Analytics returns a list directly
+                for dept in analytics_data:
+                    dept_name = dept.get("_id")  # Analytics uses "_id" for department name
+                    total_value = dept.get("total_value_usd", 0)
+                    analytics_values[dept_name] = total_value
+            elif "departments" in analytics_data:
                 for dept in analytics_data["departments"]:
                     dept_name = dept.get("department")
                     total_value = dept.get("total_value_usd", 0)
