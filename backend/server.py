@@ -5177,39 +5177,104 @@ async def get_stock_levels_analytics(
 ):
     """Get stock levels analytics for visual charts"""
     try:
-        pipeline = [
-            {
-                "$group": {
-                    "_id": "$status",
-                    "count": {"$sum": 1},
-                    "total_value": {"$sum": "$stock_value_yer"},
-                    "departments": {"$addToSet": "$department"}
-                }
-            }
-        ]
+        # Get exchange rates for USD conversion
+        try:
+            rates_response = await get_current_exchange_rates()
+            exchange_rates = rates_response.get('exchange_rates', {
+                'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+            })
+        except:
+            exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
         
-        status_breakdown = await db.products.aggregate(pipeline).to_list(None)
+        # Get accessible departments
+        accessible_departments = get_accessible_departments(current_user)
+        dept_filter = {"department": {"$in": [d.value for d in accessible_departments]}}
         
-        # Get stock distribution by range
-        stock_ranges_pipeline = [
-            {
-                "$bucket": {
-                    "groupBy": "$quantity",
-                    "boundaries": [0, 1, 5, 10, 25, 50, 100],
-                    "default": "100+",
-                    "output": {
-                        "count": {"$sum": 1},
-                        "total_value": {"$sum": "$stock_value_yer"}
-                    }
-                }
-            }
-        ]
+        # Calculate status breakdown manually
+        products = await db.products.find(dept_filter).to_list(None)
         
-        stock_ranges = await db.products.aggregate(stock_ranges_pipeline).to_list(None)
+        status_breakdown = {}
+        departments_by_status = {}
+        
+        for product in products:
+            status = await calculate_product_status(product)
+            
+            if status not in status_breakdown:
+                status_breakdown[status] = {"count": 0, "total_value": 0.0}
+                departments_by_status[status] = set()
+            
+            # Calculate stock value
+            quantity = product.get('quantity', 0)
+            purchase_price = product.get('purchase_price', 0)
+            purchase_currency = product.get('purchase_currency', 'YER')
+            
+            stock_value = quantity * purchase_price
+            conversion_rate = exchange_rates.get(purchase_currency, 1.0)
+            stock_value_usd = stock_value * conversion_rate
+            
+            status_breakdown[status]["count"] += 1
+            status_breakdown[status]["total_value"] += stock_value_usd
+            departments_by_status[status].add(product.get("department", "Unknown"))
+        
+        # Format status breakdown for frontend
+        status_breakdown_list = []
+        for status, data in status_breakdown.items():
+            status_breakdown_list.append({
+                "_id": status,
+                "count": data["count"],
+                "total_value": data["total_value"],
+                "departments": list(departments_by_status[status])
+            })
+        
+        # Calculate stock ranges manually
+        stock_ranges = {}
+        for product in products:
+            quantity = product.get('quantity', 0)
+            
+            # Determine range
+            if quantity == 0:
+                range_key = "0"
+            elif quantity < 1:
+                range_key = "0-1"
+            elif quantity < 5:
+                range_key = "1-5"
+            elif quantity < 10:
+                range_key = "5-10"
+            elif quantity < 25:
+                range_key = "10-25"
+            elif quantity < 50:
+                range_key = "25-50"
+            elif quantity < 100:
+                range_key = "50-100"
+            else:
+                range_key = "100+"
+            
+            if range_key not in stock_ranges:
+                stock_ranges[range_key] = {"count": 0, "total_value": 0.0}
+            
+            # Calculate stock value
+            purchase_price = product.get('purchase_price', 0)
+            purchase_currency = product.get('purchase_currency', 'YER')
+            
+            stock_value = quantity * purchase_price
+            conversion_rate = exchange_rates.get(purchase_currency, 1.0)
+            stock_value_usd = stock_value * conversion_rate
+            
+            stock_ranges[range_key]["count"] += 1
+            stock_ranges[range_key]["total_value"] += stock_value_usd
+        
+        # Format stock ranges for frontend
+        stock_ranges_list = []
+        for range_key, data in stock_ranges.items():
+            stock_ranges_list.append({
+                "_id": range_key,
+                "count": data["count"],
+                "total_value": data["total_value"]
+            })
         
         return {
-            "status_breakdown": status_breakdown,
-            "stock_ranges": stock_ranges
+            "status_breakdown": status_breakdown_list,
+            "stock_ranges": stock_ranges_list
         }
         
     except Exception as e:
