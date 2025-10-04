@@ -206,7 +206,7 @@ const EnhancedDashboard = () => {
           total_items: safeNumber(value?.total_items, 0),
           expired_items: safeNumber(value?.expired_items, 0),
           low_stock_items: safeNumber(value?.low_stock_items, 0),
-          stock_value: safeNumber(value?.stock_value, 0),
+          stock_value: safeNumber(value?.total_stock_value, 0),
           department: departmentName
         };
         
