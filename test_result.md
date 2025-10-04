@@ -483,20 +483,20 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE WASTE MANAGEMENT AUDIT VERIFICATION COMPLETED - SUCCESS RATE: 100% (26/26 tests passed). ✅ AUDIT REQUIREMENTS VERIFICATION: 1) Authentication & Security: Admin credentials (imadqejji/066380531I) working perfectly - JWT token authentication functional. 2) Waste Management API Endpoints: ALL 4 critical endpoints verified working (POST /api/waste/entries, GET /api/waste/reports, GET /api/waste/entries, GET /api/export/waste-report/{period}). 3) Data Integrity: Currency calculations (quantity × purchase_price) verified across YER, SAR, EUR currencies with proper waste value computation. 4) Performance Verification: All API calls <100ms requirement met with excellent response times (avg 42ms). 5) Error Handling: Proper error responses for invalid data confirmed (422 status codes). ✅ NO REGRESSION DETECTED: Frontend WasteReports.js cleanup had NO impact on backend functionality. All waste management features remain fully operational. ✅ PRODUCTION READY: System maintains expected 100% functionality after audit fixes implementation. Waste entry creation, reports generation, export functionality, and multi-currency support all working correctly. The comprehensive waste management system audit confirms NO regression and full production readiness."
 
-  - task: "Dashboard API expired items count discrepancy investigation"
+  - task: "Fix Dashboard Stock Value Calculation - showing $0.00 instead of actual values"
     implemented: true
-    working: true
-    file: "server.py"
+    working: false
+    file: "server.py, EnhancedVisualCharts.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
-        agent: "user"
-        comment: "User reported dashboard shows 6 expired items but they only added 1 item. Troubleshoot agent found database completely empty but dashboard still shows 6 expired items."
-      - working: true
-        agent: "testing"
-        comment: "DASHBOARD EXPIRED ITEMS INVESTIGATION COMPLETED - ISSUE RESOLVED. ✅ CRITICAL FINDINGS: Dashboard correctly shows 0 expired items (not 6 as reported). Database contains 1,807 products (not empty). GET /api/dashboard returns proper JSON response with accurate KPI calculations: 01-FMG (711 items, 0 expired), 01-CGD (44 items, 0 expired), 01-OPSS (1,052 items, 0 expired). Total expired items across all departments: 0. ✅ DATABASE VERIFICATION: Database is NOT empty - contains 1,807 products with proper data structure. All products have quantity=0 (out of stock) and no expiry dates set. ✅ ROOT CAUSE: Original user report appears to be resolved or was temporary. Dashboard API working correctly with proper authentication (admin: imadqejji/066380531I). ❌ MINOR ISSUE IDENTIFIED: Product status calculation mismatch - products with quantity=0 should return 'out_of_stock' status but API returns 'in_stock'. This doesn't affect dashboard KPIs but affects individual product status display. The dashboard expired items count discrepancy has been resolved - system is working correctly."
+        agent: "main"
+        comment: "User reported dashboard stock value consistently shows $0.00 despite valid database data with stock quantities and prices. Investigation revealed analytics endpoints were trying to sum non-existent fields like $stock_value_yer instead of calculating dynamically."
+      - working: false
+        agent: "main" 
+        comment: "FIXES IMPLEMENTED: ✅ Updated /api/analytics/department-breakdown to calculate stock values using quantity × purchase_price × exchange_rate ✅ Updated /api/analytics/stock-levels to calculate values dynamically ✅ Updated /api/analytics/supplier-performance to use proper calculations ✅ Updated frontend EnhancedVisualCharts.js to use total_value_usd field and display USD formatting ✅ Added currency conversion logic using exchange rates (YER: 0.004, SAR: 0.267, EUR: 1.10, USD: 1.0). Need to test if dashboard now shows correct stock values instead of $0.00."
 
   - task: "Email alert system with 06:00 AM Aden timezone functionality"
     implemented: true
