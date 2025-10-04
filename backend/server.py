@@ -538,6 +538,15 @@ async def init_admin():
 async def get_dashboard(current_user: User = Depends(get_current_user)):
     accessible_departments = get_accessible_departments(current_user)
     
+    # Get exchange rates for USD conversion
+    try:
+        rates_response = await get_current_exchange_rates()
+        exchange_rates = rates_response.get('exchange_rates', {
+            'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0
+        })
+    except:
+        exchange_rates = {'YER': 0.004, 'SAR': 0.267, 'EUR': 1.10, 'USD': 1.0}
+
     # Calculate KPIs for each accessible department
     kpis = []
     for dept in accessible_departments:
@@ -555,7 +564,19 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
         for product in products:
             status = await calculate_product_status(product)
             total_quantity += product.get('quantity', 0)
-            total_stock_value += (product.get('quantity', 0) * product.get('purchase_price', 0))
+            
+            # Calculate stock value with USD conversion
+            quantity = product.get('quantity', 0)
+            purchase_price = product.get('purchase_price', 0)
+            purchase_currency = product.get('purchase_currency', 'YER')
+            
+            # Calculate stock value in original currency
+            stock_value = quantity * purchase_price
+            
+            # Convert to USD
+            conversion_rate = exchange_rates.get(purchase_currency, 1.0)
+            stock_value_usd = stock_value * conversion_rate
+            total_stock_value += stock_value_usd
             
             if status == ProductStatus.EXPIRED:
                 expired_items += 1
