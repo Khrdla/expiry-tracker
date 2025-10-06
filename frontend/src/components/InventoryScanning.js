@@ -499,12 +499,12 @@ const InventoryScanning = () => {
 
               {/* Quick Instructions */}
               <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-                <div className="font-medium mb-2">📋 Scanning Workflow:</div>
+                <div className="font-medium mb-2">🚀 Lightning-Fast Workflow:</div>
                 <div className="space-y-1">
-                  <div>1. Tap barcode field → camera opens automatically</div>
-                  <div>2. Scan barcode → beep + flash → auto-advance to quantity</div>
-                  <div>3. Enter quantity → press Enter or tap "Add & Continue"</div>
-                  <div>4. Form resets → ready for next scan in same zone</div>
+                  <div>1. 📷 Camera opens automatically when entering barcode field</div>
+                  <div>2. 📊 Scan barcode → beep + flash → auto-advance to quantity</div>
+                  <div>3. ⌨️ Enter quantity → press Enter or tap "Add → 📷 Auto Scan Next"</div>
+                  <div>4. 🔄 Camera opens instantly for next scan - no button taps needed!</div>
                 </div>
               </div>
             </div>
