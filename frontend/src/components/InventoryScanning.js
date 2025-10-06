@@ -49,6 +49,11 @@ const InventoryScanning = () => {
   const handleBarcodeScanned = (barcode) => {
     setFormData(prev => ({ ...prev, barcode }));
     setShowScanner(false);
+    
+    // Auto-advance to quantity field after successful scan
+    setTimeout(() => {
+      document.querySelector('input[placeholder="Enter quantity"]')?.focus();
+    }, 300);
   };
 
   const handleSubmit = async (e) => {
