@@ -588,6 +588,82 @@ const EnhancedDashboard = () => {
                 </p>
               )}
             </div>
+
+            {/* Currency Controls */}
+            <div className="bg-white p-4 rounded-lg shadow-md border">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                {/* Currency Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Display Currency
+                  </label>
+                  <select
+                    value={currencySettings.display_currency}
+                    onChange={(e) => handleCurrencyChange(e.target.value)}
+                    disabled={!currencySettings.can_edit || currencyLoading}
+                    className="w-28 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="SAR">SAR</option>
+                    <option value="YER">YER</option>
+                  </select>
+                </div>
+
+                {/* YER Exchange Rate Input */}
+                <div className="flex items-center gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                      1 USD = X YER (Manual Rate)
+                      {/* Info tooltip */}
+                      <div className="relative group">
+                        <svg 
+                          className="w-4 h-4 text-gray-400 cursor-help" 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-64 z-10">
+                          Due to frequent currency fluctuations in Aden, update this exchange rate manually to keep financial metrics accurate. Enter the current market rate (1 USD = X YER).
+                        </div>
+                      </div>
+                    </label>
+                    <input
+                      type="number"
+                      value={currencySettings.yer_exchange_rate}
+                      onChange={(e) => handleExchangeRateChange(e.target.value)}
+                      disabled={!currencySettings.can_edit || currencyLoading}
+                      min="1"
+                      step="0.1"
+                      className="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                      placeholder="1610"
+                    />
+                    {/* Last Updated Timestamp */}
+                    {currencySettings.last_updated && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last updated: {new Date(currencySettings.last_updated).toLocaleDateString()} – {new Date(currencySettings.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Loading indicator */}
+                {currencyLoading && (
+                  <div className="flex items-center text-sm text-gray-500">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Updating...
+                  </div>
+                )}
+
+                {/* Admin-only indicator */}
+                {!currencySettings.can_edit && (
+                  <div className="text-xs text-gray-400 italic">
+                    Admin only
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
             
             {/* Enhanced Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
