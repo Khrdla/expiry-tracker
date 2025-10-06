@@ -1333,7 +1333,7 @@ mobile_app_comprehensive_fixes:
 
 test_plan:
   current_focus:
-    - "Fix Dashboard Stock Value Calculation - showing $0.00 instead of actual values"
+    - "Fix Waste Report PDF Export - can't be opened after exportation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
