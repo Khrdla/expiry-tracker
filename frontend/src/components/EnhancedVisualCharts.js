@@ -32,7 +32,42 @@ const EnhancedVisualCharts = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    loadCurrencySettings();
   }, []);
+
+  // Load currency settings
+  const loadCurrencySettings = async () => {
+    try {
+      // Try to load from localStorage first
+      const savedSettings = localStorage.getItem('dashboardCurrencySettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setCurrencySettings(prev => ({...prev, ...parsed}));
+      }
+      
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/currency-settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newSettings = {
+          display_currency: data.display_currency,
+          yer_exchange_rate: data.yer_exchange_rate,
+          sar_exchange_rate: data.sar_exchange_rate,
+          last_updated: data.last_updated,
+          can_edit: data.can_edit
+        };
+        
+        setCurrencySettings(newSettings);
+      }
+    } catch (error) {
+      console.error('Failed to load currency settings in charts:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
