@@ -11,6 +11,7 @@ import SettingsPanel from "./components/SettingsPanel";
 import ExpiryTracker from "./components/ExpiryTracker";
 import EnhancedReturnForm from "./components/EnhancedReturnForm";
 import WasteReports from "./components/WasteReports";
+import InventoryScanning from "./components/InventoryScanning";
 
 // Icons
 import { 
