@@ -267,6 +267,9 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
     if (item.path === "/settings") {
       return user?.role === "admin" || user?.role === "manager";
     }
+    if (item.path === "/inventory-scanning") {
+      return user?.role === "admin"; // Admin only for inventory scanning
+    }
     return true;
   });
 
