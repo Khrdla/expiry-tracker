@@ -5630,6 +5630,278 @@ async def update_dashboard_currency_settings(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update dashboard currency settings: {str(e)}")
 
+# Inventory Scanning Endpoints (Admin Only)
+@api_router.post("/inventory-scans")
+async def add_inventory_scan(
+    scan_request: InventoryScanRequest,
+    current_user: User = Depends(get_admin_user)
+):
+    """Add new inventory scan with auto-aggregation logic (Admin only)"""
+    try:
+        # Look up product in master data
+        product = await db.products.find_one({"barcode": scan_request.barcode})
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product not found for barcode: {scan_request.barcode}")
+        
+        # Check if item already scanned in this zone type
+        existing_scan = await db.inventory_scans.find_one({
+            "barcode": scan_request.barcode,
+            "zone_type": scan_request.zone_type.value
+        })
+        
+        if existing_scan:
+            # Update existing scan (aggregate quantities)
+            if scan_request.zone_type == ZoneType.SA:
+                new_qty_sa = existing_scan.get("qty_scanned_sa", 0) + scan_request.quantity_scanned
+                update_data = {"qty_scanned_sa": new_qty_sa}
+            else:  # WH
+                new_qty_wh = existing_scan.get("qty_scanned_wh", 0) + scan_request.quantity_scanned
+                update_data = {"qty_scanned_wh": new_qty_wh}
+            
+            # Recalculate totals and variances
+            total_inventory = existing_scan.get("qty_scanned_sa", 0) + existing_scan.get("qty_scanned_wh", 0)
+            if scan_request.zone_type == ZoneType.SA:
+                total_inventory = new_qty_sa + existing_scan.get("qty_scanned_wh", 0)
+            else:
+                total_inventory = existing_scan.get("qty_scanned_sa", 0) + new_qty_wh
+            
+            system_stock = existing_scan.get("system_stock", 0)
+            variance_qty = total_inventory - system_stock
+            variance_value = variance_qty * existing_scan.get("unit_cost", 0)
+            
+            update_data.update({
+                "total_inventory_scan": total_inventory,
+                "variance_qty": variance_qty,
+                "variance_value": variance_value,
+                "date_scanned": datetime.now()
+            })
+            
+            await db.inventory_scans.update_one(
+                {"_id": existing_scan["_id"]},
+                {"$set": update_data}
+            )
+            
+            logger.info(f"Updated inventory scan for barcode {scan_request.barcode} in {scan_request.zone_type.value}")
+            
+        else:
+            # Create new scan entry
+            qty_sa = scan_request.quantity_scanned if scan_request.zone_type == ZoneType.SA else 0.0
+            qty_wh = scan_request.quantity_scanned if scan_request.zone_type == ZoneType.WH else 0.0
+            total_inventory = qty_sa + qty_wh
+            system_stock = product.get("quantity", 0)
+            unit_cost = product.get("purchase_price", 0)
+            variance_qty = total_inventory - system_stock
+            variance_value = variance_qty * unit_cost
+            
+            scan_data = {
+                "id": str(uuid.uuid4()),
+                "zone_type": scan_request.zone_type.value,
+                "zone_number": scan_request.zone_number,
+                "barcode": scan_request.barcode,
+                "item_number": product.get("item_number", ""),
+                "description": product.get("description", ""),
+                "department": product.get("department", ""),
+                "section": product.get("section", ""),
+                "family": product.get("family", ""),
+                "supplier_code": product.get("supplier_code", ""),
+                "supplier_name": product.get("supplier", ""),
+                "system_stock": system_stock,
+                "unit_cost": unit_cost,
+                "qty_scanned_sa": qty_sa,
+                "qty_scanned_wh": qty_wh,
+                "total_inventory_scan": total_inventory,
+                "variance_qty": variance_qty,
+                "variance_value": variance_value,
+                "date_scanned": datetime.now(),
+                "scanned_by": current_user.id,
+                "created_at": datetime.now()
+            }
+            
+            await db.inventory_scans.insert_one(scan_data)
+            
+            logger.info(f"Added new inventory scan for barcode {scan_request.barcode} in {scan_request.zone_type.value}")
+        
+        return {
+            "success": True,
+            "message": "Inventory scan added successfully",
+            "barcode": scan_request.barcode,
+            "item_description": product.get("description", ""),
+            "quantity_added": scan_request.quantity_scanned,
+            "zone_type": scan_request.zone_type.value
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add inventory scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to add inventory scan: {str(e)}")
+
+@api_router.get("/inventory-scans")
+async def get_inventory_scans(current_user: User = Depends(get_admin_user)):
+    """Get all inventory scans (Admin only)"""
+    try:
+        scans = await db.inventory_scans.find().sort("date_scanned", -1).to_list(None)
+        
+        # Remove MongoDB ObjectId for JSON serialization
+        for scan in scans:
+            if "_id" in scan:
+                del scan["_id"]
+        
+        return {
+            "scans": scans,
+            "total_count": len(scans)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get inventory scans: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get inventory scans: {str(e)}")
+
+@api_router.delete("/inventory-scans/clear")
+async def clear_all_inventory_scans(current_user: User = Depends(get_admin_user)):
+    """Clear all inventory scans (Admin only)"""
+    try:
+        result = await db.inventory_scans.delete_many({})
+        
+        logger.info(f"Cleared {result.deleted_count} inventory scans by {current_user.username}")
+        
+        return {
+            "success": True,
+            "message": f"Successfully cleared {result.deleted_count} inventory scans",
+            "deleted_count": result.deleted_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to clear inventory scans: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear inventory scans: {str(e)}")
+
+@api_router.get("/inventory-scans/export")
+async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
+    """Export inventory scans to Excel (Admin only)"""
+    try:
+        import io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        from openpyxl.utils import get_column_letter
+        
+        # Get all scans aggregated by barcode
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$barcode",
+                    "item_number": {"$first": "$item_number"},
+                    "description": {"$first": "$description"},
+                    "department": {"$first": "$department"},
+                    "section": {"$first": "$section"},
+                    "family": {"$first": "$family"},
+                    "supplier_code": {"$first": "$supplier_code"},
+                    "supplier_name": {"$first": "$supplier_name"},
+                    "system_stock": {"$first": "$system_stock"},
+                    "unit_cost": {"$first": "$unit_cost"},
+                    "qty_scanned_sa": {"$sum": "$qty_scanned_sa"},
+                    "qty_scanned_wh": {"$sum": "$qty_scanned_wh"}
+                }
+            }
+        ]
+        
+        aggregated_scans = await db.inventory_scans.aggregate(pipeline).to_list(None)
+        
+        if not aggregated_scans:
+            raise HTTPException(status_code=404, detail="No inventory scans found")
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Inventory Scan Report"
+        
+        # Define headers in exact order
+        headers = [
+            "Item Number", "Barcode", "Description", "Department", "Section", "Family",
+            "Supplier Code", "Supplier Name", "Qty Scanned in SA", "Qty Scanned in WH",
+            "Total Inventory Scan", "System Stock", "Variance in Qty", "Variance in Value"
+        ]
+        
+        # Add headers with formatting
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+        
+        # Add data rows
+        total_sa = total_wh = total_inventory = total_variance_value = 0.0
+        
+        for row_num, scan in enumerate(aggregated_scans, 2):
+            total_inventory_scan = scan["qty_scanned_sa"] + scan["qty_scanned_wh"]
+            variance_qty = total_inventory_scan - scan["system_stock"]
+            variance_value = variance_qty * scan["unit_cost"]
+            
+            # Accumulate totals
+            total_sa += scan["qty_scanned_sa"]
+            total_wh += scan["qty_scanned_wh"]
+            total_inventory += total_inventory_scan
+            total_variance_value += variance_value
+            
+            row_data = [
+                scan["item_number"], scan["_id"], scan["description"], scan["department"],
+                scan["section"], scan["family"], scan["supplier_code"], scan["supplier_name"],
+                scan["qty_scanned_sa"], scan["qty_scanned_wh"], total_inventory_scan,
+                scan["system_stock"], variance_qty, variance_value
+            ]
+            
+            for col_num, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_num, column=col_num)
+                cell.value = value
+                
+                # Right-align numeric columns (9-14)
+                if col_num >= 9:
+                    cell.alignment = Alignment(horizontal='right')
+        
+        # Add total row
+        total_row = len(aggregated_scans) + 2
+        ws.cell(row=total_row, column=8).value = "TOTALS:"
+        ws.cell(row=total_row, column=8).font = Font(bold=True)
+        ws.cell(row=total_row, column=9).value = total_sa
+        ws.cell(row=total_row, column=9).font = Font(bold=True)
+        ws.cell(row=total_row, column=10).value = total_wh
+        ws.cell(row=total_row, column=10).font = Font(bold=True)
+        ws.cell(row=total_row, column=11).value = total_inventory
+        ws.cell(row=total_row, column=11).font = Font(bold=True)
+        ws.cell(row=total_row, column=14).value = total_variance_value
+        ws.cell(row=total_row, column=14).font = Font(bold=True)
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Generate file
+        current_time = datetime.now()
+        filename = f"Inventory_Scan_Report_{current_time.strftime('%Y%m%d')}_{current_time.strftime('%H%M')}.xlsx"
+        
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(buffer.read()),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export inventory scans: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to export inventory scans: {str(e)}")
+
 @api_router.post("/currency/rates/quick-update")
 async def quick_update_rate(
     rate_update: Dict[str, Any],
