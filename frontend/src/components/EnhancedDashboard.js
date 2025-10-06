@@ -652,33 +652,34 @@ const EnhancedDashboard = ({ user: propUser }) => {
               </div>
             </div>
           </div>
-            
-            {/* Enhanced Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigate('/grid')}
-                  className="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
-                >
-                  <Grid3X3 size={18} />
-                  📊 Grid View
-                </button>
-                
-                <button
-                  onClick={() => setShowScanner(true)}
-                  className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
-                >
-                  <Camera size={18} />
-                  📱 Multi-Scan
-                </button>
-                
-                <button
-                  onClick={() => setShowAdvancedBarcodeFeatures(true)}
-                  className="flex-1 sm:flex-initial bg-gradient-to-r from-green-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
-                >
-                  🚀 Advanced
-                </button>
-              </div>
+        </div>
+
+        {/* Enhanced Action Buttons */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/grid')}
+                className="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
+              >
+                <Grid3X3 size={18} />
+                📊 Grid View
+              </button>
+              
+              <button
+                onClick={() => setShowScanner(true)}
+                className="flex-1 sm:flex-initial bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
+              >
+                <Camera size={18} />
+                📱 Multi-Scan
+              </button>
+              
+              <button
+                onClick={() => setShowAdvancedBarcodeFeatures(true)}
+                className="flex-1 sm:flex-initial bg-gradient-to-r from-green-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-medium"
+              >
+                🚀 Advanced
+              </button>
             </div>
           </div>
         </div>
