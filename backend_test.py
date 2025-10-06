@@ -78,384 +78,476 @@ class InventoryScanningTester:
         except Exception as e:
             self.test_results.append(f"❌ Clear scans error: {str(e)}")
             return False
-    
-    def test_barcode_lookup(self):
-        """Test barcode lookup for test data"""
-        try:
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/barcode/{TEST_BARCODE}")
-            response_time = (time.time() - start_time) * 1000
             
-            if response.status_code == 200:
-                product = response.json()
-                
-                # Verify required fields for return form
-                required_fields = ["product_name", "purchase_price", "purchase_currency", "supplier"]
-                missing_fields = [field for field in required_fields if field not in product]
-                
-                if missing_fields:
-                    self.log_result("Test Barcode Lookup", False,
-                        f"Missing fields: {missing_fields}", response_time)
-                    return None
-                
-                self.log_result("Test Barcode Lookup", True,
-                    f"Product: {product.get('product_name')}, "
-                    f"Price: {product.get('purchase_price')} {product.get('purchase_currency')}, "
-                    f"Supplier: {product.get('supplier')}", response_time)
-                return product
-            else:
-                self.log_result("Test Barcode Lookup", False,
-                    f"Status: {response.status_code}, Response: {response.text}", response_time)
-                return None
-        except Exception as e:
-            self.log_result("Test Barcode Lookup", False, f"Exception: {str(e)}")
-            return None
-    
-    def test_return_form_creation_with_supervisor(self, product_data):
-        """Test return form creation with supervisor dropdown integration"""
+    async def create_inventory_scan(self, zone_type, zone_number, barcode, quantity):
+        """Create an inventory scan entry"""
         try:
-            for supervisor in TEST_SUPERVISORS:
-                start_time = time.time()
-                
-                return_form_data = {
-                    "reference_number": f"RTN-{int(time.time())}-{supervisor.replace(' ', '')}",
-                    "product_code": product_data.get("item_number", "TEST-001"),
-                    "product_name": product_data.get("product_name", "Test Product"),
-                    "barcode": TEST_BARCODE,
-                    "quantity": 5,
-                    "purchase_price": product_data.get("purchase_price", 10.0),
-                    "purchase_currency": product_data.get("purchase_currency", "YER"),
-                    "supplier": product_data.get("supplier", "Test Supplier"),
-                    "reason_for_return": "Quality issue - damaged packaging",
-                    "selected_supervisor": supervisor,  # Key requirement from review
-                    "prepared_by_supervisor": supervisor,
-                    "section_manager_name": SECTION_MANAGER,
-                    "notes": f"Test return form with supervisor: {supervisor}",
-                    "supervisor_approved": True,
-                    "supervisor_signature": f"{supervisor}_signature",
-                    "supervisor_timestamp": datetime.now().isoformat(),
-                    "section_manager_approved": True,
-                    "section_manager_signature": f"{SECTION_MANAGER}_signature", 
-                    "section_manager_timestamp": datetime.now().isoformat()
-                }
-                
-                response = self.session.post(f"{BACKEND_URL}/return-forms", json=return_form_data)
-                response_time = (time.time() - start_time) * 1000
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    form_id = data.get("id")
-                    if form_id:
-                        self.created_return_forms.append(form_id)
-                    
-                    self.log_result(f"Return Form Creation - {supervisor}", True,
-                        f"Form ID: {form_id}, Supervisor: {supervisor}, "
-                        f"Currency: {return_form_data['purchase_currency']}", response_time)
-                else:
-                    self.log_result(f"Return Form Creation - {supervisor}", False,
-                        f"Status: {response.status_code}, Response: {response.text}", response_time)
-                    
-        except Exception as e:
-            self.log_result("Return Form Creation with Supervisor", False, f"Exception: {str(e)}")
-    
-    def test_dual_currency_display(self):
-        """Test dual currency display in return form responses"""
-        if not self.created_return_forms:
-            self.log_result("Dual Currency Display", False, "No return forms created to test")
-            return
-        
-        try:
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/returns")
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                forms = response.json()
-                
-                if not forms:
-                    self.log_result("Dual Currency Display", False, "No return forms found", response_time)
-                    return
-                
-                # Check first form for dual currency fields
-                test_form = forms[0]
-                
-                # Look for original currency
-                has_original_currency = "purchase_currency" in test_form and "purchase_price" in test_form
-                
-                # Look for USD conversion (this might be calculated on-the-fly)
-                currency_fields = [key for key in test_form.keys() if "currency" in key.lower()]
-                price_fields = [key for key in test_form.keys() if "price" in key.lower() or "usd" in key.lower()]
-                
-                self.log_result("Dual Currency Display", has_original_currency,
-                    f"Original currency: {has_original_currency}, "
-                    f"Currency fields: {currency_fields}, Price fields: {price_fields}", response_time)
-            else:
-                self.log_result("Dual Currency Display", False,
-                    f"Status: {response.status_code}, Response: {response.text}", response_time)
-                    
-        except Exception as e:
-            self.log_result("Dual Currency Display", False, f"Exception: {str(e)}")
-    
-    def test_pdf_export_main(self):
-        """Test main PDF export endpoint: GET /api/export/return-form/{form_id}?format=pdf"""
-        if not self.created_return_forms:
-            self.log_result("Main PDF Export", False, "No return forms created to test")
-            return
-        
-        try:
-            form_id = self.created_return_forms[0]
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=pdf")
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                # Check if it's a PDF
-                content_type = response.headers.get('content-type', '')
-                is_pdf = 'application/pdf' in content_type or response.content.startswith(b'%PDF')
-                pdf_size = len(response.content)
-                
-                self.log_result("Main PDF Export", is_pdf,
-                    f"Content-Type: {content_type}, Size: {pdf_size} bytes, "
-                    f"PDF signature: {response.content[:10]}", response_time)
-            else:
-                self.log_result("Main PDF Export", False,
-                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
-                    
-        except Exception as e:
-            self.log_result("Main PDF Export", False, f"Exception: {str(e)}")
-    
-    def test_pdf_export_individual(self):
-        """Test individual PDF export endpoint: GET /api/export/return-form/{return_id}/pdf"""
-        if not self.created_return_forms:
-            self.log_result("Individual PDF Export", False, "No return forms created to test")
-            return
-        
-        try:
-            form_id = self.created_return_forms[0]
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}/pdf")
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                # Check if it's a PDF
-                content_type = response.headers.get('content-type', '')
-                is_pdf = 'application/pdf' in content_type or response.content.startswith(b'%PDF')
-                pdf_size = len(response.content)
-                
-                self.log_result("Individual PDF Export", is_pdf,
-                    f"Content-Type: {content_type}, Size: {pdf_size} bytes, "
-                    f"PDF signature: {response.content[:10]}", response_time)
-            else:
-                self.log_result("Individual PDF Export", False,
-                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
-                    
-        except Exception as e:
-            self.log_result("Individual PDF Export", False, f"Exception: {str(e)}")
-    
-    def test_approval_workflow_validation(self):
-        """Test approval workflow and digital signature timestamps"""
-        try:
-            # Test creating return form without approvals
-            start_time = time.time()
-            
-            incomplete_form_data = {
-                "reference_number": f"RTN-INCOMPLETE-{int(time.time())}",
-                "product_code": "TEST-001",
-                "product_name": "Test Product",
-                "quantity": 1,
-                "purchase_price": 10.0,
-                "purchase_currency": "YER",
-                "supplier": "Test Supplier",
-                "reason_for_return": "Test incomplete form",
-                "selected_supervisor": TEST_SUPERVISORS[0],
-                # Missing approvals intentionally
-                "supervisor_approved": False,
-                "section_manager_approved": False
+            scan_data = {
+                "zone_type": zone_type,
+                "zone_number": zone_number,
+                "barcode": barcode,
+                "quantity_scanned": quantity
             }
             
-            response = self.session.post(f"{BACKEND_URL}/return-forms", json=incomplete_form_data)
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                data = response.json()
-                incomplete_form_id = data.get("id")
-                
-                # Try to export without approvals - should fail
-                export_response = self.session.get(f"{BACKEND_URL}/export/return-form/{incomplete_form_id}/pdf")
-                
-                if export_response.status_code == 403:
-                    self.log_result("Approval Workflow Validation", True,
-                        f"Export correctly blocked without approvals (403 status)", response_time)
+            async with self.session.post(
+                f"{BACKEND_URL}/inventory-scans",
+                json=scan_data,
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.test_results.append(f"✅ Created scan: {zone_type}{zone_number:02d} - {barcode} - {quantity} qty")
+                    return True
                 else:
-                    self.log_result("Approval Workflow Validation", False,
-                        f"Export should be blocked but got status: {export_response.status_code}", response_time)
-            else:
-                self.log_result("Approval Workflow Validation", False,
-                    f"Failed to create incomplete form: {response.status_code}", response_time)
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Failed to create scan {zone_type}{zone_number:02d}: {response.status} - {error_text}")
+                    return False
                     
         except Exception as e:
-            self.log_result("Approval Workflow Validation", False, f"Exception: {str(e)}")
-    
-    def test_excel_export(self):
-        """Test Excel export functionality"""
-        if not self.created_return_forms:
-            self.log_result("Excel Export", False, "No return forms created to test")
-            return
-        
-        try:
-            form_id = self.created_return_forms[0]
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}?format=excel")
-            response_time = (time.time() - start_time) * 1000
+            self.test_results.append(f"❌ Create scan error: {str(e)}")
+            return False
             
-            if response.status_code == 200:
-                # Check if it's an Excel file
+    async def setup_multi_zone_data(self):
+        """Setup inventory scans in multiple zones with different items"""
+        self.test_results.append("\n🔧 SETTING UP MULTI-ZONE TEST DATA:")
+        
+        # Test data for different zones
+        test_scans = [
+            # SA Zone 1 - Multiple items
+            ("SA", 1, "3222471081716", 50),  # Apple Juice Box 1L
+            ("SA", 1, "3222471052747", 30),  # Lemonade 150Cl
+            ("SA", 1, "3222471075722", 25),  # Mountain Water 6X50Cl
+            
+            # SA Zone 2 - Different items
+            ("SA", 2, "3222471081273", 40),  # Orange Peach Apricot Nectar Box 1L
+            ("SA", 2, "3222471090022", 35),  # Different product
+            
+            # WH Zone 1 - Mixed items (some same as SA zones)
+            ("WH", 1, "3222471081716", 20),  # Apple Juice Box 1L (same as SA01)
+            ("WH", 1, "3222471075722", 15),  # Mountain Water 6X50Cl (same as SA01)
+            ("WH", 1, "9501100046987", 60),  # Different product
+            
+            # WH Zone 2 - Unique items
+            ("WH", 2, "3222471052747", 45),  # Lemonade 150Cl (same as SA01)
+            ("WH", 2, "3222471081273", 25),  # Orange Peach Apricot Nectar (same as SA02)
+        ]
+        
+        success_count = 0
+        for zone_type, zone_number, barcode, quantity in test_scans:
+            if await self.create_inventory_scan(zone_type, zone_number, barcode, quantity):
+                success_count += 1
+                
+        self.test_results.append(f"✅ Created {success_count}/{len(test_scans)} inventory scans")
+        return success_count == len(test_scans)
+        
+    async def export_and_analyze_excel(self):
+        """Export inventory scans to Excel and analyze the multi-worksheet structure"""
+        try:
+            self.test_results.append("\n📊 TESTING EXCEL EXPORT WITH MULTIPLE WORKSHEETS:")
+            
+            async with self.session.get(
+                f"{BACKEND_URL}/inventory-scans/export",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Export failed: {response.status} - {error_text}")
+                    return False
+                    
+                # Get the Excel file content
+                excel_content = await response.read()
+                self.test_results.append(f"✅ Excel file downloaded: {len(excel_content)} bytes")
+                
+                # Verify Content-Type header
                 content_type = response.headers.get('content-type', '')
-                is_excel = 'spreadsheet' in content_type or 'excel' in content_type
-                excel_size = len(response.content)
+                if 'spreadsheet' in content_type:
+                    self.test_results.append("✅ Correct Content-Type header for Excel file")
+                else:
+                    self.test_results.append(f"⚠️ Unexpected Content-Type: {content_type}")
                 
-                self.log_result("Excel Export", is_excel or excel_size > 1000,
-                    f"Content-Type: {content_type}, Size: {excel_size} bytes", response_time)
-            else:
-                self.log_result("Excel Export", False,
-                    f"Status: {response.status_code}, Response: {response.text[:200]}", response_time)
-                    
+                # Verify filename
+                content_disposition = response.headers.get('content-disposition', '')
+                if 'Inventory_Scan_Report_' in content_disposition:
+                    self.test_results.append("✅ Proper filename format with timestamp")
+                else:
+                    self.test_results.append(f"⚠️ Unexpected filename: {content_disposition}")
+                
+                # Analyze Excel structure
+                return await self.analyze_excel_structure(excel_content)
+                
         except Exception as e:
-            self.log_result("Excel Export", False, f"Exception: {str(e)}")
-    
-    def test_company_branding_in_exports(self):
-        """Test company logo and branding in PDF exports"""
-        if not self.created_return_forms:
-            self.log_result("Company Branding in Exports", False, "No return forms created to test")
-            return
+            self.test_results.append(f"❌ Export error: {str(e)}")
+            return False
+            
+    async def analyze_excel_structure(self, excel_content):
+        """Analyze the Excel file structure for multiple worksheets"""
+        try:
+            self.test_results.append("\n🔍 ANALYZING EXCEL STRUCTURE:")
+            
+            # Load Excel file
+            workbook = openpyxl.load_workbook(BytesIO(excel_content))
+            
+            # Check worksheet names
+            worksheet_names = workbook.sheetnames
+            self.test_results.append(f"✅ Found {len(worksheet_names)} worksheets: {worksheet_names}")
+            
+            # Expected zones based on our test data
+            expected_zones = ["SA01", "SA02", "WH01", "WH02"]
+            
+            # Verify each expected zone has a worksheet
+            zones_found = []
+            for expected_zone in expected_zones:
+                if expected_zone in worksheet_names:
+                    zones_found.append(expected_zone)
+                    self.test_results.append(f"✅ Worksheet found for zone: {expected_zone}")
+                else:
+                    self.test_results.append(f"❌ Missing worksheet for zone: {expected_zone}")
+            
+            if len(zones_found) == len(expected_zones):
+                self.test_results.append("✅ All expected zone worksheets created")
+            else:
+                self.test_results.append(f"❌ Missing {len(expected_zones) - len(zones_found)} zone worksheets")
+            
+            # Analyze each worksheet
+            worksheet_analysis_success = True
+            for zone_name in zones_found:
+                if not await self.analyze_worksheet(workbook[zone_name], zone_name):
+                    worksheet_analysis_success = False
+            
+            return worksheet_analysis_success and len(zones_found) == len(expected_zones)
+            
+        except Exception as e:
+            self.test_results.append(f"❌ Excel analysis error: {str(e)}")
+            return False
+            
+    async def analyze_worksheet(self, worksheet, zone_name):
+        """Analyze individual worksheet structure and formatting"""
+        try:
+            self.test_results.append(f"\n📋 ANALYZING WORKSHEET: {zone_name}")
+            
+            # Check zone header information
+            zone_header = worksheet['A1'].value
+            if zone_header and f"Zone Number: {zone_name}" in str(zone_header):
+                self.test_results.append(f"✅ Zone header correct: {zone_header}")
+            else:
+                self.test_results.append(f"❌ Zone header incorrect: {zone_header}")
+                return False
+            
+            # Check SKU count header
+            sku_count_cell = worksheet['A2'].value
+            if sku_count_cell and "Total SKUs Scanned:" in str(sku_count_cell):
+                sku_count = str(sku_count_cell).split(":")[-1].strip()
+                self.test_results.append(f"✅ SKU count header found: {sku_count} SKUs")
+            else:
+                self.test_results.append(f"❌ SKU count header missing: {sku_count_cell}")
+                return False
+            
+            # Check timestamp header
+            timestamp_cell = worksheet['A3'].value
+            if timestamp_cell and "Generated On:" in str(timestamp_cell):
+                timestamp = str(timestamp_cell).split(":")[-1].strip()
+                # Verify YYYY-MM-DD format
+                try:
+                    datetime.strptime(timestamp, '%Y-%m-%d')
+                    self.test_results.append(f"✅ Timestamp header correct format: {timestamp}")
+                except:
+                    self.test_results.append(f"⚠️ Timestamp format unexpected: {timestamp}")
+            else:
+                self.test_results.append(f"❌ Timestamp header missing: {timestamp_cell}")
+                return False
+            
+            # Check table headers (row 5)
+            expected_headers = [
+                "Item Number", "Barcode", "Description", "Supplier Code", "Supplier Name",
+                "Qty Scanned in SA", "Qty Scanned in WH", "Total Inventory Scan",
+                "System Stock", "Variance in Qty", "Variance in Value"
+            ]
+            
+            headers_correct = True
+            for col_num, expected_header in enumerate(expected_headers, 1):
+                actual_header = worksheet.cell(row=5, column=col_num).value
+                if actual_header == expected_header:
+                    continue
+                else:
+                    self.test_results.append(f"❌ Header mismatch col {col_num}: expected '{expected_header}', got '{actual_header}'")
+                    headers_correct = False
+            
+            if headers_correct:
+                self.test_results.append("✅ All table headers correct")
+            
+            # Check header formatting
+            header_cell = worksheet.cell(row=5, column=1)
+            if header_cell.font.bold:
+                self.test_results.append("✅ Headers are bold")
+            else:
+                self.test_results.append("❌ Headers are not bold")
+                
+            if header_cell.fill.start_color.rgb == "FF366092":  # Blue background
+                self.test_results.append("✅ Headers have blue background")
+            else:
+                self.test_results.append(f"⚠️ Header background color: {header_cell.fill.start_color.rgb}")
+                
+            if header_cell.font.color.rgb == "FFFFFFFF":  # White text
+                self.test_results.append("✅ Headers have white text")
+            else:
+                self.test_results.append(f"⚠️ Header text color: {header_cell.font.color.rgb}")
+            
+            # Check frozen panes
+            if worksheet.freeze_panes == "A6":
+                self.test_results.append("✅ Header row is frozen")
+            else:
+                self.test_results.append(f"⚠️ Freeze panes setting: {worksheet.freeze_panes}")
+            
+            # Check data rows and formatting
+            data_rows_found = 0
+            row = 6  # First data row
+            while worksheet.cell(row=row, column=1).value:
+                data_rows_found += 1
+                
+                # Check numeric column alignment (columns 6-11)
+                for col in range(6, 12):
+                    cell = worksheet.cell(row=row, column=col)
+                    if cell.alignment.horizontal == 'right':
+                        continue
+                    else:
+                        self.test_results.append(f"⚠️ Row {row} Col {col} not right-aligned")
+                        break
+                
+                # Check alternating row colors
+                if row % 2 == 0:  # Even rows should have background
+                    cell = worksheet.cell(row=row, column=1)
+                    if cell.fill.start_color.rgb == "FFF2F2F2":
+                        continue
+                    else:
+                        self.test_results.append(f"⚠️ Row {row} missing alternating background")
+                        break
+                
+                row += 1
+            
+            self.test_results.append(f"✅ Found {data_rows_found} data rows in {zone_name}")
+            
+            # Check totals row
+            totals_row = 5 + data_rows_found + 1
+            totals_label = worksheet.cell(row=totals_row, column=5).value
+            if totals_label == "TOTALS:":
+                self.test_results.append("✅ Totals row found with correct label")
+                
+                # Check if totals are calculated
+                total_sa = worksheet.cell(row=totals_row, column=6).value
+                total_wh = worksheet.cell(row=totals_row, column=7).value
+                total_inventory = worksheet.cell(row=totals_row, column=8).value
+                total_variance = worksheet.cell(row=totals_row, column=11).value
+                
+                if all(isinstance(val, (int, float)) for val in [total_sa, total_wh, total_inventory, total_variance]):
+                    self.test_results.append(f"✅ Zone totals calculated: SA={total_sa}, WH={total_wh}, Total={total_inventory}, Variance={total_variance}")
+                else:
+                    self.test_results.append("❌ Zone totals not properly calculated")
+                    return False
+            else:
+                self.test_results.append(f"❌ Totals row not found or incorrect: {totals_label}")
+                return False
+            
+            # Check borders on all cells
+            borders_correct = True
+            for row_num in range(5, totals_row + 1):
+                for col_num in range(1, len(expected_headers) + 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    if not (cell.border.left.style and cell.border.right.style and 
+                           cell.border.top.style and cell.border.bottom.style):
+                        borders_correct = False
+                        break
+                if not borders_correct:
+                    break
+            
+            if borders_correct:
+                self.test_results.append("✅ All cells have proper borders")
+            else:
+                self.test_results.append("⚠️ Some cells missing borders")
+            
+            return True
+            
+        except Exception as e:
+            self.test_results.append(f"❌ Worksheet analysis error for {zone_name}: {str(e)}")
+            return False
+            
+    async def verify_data_integrity(self):
+        """Verify that each zone shows only its scanned items with proper aggregation"""
+        try:
+            self.test_results.append("\n🔍 VERIFYING DATA INTEGRITY:")
+            
+            # Get all scans from API
+            async with self.session.get(
+                f"{BACKEND_URL}/inventory-scans",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status != 200:
+                    self.test_results.append("❌ Could not retrieve scans for verification")
+                    return False
+                    
+                scans_data = await response.json()
+                self.test_results.append(f"✅ Retrieved {len(scans_data)} scan records")
+                
+                # Group by zone for verification
+                zones_data = {}
+                for scan in scans_data:
+                    zone_key = f"{scan['zone_type']}{scan['zone_number']:02d}"
+                    if zone_key not in zones_data:
+                        zones_data[zone_key] = []
+                    zones_data[zone_key].append(scan)
+                
+                # Verify each zone has correct data
+                for zone_key, zone_scans in zones_data.items():
+                    unique_barcodes = set(scan['barcode'] for scan in zone_scans)
+                    self.test_results.append(f"✅ Zone {zone_key}: {len(zone_scans)} scans, {len(unique_barcodes)} unique items")
+                    
+                    # Verify aggregation for items scanned multiple times
+                    barcode_totals = {}
+                    for scan in zone_scans:
+                        barcode = scan['barcode']
+                        if barcode not in barcode_totals:
+                            barcode_totals[barcode] = 0
+                        barcode_totals[barcode] += scan.get('qty_scanned_sa', 0) + scan.get('qty_scanned_wh', 0)
+                    
+                    for barcode, total_qty in barcode_totals.items():
+                        if total_qty > 0:
+                            self.test_results.append(f"✅ {zone_key} - {barcode}: {total_qty} total qty")
+                
+                return True
+                
+        except Exception as e:
+            self.test_results.append(f"❌ Data integrity verification error: {str(e)}")
+            return False
+            
+    async def test_same_item_different_zones(self):
+        """Test that same item scanned in different zones appears in respective worksheets"""
+        try:
+            self.test_results.append("\n🔄 TESTING SAME ITEM IN DIFFERENT ZONES:")
+            
+            # Apple Juice Box 1L (3222471081716) should appear in SA01 and WH01
+            # Mountain Water (3222471075722) should appear in SA01 and WH01
+            # Lemonade (3222471052747) should appear in SA01 and WH02
+            
+            test_cases = [
+                ("3222471081716", ["SA01", "WH01"], "Apple Juice Box 1L"),
+                ("3222471075722", ["SA01", "WH01"], "Mountain Water 6X50Cl"),
+                ("3222471052747", ["SA01", "WH02"], "Lemonade 150Cl")
+            ]
+            
+            # Export Excel again to verify
+            async with self.session.get(
+                f"{BACKEND_URL}/inventory-scans/export",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status != 200:
+                    self.test_results.append("❌ Could not export Excel for cross-zone verification")
+                    return False
+                    
+                excel_content = await response.read()
+                workbook = openpyxl.load_workbook(BytesIO(excel_content))
+                
+                for barcode, expected_zones, product_name in test_cases:
+                    zones_found = []
+                    for zone_name in expected_zones:
+                        if zone_name in workbook.sheetnames:
+                            worksheet = workbook[zone_name]
+                            # Look for barcode in column B (starting from row 6)
+                            row = 6
+                            found_in_zone = False
+                            while worksheet.cell(row=row, column=1).value:  # While there's data
+                                if worksheet.cell(row=row, column=2).value == barcode:
+                                    found_in_zone = True
+                                    zones_found.append(zone_name)
+                                    break
+                                row += 1
+                            
+                            if found_in_zone:
+                                self.test_results.append(f"✅ {product_name} ({barcode}) found in {zone_name}")
+                            else:
+                                self.test_results.append(f"❌ {product_name} ({barcode}) NOT found in {zone_name}")
+                    
+                    if len(zones_found) == len(expected_zones):
+                        self.test_results.append(f"✅ {product_name} correctly appears in all expected zones")
+                    else:
+                        self.test_results.append(f"❌ {product_name} missing from some zones")
+                        return False
+                
+                return True
+                
+        except Exception as e:
+            self.test_results.append(f"❌ Cross-zone verification error: {str(e)}")
+            return False
+            
+    async def run_comprehensive_test(self):
+        """Run comprehensive test of Enhanced Inventory Scanning Excel Export"""
+        print("🚀 STARTING ENHANCED INVENTORY SCANNING EXCEL EXPORT TESTING")
+        print("=" * 80)
         
         try:
-            form_id = self.created_return_forms[0]
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/export/return-form/{form_id}/pdf")
-            response_time = (time.time() - start_time) * 1000
+            await self.setup_session()
             
-            if response.status_code == 200:
-                pdf_content = response.content
+            # Step 1: Authentication
+            if not await self.authenticate():
+                return False
                 
-                # Check for company branding indicators in PDF
-                has_geant_branding = b'GEANT' in pdf_content or b'Geant' in pdf_content
-                has_hypermarket = b'HYPERMARKET' in pdf_content or b'Hypermarket' in pdf_content
-                pdf_size = len(pdf_content)
+            # Step 2: Clear existing data
+            if not await self.clear_existing_scans():
+                return False
                 
-                # Larger PDF size might indicate logo/branding inclusion
-                has_branding = has_geant_branding or has_hypermarket or pdf_size > 5000
+            # Step 3: Setup multi-zone test data
+            if not await self.setup_multi_zone_data():
+                return False
                 
-                self.log_result("Company Branding in Exports", has_branding,
-                    f"GEANT branding: {has_geant_branding}, Hypermarket: {has_hypermarket}, "
-                    f"PDF size: {pdf_size} bytes", response_time)
-            else:
-                self.log_result("Company Branding in Exports", False,
-                    f"Status: {response.status_code}", response_time)
-                    
+            # Step 4: Export and analyze Excel structure
+            if not await self.export_and_analyze_excel():
+                return False
+                
+            # Step 5: Verify data integrity
+            if not await self.verify_data_integrity():
+                return False
+                
+            # Step 6: Test same item in different zones
+            if not await self.test_same_item_different_zones():
+                return False
+                
+            self.test_results.append("\n🎉 ALL TESTS COMPLETED SUCCESSFULLY!")
+            return True
+            
         except Exception as e:
-            self.log_result("Company Branding in Exports", False, f"Exception: {str(e)}")
-    
-    def run_comprehensive_tests(self):
-        """Run all enhanced return form system tests"""
-        print("🚀 ENHANCED SUPPLIER RETURN FORM SYSTEM TESTING")
-        print("=" * 60)
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Supervisors: {TEST_SUPERVISORS}")
-        print(f"Section Manager: {SECTION_MANAGER}")
-        print(f"Test Currencies: {TEST_CURRENCIES}")
-        print(f"Test Barcode: {TEST_BARCODE}")
-        print("=" * 60)
+            self.test_results.append(f"❌ Test execution error: {str(e)}")
+            return False
+        finally:
+            await self.cleanup_session()
+            
+    def print_results(self):
+        """Print all test results"""
+        print("\n" + "=" * 80)
+        print("📊 TEST RESULTS SUMMARY")
+        print("=" * 80)
         
-        # 1. Authentication
-        if not self.authenticate():
-            print("❌ Authentication failed - stopping tests")
-            return
+        for result in self.test_results:
+            print(result)
+            
+        # Count successes and failures
+        successes = sum(1 for result in self.test_results if result.startswith("✅"))
+        failures = sum(1 for result in self.test_results if result.startswith("❌"))
+        warnings = sum(1 for result in self.test_results if result.startswith("⚠️"))
         
-        # 2. Currency API Integration
-        self.test_currency_rates_api()
+        print("\n" + "=" * 80)
+        print(f"📈 FINAL SCORE: {successes} ✅ | {failures} ❌ | {warnings} ⚠️")
         
-        # 3. Test barcode lookup for product data
-        product_data = self.test_barcode_lookup()
-        if not product_data:
-            # Use fallback data if barcode lookup fails
-            product_data = {
-                "product_name": "Apple Juice Box 1L",
-                "purchase_price": 0.754,
-                "purchase_currency": "EUR",
-                "supplier": "ExtenC",
-                "item_number": "TEST-001"
-            }
+        if failures == 0:
+            print("🎉 ENHANCED INVENTORY SCANNING EXCEL EXPORT: FULLY FUNCTIONAL!")
+        else:
+            print("🚨 ISSUES DETECTED - NEEDS ATTENTION")
         
-        # 4. Supervisor Dropdown Integration
-        self.test_return_form_creation_with_supervisor(product_data)
-        
-        # 5. Dual Currency Display
-        self.test_dual_currency_display()
-        
-        # 6. Enhanced PDF Export - Main endpoint
-        self.test_pdf_export_main()
-        
-        # 7. Enhanced PDF Export - Individual endpoint
-        self.test_pdf_export_individual()
-        
-        # 8. Excel Export
-        self.test_excel_export()
-        
-        # 9. Approval Workflow Validation
-        self.test_approval_workflow_validation()
-        
-        # 10. Company Branding in Exports
-        self.test_company_branding_in_exports()
-        
-        # Summary
-        self.print_summary()
-    
-    def print_summary(self):
-        """Print comprehensive test summary"""
-        print("\n" + "=" * 60)
-        print("📊 ENHANCED RETURN FORM SYSTEM TEST SUMMARY")
-        print("=" * 60)
-        
-        passed = sum(1 for result in self.test_results if result["success"])
-        total = len(self.test_results)
-        success_rate = (passed / total * 100) if total > 0 else 0
-        
-        print(f"✅ PASSED: {passed}/{total} tests ({success_rate:.1f}%)")
-        print(f"🔄 CREATED RETURN FORMS: {len(self.created_return_forms)}")
-        
-        # Critical requirements verification
-        print("\n🎯 CRITICAL REQUIREMENTS VERIFICATION:")
-        
-        critical_tests = {
-            "Supervisor Dropdown Integration": any("Return Form Creation -" in r["test"] and r["success"] for r in self.test_results),
-            "Currency API Integration": any("Currency Rates API" in r["test"] and r["success"] for r in self.test_results),
-            "Dual Currency Display": any("Dual Currency Display" in r["test"] and r["success"] for r in self.test_results),
-            "Main PDF Export": any("Main PDF Export" in r["test"] and r["success"] for r in self.test_results),
-            "Individual PDF Export": any("Individual PDF Export" in r["test"] and r["success"] for r in self.test_results),
-            "Approval Workflow": any("Approval Workflow" in r["test"] and r["success"] for r in self.test_results),
-            "Company Branding": any("Company Branding" in r["test"] and r["success"] for r in self.test_results)
-        }
-        
-        for requirement, status in critical_tests.items():
-            status_icon = "✅" if status else "❌"
-            print(f"{status_icon} {requirement}")
-        
-        # Failed tests details
-        failed_tests = [r for r in self.test_results if not r["success"]]
-        if failed_tests:
-            print(f"\n❌ FAILED TESTS ({len(failed_tests)}):")
-            for test in failed_tests:
-                print(f"   • {test['test']}: {test['details']}")
-        
-        # Performance summary
-        avg_response_time = sum(float(r["response_time"].replace("ms", "")) for r in self.test_results) / len(self.test_results)
-        print(f"\n⚡ AVERAGE RESPONSE TIME: {avg_response_time:.0f}ms")
-        
-        print("\n" + "=" * 60)
-        print("🏁 ENHANCED RETURN FORM SYSTEM TESTING COMPLETE")
-        print("=" * 60)
+        print("=" * 80)
+
+async def main():
+    """Main test execution"""
+    tester = InventoryScanningTester()
+    success = await tester.run_comprehensive_test()
+    tester.print_results()
+    return success
 
 if __name__ == "__main__":
-    tester = EnhancedReturnFormTester()
-    tester.run_comprehensive_tests()
+    asyncio.run(main())
