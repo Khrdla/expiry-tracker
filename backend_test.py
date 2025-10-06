@@ -141,44 +141,51 @@ class InventoryScanningPDFTester:
         self.test_results.append(f"✅ Created {success_count}/{len(test_scans)} inventory scans")
         return success_count == len(test_scans)
         
-    async def export_and_analyze_excel(self):
-        """Export inventory scans to Excel and analyze the multi-worksheet structure"""
+    async def test_pdf_export_endpoint(self):
+        """Test the PDF export endpoint and verify PDF generation"""
         try:
-            self.test_results.append("\n📊 TESTING EXCEL EXPORT WITH MULTIPLE WORKSHEETS:")
+            self.test_results.append("\n📄 TESTING PDF EXPORT ENDPOINT:")
             
             async with self.session.get(
-                f"{BACKEND_URL}/inventory-scans/export",
+                f"{BACKEND_URL}/inventory-scans/export-pdf",
                 headers=self.get_auth_headers()
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    self.test_results.append(f"❌ Export failed: {response.status} - {error_text}")
-                    return False
+                    self.test_results.append(f"❌ PDF Export failed: {response.status} - {error_text}")
+                    return False, None
                     
-                # Get the Excel file content
-                excel_content = await response.read()
-                self.test_results.append(f"✅ Excel file downloaded: {len(excel_content)} bytes")
+                # Get the PDF file content
+                pdf_content = await response.read()
+                self.test_results.append(f"✅ PDF file downloaded: {len(pdf_content)} bytes")
                 
                 # Verify Content-Type header
                 content_type = response.headers.get('content-type', '')
-                if 'spreadsheet' in content_type:
-                    self.test_results.append("✅ Correct Content-Type header for Excel file")
+                if content_type == 'application/pdf':
+                    self.test_results.append("✅ Correct Content-Type header for PDF file")
                 else:
-                    self.test_results.append(f"⚠️ Unexpected Content-Type: {content_type}")
+                    self.test_results.append(f"❌ Incorrect Content-Type: {content_type}")
                 
                 # Verify filename
                 content_disposition = response.headers.get('content-disposition', '')
-                if 'Inventory_Scan_Report_' in content_disposition:
-                    self.test_results.append("✅ Proper filename format with timestamp")
+                if 'Inventory_Scan_Report_PDF_' in content_disposition and '.pdf' in content_disposition:
+                    self.test_results.append("✅ Proper PDF filename format with timestamp")
                 else:
-                    self.test_results.append(f"⚠️ Unexpected filename: {content_disposition}")
+                    self.test_results.append(f"❌ Unexpected PDF filename: {content_disposition}")
                 
-                # Analyze Excel structure
-                return await self.analyze_excel_structure(excel_content)
+                # Verify PDF file is valid
+                try:
+                    pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_content))
+                    num_pages = len(pdf_reader.pages)
+                    self.test_results.append(f"✅ Valid PDF file with {num_pages} pages")
+                    return True, pdf_content
+                except Exception as pdf_error:
+                    self.test_results.append(f"❌ Invalid PDF file: {str(pdf_error)}")
+                    return False, None
                 
         except Exception as e:
-            self.test_results.append(f"❌ Export error: {str(e)}")
-            return False
+            self.test_results.append(f"❌ PDF Export error: {str(e)}")
+            return False, None
             
     async def analyze_excel_structure(self, excel_content):
         """Analyze the Excel file structure for multiple worksheets"""
