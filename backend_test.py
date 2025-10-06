@@ -125,7 +125,7 @@ class InventoryScanningTester:
             # WH Zone 1 - Mixed items (some same as SA zones)
             ("WH", 1, "3222471081716", 20),  # Apple Juice Box 1L (same as SA01)
             ("WH", 1, "3222471075722", 15),  # Mountain Water 6X50Cl (same as SA01)
-            ("WH", 1, "9501100046987", 60),  # Different product
+            ("WH", 1, "3222471081273", 60),  # Orange Peach Apricot Nectar (different from SA02)
             
             # WH Zone 2 - Unique items
             ("WH", 2, "3222471052747", 45),  # Lemonade 150Cl (same as SA01)
