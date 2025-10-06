@@ -117,7 +117,7 @@ function App() {
         />
 
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'} lg:ml-64`}>
+        <div className={`transition-all duration-300 lg:${sidebarOpen ? 'ml-64' : 'ml-16'} ml-0`}>
           <main className="p-6">
             <Routes>
               <Route path="/" element={<EnhancedDashboard user={user} />} />
