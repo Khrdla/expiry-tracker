@@ -223,6 +223,44 @@ const InventoryScanning = () => {
     }
   };
 
+  const handlePdfExport = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${BACKEND_URL}/api/inventory-scans/export-pdf`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Extract filename from response headers or use default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filename = contentDisposition 
+          ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') 
+          : `Inventory_Scan_Report_PDF_${new Date().toISOString().slice(0,10)}.pdf`;
+        
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        setSuccess('Inventory PDF report exported successfully!');
+      } else {
+        throw new Error('Failed to export inventory PDF report');
+      }
+    } catch (error) {
+      setError(error.message);
+      console.error('PDF Export error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleClearAll = async () => {
     if (!window.confirm('Are you sure you want to clear all inventory scans? This action cannot be undone.')) {
       return;
