@@ -4537,9 +4537,9 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
                         usd_amount = amount_float * rate
                         total_usd += usd_amount
                         
-                        pdf.cell(0, 6, f'{currency}: {amount_float:,.2f} {currency} = ${usd_amount:,.2f} USD', 0, 1)
+                        pdf.cell(0, 6, sanitize_text(f'{currency}: {amount_float:,.2f} {currency} = ${usd_amount:,.2f} USD'), 0, 1)
                     except (ValueError, TypeError):
-                        pdf.cell(0, 6, f'{currency}: {amount} {currency} (Invalid amount)', 0, 1)
+                        pdf.cell(0, 6, sanitize_text(f'{currency}: {amount} {currency} (Invalid amount)'), 0, 1)
             
             if total_usd > 0:
                 pdf.ln(5)
