@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Camera, Package, Upload, Trash2, AlertTriangle, CheckCircle, X, Scan } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, Package, Upload, Trash2, AlertTriangle, CheckCircle, X, Scan, Volume2 } from 'lucide-react';
 import BarcodeScanner from './BarcodeScanner';
 
 const InventoryScanning = () => {
