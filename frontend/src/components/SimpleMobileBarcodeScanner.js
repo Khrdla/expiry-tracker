@@ -212,45 +212,94 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
         <div className="p-4">
           {!showManualInput ? (
             <div>
-              {/* Camera Preview */}
-              <div className="relative bg-black rounded-lg overflow-hidden mb-4" style={{aspectRatio: '16/9'}}>
+              {/* Camera Preview with Enhanced Overlay */}
+              <div className={`relative bg-black rounded-lg overflow-hidden mb-4 transition-all duration-300 ${
+                scanSuccess ? 'ring-4 ring-green-500' : ''
+              }`} style={{aspectRatio: '16/9'}}>
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
                   playsInline
                   muted
+                  autoPlay
                 />
-                <canvas ref={canvasRef} className="hidden" />
                 
-                {/* Scanning Overlay */}
+                {/* Success Flash Overlay */}
+                {scanSuccess && (
+                  <div className="absolute inset-0 bg-green-500 opacity-50 animate-pulse"></div>
+                )}
+                
+                {/* Scanning Frame */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="border-2 border-green-500 w-64 h-32 bg-transparent"></div>
+                  <div className="relative">
+                    {/* Main scanning frame */}
+                    <div className={`border-2 w-64 h-32 bg-transparent transition-colors duration-200 ${
+                      scanSuccess ? 'border-green-400' : 'border-blue-400'
+                    }`}>
+                      {/* Corner markers */}
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-white"></div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-white"></div>
+                      <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-white"></div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-white"></div>
+                    </div>
+                    
+                    {/* Scanning line animation */}
+                    {isScanning && !cameraError && (
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="w-full h-0.5 bg-red-500 animate-pulse"></div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
-                {/* Scanning Indicator */}
-                {isScanning && !cameraError && (
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="bg-black bg-opacity-50 text-white px-3 py-2 rounded text-center">
-                      📷 Position barcode within the green frame
+                {/* Status Indicator */}
+                {scanStatus && (
+                  <div className="absolute top-4 left-4 right-4">
+                    <div className={`px-3 py-2 rounded text-center text-sm font-medium ${
+                      scanStatus.includes('✅') ? 'bg-green-500 text-white' :
+                      scanStatus.includes('❌') ? 'bg-red-500 text-white' :
+                      'bg-black bg-opacity-70 text-white'
+                    }`}>
+                      {scanStatus}
                     </div>
                   </div>
                 )}
+                
+                {/* Supported formats indicator */}
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="bg-black bg-opacity-70 text-white px-3 py-2 rounded text-center text-xs">
+                    📊 Supports: CODE128, EAN13/8, UPC, QR codes
+                  </div>
+                </div>
               </div>
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded mb-4 flex items-start gap-2">
                   <AlertTriangle size={16} className="mt-0.5" />
-                  <span className="text-sm">{error}</span>
+                  <div>
+                    <div className="font-medium">Camera Error</div>
+                    <div className="text-sm">{error}</div>
+                  </div>
                 </div>
               )}
 
               {/* Action Buttons */}
               <div className="space-y-3">
+                {cameraError && (
+                  <button
+                    onClick={retryScanning}
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={16} />
+                    Retry Camera (Attempt {retryCount + 1})
+                  </button>
+                )}
+                
                 <button
                   onClick={handleDeviceScanner}
                   className="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
                 >
-                  📱 Use Device Scanner
+                  📱 Use Device Scanner App
                 </button>
                 
                 <button
