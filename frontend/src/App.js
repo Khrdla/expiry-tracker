@@ -395,7 +395,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
             } ${!sidebarOpen && 'justify-center lg:justify-start'}`}
           >
             <LogOut size={20} />
-            <span className={`${sidebarOpen || 'lg:block'} ${!sidebarOpen && 'hidden'}`}>Logout</span>
+            <span className={`${sidebarOpen ? 'block' : 'hidden lg:block'}`}>Logout</span>
           </button>
         </div>
       </div>
