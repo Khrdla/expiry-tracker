@@ -19,49 +19,45 @@ ADMIN_PASSWORD = "066380531I"
 
 class InventoryScanningTester:
     def __init__(self):
-        self.session = requests.Session()
-        self.token = None
+        self.session = None
+        self.auth_token = None
         self.test_results = []
-        self.created_return_forms = []
         
-    def log_result(self, test_name, success, details="", response_time=0):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        result = {
-            "test": test_name,
-            "status": status,
-            "success": success,
-            "details": details,
-            "response_time": f"{response_time:.0f}ms",
-            "timestamp": datetime.now().strftime("%H:%M:%S")
-        }
-        self.test_results.append(result)
-        print(f"{status} {test_name} ({response_time:.0f}ms)")
-        if details:
-            print(f"    Details: {details}")
-    
-    def authenticate(self):
+    async def setup_session(self):
+        """Setup HTTP session"""
+        self.session = aiohttp.ClientSession()
+        
+    async def cleanup_session(self):
+        """Cleanup HTTP session"""
+        if self.session:
+            await self.session.close()
+            
+    async def authenticate(self):
         """Authenticate with admin credentials"""
         try:
-            start_time = time.time()
-            response = self.session.post(f"{BACKEND_URL}/auth/login", 
-                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
-            response_time = (time.time() - start_time) * 1000
+            login_data = {
+                "username": ADMIN_USERNAME,
+                "password": ADMIN_PASSWORD
+            }
             
-            if response.status_code == 200:
-                data = response.json()
-                self.token = data.get("access_token")
-                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
-                self.log_result("Admin Authentication", True, 
-                    f"Token received, expires in 24h", response_time)
-                return True
-            else:
-                self.log_result("Admin Authentication", False, 
-                    f"Status: {response.status_code}, Response: {response.text}", response_time)
-                return False
+            async with self.session.post(f"{BACKEND_URL}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.auth_token = data.get("access_token")
+                    self.test_results.append("✅ Authentication successful")
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Authentication failed: {response.status} - {error_text}")
+                    return False
+                    
         except Exception as e:
-            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
+            self.test_results.append(f"❌ Authentication error: {str(e)}")
             return False
+            
+    def get_auth_headers(self):
+        """Get authorization headers"""
+        return {"Authorization": f"Bearer {self.auth_token}"}
     
     def test_currency_rates_api(self):
         """Test GET /api/currency/rates for real-time exchange rates"""
