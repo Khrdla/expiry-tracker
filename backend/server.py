@@ -4485,27 +4485,27 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
             pdf.set_font('Arial', 'B', 16)
             
             # Company header
-            pdf.cell(0, 10, 'GEANT HYPERMARKET', 0, 1, 'C')
+            pdf.cell(0, 10, sanitize_text('GEANT HYPERMARKET'), 0, 1, 'C')
             pdf.set_font('Arial', 'B', 14)
-            pdf.cell(0, 10, f'WASTE REPORT - {period.upper()}', 0, 1, 'C')
+            pdf.cell(0, 10, sanitize_text(f'WASTE REPORT - {period.upper()}'), 0, 1, 'C')
             pdf.ln(10)
             
             # Report details
             pdf.set_font('Arial', 'B', 12)
-            pdf.cell(0, 8, 'Report Details:', 0, 1)
+            pdf.cell(0, 8, sanitize_text('Report Details:'), 0, 1)
             pdf.set_font('Arial', '', 10)
             
             current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
-            pdf.cell(0, 6, f'Report Period: {period.title()}', 0, 1)
-            pdf.cell(0, 6, f'Generated: {current_time}', 0, 1)
-            pdf.cell(0, 6, 'Report Type: Waste Management', 0, 1)
+            pdf.cell(0, 6, sanitize_text(f'Report Period: {period.title()}'), 0, 1)
+            pdf.cell(0, 6, sanitize_text(f'Generated: {current_time}'), 0, 1)
+            pdf.cell(0, 6, sanitize_text('Report Type: Waste Management'), 0, 1)
             
             # Add department/section if available
             if report_data.get('department') and str(report_data['department']) != 'all':
-                pdf.cell(0, 6, f'Department: {str(report_data["department"])}', 0, 1)
+                pdf.cell(0, 6, sanitize_text(f'Department: {str(report_data["department"])}'), 0, 1)
             
             if report_data.get('section') and str(report_data['section']) != 'all':
-                pdf.cell(0, 6, f'Section: {str(report_data["section"])}', 0, 1)
+                pdf.cell(0, 6, sanitize_text(f'Section: {str(report_data["section"])}'), 0, 1)
             
             pdf.ln(10)
             
