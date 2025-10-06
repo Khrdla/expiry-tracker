@@ -72,14 +72,59 @@ const InventoryScanning = () => {
     }
   };
 
+  // Audio and visual feedback functions
+  const playBeepSound = () => {
+    try {
+      // Create a simple beep sound
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (error) {
+      console.log('Audio not available:', error);
+    }
+  };
+
+  const showScanFlash = () => {
+    setScanFlash(true);
+    setTimeout(() => setScanFlash(false), 200);
+  };
+
   const handleBarcodeScanned = (barcode) => {
-    setFormData(prev => ({ ...prev, barcode }));
+    setScanData(prev => ({ ...prev, barcode }));
     setShowScanner(false);
+    
+    // Play beep and show flash
+    playBeepSound();
+    showScanFlash();
     
     // Auto-advance to quantity field after successful scan
     setTimeout(() => {
-      document.querySelector('input[placeholder="Enter quantity"]')?.focus();
+      if (quantityRef.current) {
+        quantityRef.current.focus();
+      }
     }, 300);
+  };
+
+  const handleZoneNumberSet = () => {
+    if (zoneData.zone_number) {
+      setZoneSet(true);
+      // Auto-focus barcode field for first scan
+      setTimeout(() => {
+        if (barcodeRef.current) {
+          barcodeRef.current.focus();
+        }
+      }, 200);
+    }
   };
 
   const handleSubmit = async (e) => {
