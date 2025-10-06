@@ -593,63 +593,44 @@ class InventoryScanningPDFTester:
             self.test_results.append(f"❌ Data integrity verification error: {str(e)}")
             return False
             
-    async def test_same_item_different_zones(self):
-        """Test that same item scanned in different zones appears in respective worksheets"""
+    async def test_same_item_different_zones_pdf(self, pdf_content):
+        """Test that same item scanned in different zones appears in respective PDF pages"""
         try:
-            self.test_results.append("\n🔄 TESTING SAME ITEM IN DIFFERENT ZONES:")
+            self.test_results.append("\n🔄 TESTING SAME ITEM IN DIFFERENT ZONES (PDF):")
             
-            # Apple Juice Box 1L (3222471081716) should appear in SA01 and WH01
-            # Mountain Water (3222471075722) should appear in SA01 and WH01
-            # Lemonade (3222471052747) should appear in SA01 and WH02
+            # Apple Juice Box 1L (3222471081716) should appear in SA01 and WH01 pages
+            # Mountain Water (3222471075722) should appear in SA01 and WH01 pages
+            # Lemonade (3222471052747) should appear in SA01 and WH02 pages
             
             test_cases = [
-                ("3222471081716", ["SA01", "WH01"], "Apple Juice Box 1L"),
-                ("3222471075722", ["SA01", "WH01"], "Mountain Water 6X50Cl"),
-                ("3222471052747", ["SA01", "WH02"], "Lemonade 150Cl")
+                ("3222471081716", [0, 2], "Apple Juice Box 1L"),  # Pages 1 (SA01) and 3 (WH01)
+                ("3222471075722", [0, 2], "Mountain Water 6X50Cl"),  # Pages 1 (SA01) and 3 (WH01)
+                ("3222471052747", [0, 3], "Lemonade 150Cl")  # Pages 1 (SA01) and 4 (WH02)
             ]
             
-            # Export Excel again to verify
-            async with self.session.get(
-                f"{BACKEND_URL}/inventory-scans/export",
-                headers=self.get_auth_headers()
-            ) as response:
-                if response.status != 200:
-                    self.test_results.append("❌ Could not export Excel for cross-zone verification")
+            pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_content))
+            
+            for barcode, expected_page_indices, product_name in test_cases:
+                pages_found = []
+                for page_idx in expected_page_indices:
+                    if page_idx < len(pdf_reader.pages):
+                        page_text = pdf_reader.pages[page_idx].extract_text()
+                        if barcode in page_text:
+                            pages_found.append(page_idx + 1)  # Convert to 1-based page numbers
+                            self.test_results.append(f"✅ {product_name} ({barcode}) found on page {page_idx + 1}")
+                        else:
+                            self.test_results.append(f"❌ {product_name} ({barcode}) NOT found on page {page_idx + 1}")
+                
+                if len(pages_found) == len(expected_page_indices):
+                    self.test_results.append(f"✅ {product_name} correctly appears on all expected pages")
+                else:
+                    self.test_results.append(f"❌ {product_name} missing from some pages")
                     return False
-                    
-                excel_content = await response.read()
-                workbook = openpyxl.load_workbook(BytesIO(excel_content))
-                
-                for barcode, expected_zones, product_name in test_cases:
-                    zones_found = []
-                    for zone_name in expected_zones:
-                        if zone_name in workbook.sheetnames:
-                            worksheet = workbook[zone_name]
-                            # Look for barcode in column B (starting from row 6)
-                            row = 6
-                            found_in_zone = False
-                            while worksheet.cell(row=row, column=1).value:  # While there's data
-                                if worksheet.cell(row=row, column=2).value == barcode:
-                                    found_in_zone = True
-                                    zones_found.append(zone_name)
-                                    break
-                                row += 1
-                            
-                            if found_in_zone:
-                                self.test_results.append(f"✅ {product_name} ({barcode}) found in {zone_name}")
-                            else:
-                                self.test_results.append(f"❌ {product_name} ({barcode}) NOT found in {zone_name}")
-                    
-                    if len(zones_found) == len(expected_zones):
-                        self.test_results.append(f"✅ {product_name} correctly appears in all expected zones")
-                    else:
-                        self.test_results.append(f"❌ {product_name} missing from some zones")
-                        return False
-                
-                return True
+            
+            return True
                 
         except Exception as e:
-            self.test_results.append(f"❌ Cross-zone verification error: {str(e)}")
+            self.test_results.append(f"❌ Cross-zone PDF verification error: {str(e)}")
             return False
             
     async def run_comprehensive_test(self):
