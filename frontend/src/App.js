@@ -124,6 +124,7 @@ function App() {
               <Route path="/grid" element={<EnhancedDashboardGrid user={user} />} />
               <Route path="/products" element={<EnhancedProductManagement user={user} />} />
               <Route path="/waste-reports" element={<WasteReports user={user} />} />
+              <Route path="/inventory-scanning" element={<InventoryScanning user={user} />} />
               <Route path="/expiry-tracker" element={<ExpiryTracker user={user} />} />
               <Route path="/return-form" element={<EnhancedReturnForm user={user} />} />
               <Route path="/settings" element={<SettingsPanel user={user} />} />
