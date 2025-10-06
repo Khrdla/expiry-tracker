@@ -398,18 +398,15 @@ const InventoryScanning = () => {
                 <label className="block text-lg font-medium text-gray-700 mb-3">
                   📷 Scan Barcode
                 </label>
-                <div className="flex gap-3">
+                
+                {/* Mobile-First Barcode Input */}
+                <div className="space-y-3">
                   <input
                     ref={barcodeRef}
                     type="text"
-                    placeholder="Tap to activate camera scanner"
+                    placeholder="Enter barcode or tap camera button"
                     value={scanData.barcode}
                     onChange={(e) => setScanData({...scanData, barcode: e.target.value})}
-                    onFocus={() => {
-                      if (!scanData.barcode && !showScanner) {
-                        setShowScanner(true);
-                      }
-                    }}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && scanData.barcode) {
                         e.preventDefault();
@@ -418,26 +415,46 @@ const InventoryScanning = () => {
                         }
                       }
                     }}
-                    className="flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowScanner(true)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                  >
-                    <Camera size={20} />
-                    <span className="hidden sm:inline">Scan</span>
-                  </button>
+
+                  {/* Camera Scanner Buttons */}
+                  <div className="grid grid-cols-1 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowScanner(true)}
+                      className="w-full px-6 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 flex items-center justify-center gap-3"
+                    >
+                      📷 Open Camera Scanner
+                    </button>
+                    
+                    {/* Quick Native Scanner Button for iOS/Android */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // For mobile devices, suggest using device camera
+                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                          alert('💡 Tip: Use your device\'s camera app to scan the barcode, then enter the number in the field above.');
+                        } else {
+                          setShowScanner(true);
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+                    >
+                      📱 Use Device Camera
+                    </button>
+                  </div>
                 </div>
 
-                {/* Mobile Camera Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowScanner(true)}
-                  className="mt-3 w-full sm:hidden px-6 py-4 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 flex items-center justify-center gap-3"
-                >
-                  📷 Activate Camera Scanner
-                </button>
+                {/* Barcode Format Help */}
+                <div className="mt-3 bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                  <div className="font-medium mb-1">💡 Scanning Tips:</div>
+                  <div className="space-y-1">
+                    <div>• Tap "Open Camera Scanner" for built-in scanner</div>
+                    <div>• Or use "Device Camera" → scan → enter number manually</div>
+                    <div>• Barcode usually 8-13 digits (e.g., 1234567890123)</div>
+                  </div>
+                </div>
               </div>
 
               {/* Quantity Input */}
