@@ -273,10 +273,27 @@ const InventoryScanning = () => {
                 </label>
                 <div className="flex gap-2">
                   <input
+                    ref={(el) => {
+                      if (el) {
+                        // Auto-open camera on focus
+                        el.addEventListener('focus', () => {
+                          if (!formData.barcode) {
+                            setShowScanner(true);
+                          }
+                        });
+                      }
+                    }}
                     type="text"
-                    placeholder="Scan or enter barcode"
+                    placeholder="Tap to scan or enter barcode"
                     value={formData.barcode}
                     onChange={(e) => setFormData({...formData, barcode: e.target.value})}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Move to quantity field
+                        document.querySelector('input[placeholder="Enter quantity"]')?.focus();
+                      }
+                    }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -287,6 +304,22 @@ const InventoryScanning = () => {
                   >
                     <Camera size={16} />
                     Scan
+                  </button>
+                </div>
+                {/* Mobile Enter/Next Button */}
+                <div className="mt-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.barcode) {
+                        document.querySelector('input[placeholder="Enter quantity"]')?.focus();
+                      } else {
+                        setShowScanner(true);
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center justify-center gap-2"
+                  >
+                    {formData.barcode ? 'Next → Quantity' : '📷 Open Camera'}
                   </button>
                 </div>
               </div>
