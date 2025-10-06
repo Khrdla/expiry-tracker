@@ -482,6 +482,69 @@ class InventoryScanningPDFTester:
             self.test_results.append(f"❌ Worksheet analysis error for {zone_name}: {str(e)}")
             return False
             
+    async def test_error_handling_no_data(self):
+        """Test PDF export behavior when no inventory scans exist"""
+        try:
+            self.test_results.append("\n🚫 TESTING ERROR HANDLING WITH NO DATA:")
+            
+            # First clear all scans
+            await self.clear_existing_scans()
+            
+            # Try to export PDF with no data
+            async with self.session.get(
+                f"{BACKEND_URL}/inventory-scans/export-pdf",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status == 404:
+                    error_data = await response.json()
+                    if "No inventory scans found" in error_data.get("detail", ""):
+                        self.test_results.append("✅ Proper 404 error when no inventory scans exist")
+                        return True
+                    else:
+                        self.test_results.append(f"❌ Unexpected error message: {error_data}")
+                        return False
+                elif response.status == 200:
+                    self.test_results.append("❌ PDF export should fail when no data exists")
+                    return False
+                else:
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Unexpected error status {response.status}: {error_text}")
+                    return False
+                
+        except Exception as e:
+            self.test_results.append(f"❌ Error handling test failed: {str(e)}")
+            return False
+
+    async def test_admin_access_control(self):
+        """Test that PDF export requires admin authentication"""
+        try:
+            self.test_results.append("\n🔐 TESTING ADMIN ACCESS CONTROL:")
+            
+            # Test without authentication
+            async with self.session.get(f"{BACKEND_URL}/inventory-scans/export-pdf") as response:
+                if response.status == 403 or response.status == 401:
+                    self.test_results.append("✅ PDF export properly requires authentication")
+                else:
+                    self.test_results.append(f"❌ PDF export should require authentication, got status: {response.status}")
+                    return False
+            
+            # Test with valid admin credentials (already authenticated)
+            async with self.session.get(
+                f"{BACKEND_URL}/inventory-scans/export-pdf",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status in [200, 404]:  # 200 if data exists, 404 if no data
+                    self.test_results.append("✅ Admin credentials allow PDF export access")
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Admin access failed: {response.status} - {error_text}")
+                    return False
+                
+        except Exception as e:
+            self.test_results.append(f"❌ Access control test failed: {str(e)}")
+            return False
+
     async def verify_data_integrity(self):
         """Verify that each zone shows only its scanned items with proper aggregation"""
         try:
