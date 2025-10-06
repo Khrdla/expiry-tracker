@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Enhanced Inventory Scanning Excel Export Testing
-Testing multi-zone Excel export with separate worksheets per zone
+Comprehensive Inventory Scanning PDF Export Testing
+Testing PDF export functionality with zone-based pages, headers, and professional layout
 """
 
 import asyncio
@@ -11,6 +11,7 @@ import os
 from datetime import datetime
 import openpyxl
 from io import BytesIO
+import PyPDF2
 
 # Configuration
 BACKEND_URL = "https://geant-scanner.preview.emergentagent.com/api"
