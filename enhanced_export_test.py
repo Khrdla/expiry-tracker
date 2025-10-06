@@ -14,7 +14,7 @@ from datetime import datetime
 import sys
 
 # Test configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://inventory-master-78.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://geant-scanner.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Admin credentials for testing

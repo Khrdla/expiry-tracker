@@ -8,7 +8,7 @@ import requests
 import json
 
 # Test analytics endpoints
-BACKEND_URL = 'https://inventory-master-78.preview.emergentagent.com/api'
+BACKEND_URL = 'https://geant-scanner.preview.emergentagent.com/api'
 session = requests.Session()
 
 # Login

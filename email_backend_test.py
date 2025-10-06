@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import pytz
 
 class EmailAlertSystemTester:
-    def __init__(self, base_url="https://inventory-master-78.preview.emergentagent.com"):
+    def __init__(self, base_url="https://geant-scanner.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-scanner.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 UPLOADS_DIR = "/app/uploads"
@@ -172,9 +172,9 @@ class ComprehensiveImageDebugTester:
             # Construct the full URL as frontend would
             if image_url.startswith('/uploads/'):
                 filename = image_url.replace('/uploads/', '')
-                full_url = f"https://inventory-master-78.preview.emergentagent.com/api/uploads/{filename}"
+                full_url = f"https://geant-scanner.preview.emergentagent.com/api/uploads/{filename}"
             else:
-                full_url = f"https://inventory-master-78.preview.emergentagent.com{image_url}"
+                full_url = f"https://geant-scanner.preview.emergentagent.com{image_url}"
             
             # Test without authentication (as frontend would)
             response = requests.get(full_url)

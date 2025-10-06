@@ -9,7 +9,7 @@ import os
 import time
 
 # Configuration
-BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-scanner.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 RETURN_FORM_ID = "69166bb7-5694-46e5-bc01-b320717cee77"  # From previous test

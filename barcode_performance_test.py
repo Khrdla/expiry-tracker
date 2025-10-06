@@ -24,7 +24,7 @@ import statistics
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
+BACKEND_URL = "https://geant-scanner.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 TARGET_BARCODE = "3222471081716"  # Apple Juice Box 1L from review request
@@ -249,7 +249,7 @@ class BarcodePerformanceTester:
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Origin": "https://inventory-master-78.preview.emergentagent.com"
+            "Origin": "https://geant-scanner.preview.emergentagent.com"
         }
         
         try:
@@ -283,7 +283,7 @@ class BarcodePerformanceTester:
                     
                     # Check if allows all origins or specific origin
                     allow_origin = cors_headers.get('Access-Control-Allow-Origin')
-                    if allow_origin in ['*', 'https://inventory-master-78.preview.emergentagent.com']:
+                    if allow_origin in ['*', 'https://geant-scanner.preview.emergentagent.com']:
                         self.log_result("CORS Origin Policy", True, f"Allows: {allow_origin}")
                     else:
                         self.log_result("CORS Origin Policy", False, f"Restrictive: {allow_origin}")
