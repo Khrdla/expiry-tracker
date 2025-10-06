@@ -58,40 +58,25 @@ class InventoryScanningTester:
     def get_auth_headers(self):
         """Get authorization headers"""
         return {"Authorization": f"Bearer {self.auth_token}"}
-    
-    def test_currency_rates_api(self):
-        """Test GET /api/currency/rates for real-time exchange rates"""
+        
+    async def clear_existing_scans(self):
+        """Clear all existing inventory scans"""
         try:
-            start_time = time.time()
-            response = self.session.get(f"{BACKEND_URL}/currency/rates")
-            response_time = (time.time() - start_time) * 1000
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Verify response structure
-                required_fields = ["base_currency", "exchange_rates", "last_updated"]
-                missing_fields = [field for field in required_fields if field not in data]
-                
-                if missing_fields:
-                    self.log_result("Currency Rates API Structure", False,
-                        f"Missing fields: {missing_fields}", response_time)
+            async with self.session.delete(
+                f"{BACKEND_URL}/inventory-scans/clear",
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.test_results.append(f"✅ Cleared existing scans: {data.get('message', 'Success')}")
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.test_results.append(f"❌ Failed to clear scans: {response.status} - {error_text}")
                     return False
-                
-                # Check if test currencies are present
-                exchange_rates = data.get("exchange_rates", {})
-                test_currencies_present = [curr for curr in TEST_CURRENCIES if curr in exchange_rates]
-                
-                self.log_result("Currency Rates API", True,
-                    f"Base: {data.get('base_currency')}, Rates: {len(exchange_rates)} currencies, "
-                    f"Test currencies present: {test_currencies_present}", response_time)
-                return True
-            else:
-                self.log_result("Currency Rates API", False,
-                    f"Status: {response.status_code}, Response: {response.text}", response_time)
-                return False
+                    
         except Exception as e:
-            self.log_result("Currency Rates API", False, f"Exception: {str(e)}")
+            self.test_results.append(f"❌ Clear scans error: {str(e)}")
             return False
     
     def test_barcode_lookup(self):
