@@ -335,9 +335,33 @@ const InventoryScanning = () => {
                   placeholder="Enter quantity"
                   value={formData.quantity_scanned}
                   onChange={(e) => setFormData({...formData, quantity_scanned: e.target.value})}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      // Submit the form if all fields are filled
+                      if (formData.zone_number && formData.barcode && formData.quantity_scanned) {
+                        handleSubmit(e);
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
+                {/* Mobile Submit Button */}
+                <div className="mt-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      if (formData.zone_number && formData.barcode && formData.quantity_scanned) {
+                        handleSubmit(e);
+                      }
+                    }}
+                    disabled={!formData.zone_number || !formData.barcode || !formData.quantity_scanned || loading}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
+                  >
+                    {loading ? 'Adding...' : '✓ Add to Inventory'}
+                  </button>
+                </div>
               </div>
             </div>
 
