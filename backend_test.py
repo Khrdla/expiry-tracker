@@ -605,33 +605,43 @@ class InventoryScanningPDFTester:
         try:
             self.test_results.append("\n🔄 TESTING SAME ITEM IN DIFFERENT ZONES (PDF):")
             
-            # Apple Juice Box 1L (3222471081716) should appear in SA01 and WH01 pages
-            # Mountain Water (3222471075722) should appear in SA01 and WH01 pages
-            # Lemonade (3222471052747) should appear in SA01 and WH02 pages
-            
+            # Test items that should appear in multiple zones
             test_cases = [
-                ("3222471081716", [0, 2], "Apple Juice Box 1L"),  # Pages 1 (SA01) and 3 (WH01)
-                ("3222471075722", [0, 2], "Mountain Water 6X50Cl"),  # Pages 1 (SA01) and 3 (WH01)
-                ("3222471052747", [0, 3], "Lemonade 150Cl")  # Pages 1 (SA01) and 4 (WH02)
+                ("3222471081716", ["SA01", "WH01"], "Apple Juice Box 1L"),
+                ("3222471075722", ["SA01", "WH01"], "Mountain Water 6X50Cl"),
+                ("3222471052747", ["SA01", "WH02"], "Lemonade 150Cl"),
+                ("3222471081273", ["SA02", "WH01"], "Orange Peach Apricot Nectar Box 1L")
             ]
             
             pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_content))
             
-            for barcode, expected_page_indices, product_name in test_cases:
-                pages_found = []
-                for page_idx in expected_page_indices:
-                    if page_idx < len(pdf_reader.pages):
-                        page_text = pdf_reader.pages[page_idx].extract_text()
-                        if barcode in page_text:
-                            pages_found.append(page_idx + 1)  # Convert to 1-based page numbers
-                            self.test_results.append(f"✅ {product_name} ({barcode}) found on page {page_idx + 1}")
-                        else:
-                            self.test_results.append(f"❌ {product_name} ({barcode}) NOT found on page {page_idx + 1}")
+            # First, map pages to zones
+            page_zones = {}
+            for page_idx, page in enumerate(pdf_reader.pages):
+                page_text = page.extract_text()
+                for line in page_text.split('\n'):
+                    if 'Zone Number:' in line:
+                        zone = line.split('Zone Number:')[-1].strip()
+                        page_zones[page_idx] = zone
+                        break
+            
+            self.test_results.append(f"✅ Page-Zone mapping: {page_zones}")
+            
+            for barcode, expected_zones, product_name in test_cases:
+                zones_found = []
+                for page_idx, page in enumerate(pdf_reader.pages):
+                    page_text = page.extract_text()
+                    if barcode in page_text:
+                        zone = page_zones.get(page_idx, f"Page{page_idx+1}")
+                        zones_found.append(zone)
+                        self.test_results.append(f"✅ {product_name} ({barcode}) found in zone {zone}")
                 
-                if len(pages_found) == len(expected_page_indices):
-                    self.test_results.append(f"✅ {product_name} correctly appears on all expected pages")
+                # Check if all expected zones are found
+                missing_zones = set(expected_zones) - set(zones_found)
+                if not missing_zones:
+                    self.test_results.append(f"✅ {product_name} correctly appears in all expected zones: {expected_zones}")
                 else:
-                    self.test_results.append(f"❌ {product_name} missing from some pages")
+                    self.test_results.append(f"❌ {product_name} missing from zones: {missing_zones}")
                     return False
             
             return True
