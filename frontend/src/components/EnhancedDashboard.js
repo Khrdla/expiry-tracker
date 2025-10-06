@@ -529,19 +529,7 @@ const EnhancedDashboard = () => {
     }).filter(Boolean);
   };
 
-  // Enhanced currency formatting
-  const formatCurrency = (amount, currency = 'USD') => {
-    const safeAmount = safeNumber(amount, 0);
-    
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency
-      }).format(safeAmount);
-    } catch (error) {
-      return `${safeAmount} ${currency}`;
-    }
-  };
+  // Duplicate formatCurrency function removed - using the comprehensive one above
 
   // Enhanced status color function
   const getStatusColor = (status) => {
