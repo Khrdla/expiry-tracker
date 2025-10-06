@@ -5967,6 +5967,201 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
         logger.error(f"Failed to export inventory scans: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to export inventory scans: {str(e)}")
 
+@api_router.get("/inventory-scans/export-pdf")
+async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user)):
+    """Export inventory scans to PDF with separate pages per zone (Admin only)"""
+    try:
+        import io
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch
+        from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+        
+        # Get all scans grouped by zone and barcode
+        pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "zone_number": "$zone_number", 
+                        "zone_type": "$zone_type",
+                        "barcode": "$barcode"
+                    },
+                    "item_number": {"$first": "$item_number"},
+                    "description": {"$first": "$description"},
+                    "qty_scanned_sa": {"$sum": "$qty_scanned_sa"},
+                    "qty_scanned_wh": {"$sum": "$qty_scanned_wh"}
+                }
+            },
+            {
+                "$sort": {"_id.zone_number": 1, "_id.zone_type": 1}
+            }
+        ]
+        
+        scans_by_zone = await db.inventory_scans.aggregate(pipeline).to_list(None)
+        
+        if not scans_by_zone:
+            raise HTTPException(status_code=404, detail="No inventory scans found")
+        
+        # Group scans by zone for page creation
+        zones_data = {}
+        for scan in scans_by_zone:
+            zone_key = f"{scan['_id']['zone_type']}{scan['_id']['zone_number']:02d}"
+            if zone_key not in zones_data:
+                zones_data[zone_key] = []
+            
+            # Calculate total quantity scanned for the item
+            total_qty = scan["qty_scanned_sa"] + scan["qty_scanned_wh"]
+            scan["total_qty_scanned"] = total_qty
+            zones_data[zone_key].append(scan)
+        
+        # Create PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        
+        # Create custom styles
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=colors.HexColor('#2563eb'),
+            alignment=TA_CENTER,
+            spaceAfter=20
+        )
+        
+        header_style = ParagraphStyle(
+            'HeaderStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.HexColor('#374151'),
+            alignment=TA_RIGHT,
+            spaceAfter=15
+        )
+        
+        zone_title_style = ParagraphStyle(
+            'ZoneTitle',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor=colors.HexColor('#1f2937'),
+            alignment=TA_LEFT,
+            spaceAfter=15
+        )
+        
+        # Story to hold PDF content
+        story = []
+        
+        current_time = datetime.now()
+        current_date = current_time.strftime('%Y-%m-%d %H:%M')
+        
+        # Process each zone
+        for zone_idx, (zone_key, zone_scans) in enumerate(zones_data.items()):
+            
+            # Add page break between zones (except for the first one)
+            if zone_idx > 0:
+                story.append(PageBreak())
+            
+            # Company logo and header section
+            header_data = [
+                [
+                    Paragraph("Geant Hypermarket<br/>Inventory Scanning Report", title_style),
+                    "🏢"  # Simple logo placeholder - you can replace with actual logo
+                ]
+            ]
+            
+            header_table = Table(header_data, colWidths=[4.5*inch, 1*inch])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+                ('FONTSIZE', (1, 0), (1, 0), 36),
+            ]))
+            story.append(header_table)
+            story.append(Spacer(1, 20))
+            
+            # Zone information header (top-right style)
+            zone_info_text = f"Zone Number: {zone_key}<br/>Total SKUs Scanned: {len(zone_scans)}<br/>Generated: {current_date}"
+            zone_info = Paragraph(zone_info_text, header_style)
+            story.append(zone_info)
+            story.append(Spacer(1, 15))
+            
+            # Zone title
+            zone_title = Paragraph(f"Zone {zone_key} - Inventory Details", zone_title_style)
+            story.append(zone_title)
+            story.append(Spacer(1, 10))
+            
+            # Create table data
+            table_data = [
+                ['Item Number', 'Barcode', 'Description', 'Quantity Scanned']
+            ]
+            
+            # Add data rows
+            for scan in zone_scans:
+                # Truncate long descriptions to fit on page
+                description = scan["description"][:50] + "..." if len(scan["description"]) > 50 else scan["description"]
+                
+                row = [
+                    scan["item_number"] or "N/A",
+                    scan["_id"]["barcode"],
+                    description,
+                    f"{scan['total_qty_scanned']:.0f}"
+                ]
+                table_data.append(row)
+            
+            # Create the table
+            data_table = Table(table_data, colWidths=[1.3*inch, 1.5*inch, 2.7*inch, 1*inch])
+            
+            # Style the table
+            table_style = TableStyle([
+                # Header row styling
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563eb')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),  # Right-align quantity column
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                
+                # Data rows styling
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+            ])
+            
+            data_table.setStyle(table_style)
+            story.append(data_table)
+            
+            # Add zone summary at bottom
+            story.append(Spacer(1, 20))
+            summary_text = f"Zone {zone_key} Summary: {len(zone_scans)} unique items scanned with total quantity of {sum(scan['total_qty_scanned'] for scan in zone_scans):.0f} units"
+            summary = Paragraph(summary_text, styles['Normal'])
+            story.append(summary)
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        filename = f"Inventory_Scan_Report_PDF_{current_time.strftime('%Y%m%d')}_{current_time.strftime('%H%M')}.pdf"
+        
+        return StreamingResponse(
+            io.BytesIO(buffer.read()),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export inventory scans PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to export inventory scans PDF: {str(e)}")
+
 @api_router.post("/currency/rates/quick-update")
 async def quick_update_rate(
     rate_update: Dict[str, Any],
