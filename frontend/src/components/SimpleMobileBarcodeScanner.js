@@ -28,41 +28,136 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
     };
   }, [showManualInput]);
 
-  const startCamera = async () => {
+  const initializeScanner = async () => {
     try {
       setIsScanning(true);
       setError('');
       setCameraError(false);
+      setScanStatus('🔍 Initializing camera...');
 
-      // Request camera permission with better constraints for mobile
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-
-      streamRef.current = stream;
+      // Initialize ZXing barcode reader with multiple format support
+      codeReaderRef.current = new BrowserMultiFormatReader();
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
-          startBarcodeDetection();
-        };
+      // Get available video devices
+      const videoDevices = await codeReaderRef.current.listVideoInputDevices();
+      
+      if (videoDevices.length === 0) {
+        throw new Error('No camera devices found');
       }
+
+      // Try to use back camera on mobile devices
+      let selectedDeviceId = videoDevices[0].deviceId;
+      for (const device of videoDevices) {
+        if (device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('rear') ||
+            device.label.toLowerCase().includes('environment')) {
+          selectedDeviceId = device.deviceId;
+          break;
+        }
+      }
+
+      setScanStatus('📷 Starting camera...');
+      
+      // Start decoding from video device
+      await codeReaderRef.current.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            handleBarcodeDetected(result.getText());
+          } else if (error) {
+            // Only log non-routine scanning errors
+            if (!(error instanceof NotFoundException)) {
+              console.log('Scan error:', error);
+            }
+            
+            // Update scan status for user feedback
+            const now = Date.now();
+            if (now - lastScanTime > 2000) { // Update status every 2 seconds
+              setScanStatus('🎯 Position barcode in center frame');
+              setLastScanTime(now);
+            }
+          }
+        }
+      );
+
+      setScanStatus('✅ Scanner active - position barcode in frame');
+      
     } catch (error) {
-      console.error('Camera access error:', error);
+      console.error('Scanner initialization error:', error);
       setCameraError(true);
-      setError('Camera access denied or not available. Use manual input below.');
+      
+      let errorMessage = 'Camera not available. ';
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'Camera not supported in this browser.';
+      }
+      
+      setError(errorMessage);
+      setScanStatus('❌ Camera unavailable');
       setShowManualInput(true);
     }
   };
 
-  const stopCamera = () => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
+  const handleBarcodeDetected = (barcodeText) => {
+    if (barcodeText && barcodeText.trim()) {
+      // Prevent duplicate scans within 1 second
+      const now = Date.now();
+      if (now - lastScanTime < 1000) {
+        return;
+      }
+      setLastScanTime(now);
+
+      console.log('Barcode detected:', barcodeText);
+      
+      // Play success feedback
+      playSuccessBeep();
+      showSuccessFlash();
+      
+      // Call parent callback with detected barcode
+      onScan(barcodeText.trim());
+    }
+  };
+
+  const playSuccessBeep = () => {
+    try {
+      // Create success beep sound
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Higher pitch for success
+      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+      console.log('Audio not available:', error);
+    }
+  };
+
+  const showSuccessFlash = () => {
+    setScanSuccess(true);
+    setTimeout(() => setScanSuccess(false), 500);
+  };
+
+  const cleanup = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -71,28 +166,12 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
     setIsScanning(false);
   };
 
-  const startBarcodeDetection = () => {
-    // Simple pattern matching for common barcode formats
-    scanIntervalRef.current = setInterval(() => {
-      captureAndAnalyze();
-    }, 500);
-  };
-
-  const captureAndAnalyze = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    const video = videoRef.current;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    context.drawImage(video, 0, 0);
-
-    // For now, we'll rely on manual input since camera-based barcode detection
-    // requires external libraries. This provides a working camera preview.
-    // Users can see the barcode and type it manually or use device's native scanner.
+  const retryScanning = () => {
+    setRetryCount(prev => prev + 1);
+    setError('');
+    setCameraError(false);
+    setShowManualInput(false);
+    initializeScanner();
   };
 
   const handleManualSubmit = () => {
