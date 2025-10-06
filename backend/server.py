@@ -5776,18 +5776,22 @@ async def clear_all_inventory_scans(current_user: User = Depends(get_admin_user)
 
 @api_router.get("/inventory-scans/export")
 async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
-    """Export inventory scans to Excel (Admin only)"""
+    """Export inventory scans to Excel with separate worksheets per zone (Admin only)"""
     try:
         import io
         from openpyxl import Workbook
-        from openpyxl.styles import Font, Alignment
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
         from openpyxl.utils import get_column_letter
         
-        # Get all scans aggregated by barcode
+        # Get all scans grouped by zone and barcode
         pipeline = [
             {
                 "$group": {
-                    "_id": "$barcode",
+                    "_id": {
+                        "zone_number": "$zone_number", 
+                        "zone_type": "$zone_type",
+                        "barcode": "$barcode"
+                    },
                     "item_number": {"$first": "$item_number"},
                     "description": {"$first": "$description"},
                     "department": {"$first": "$department"},
@@ -5800,90 +5804,147 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
                     "qty_scanned_sa": {"$sum": "$qty_scanned_sa"},
                     "qty_scanned_wh": {"$sum": "$qty_scanned_wh"}
                 }
+            },
+            {
+                "$sort": {"_id.zone_number": 1, "_id.zone_type": 1}
             }
         ]
         
-        aggregated_scans = await db.inventory_scans.aggregate(pipeline).to_list(None)
+        scans_by_zone = await db.inventory_scans.aggregate(pipeline).to_list(None)
         
-        if not aggregated_scans:
+        if not scans_by_zone:
             raise HTTPException(status_code=404, detail="No inventory scans found")
+        
+        # Group scans by zone for worksheet creation
+        zones_data = {}
+        for scan in scans_by_zone:
+            zone_key = f"{scan['_id']['zone_type']}{scan['_id']['zone_number']:02d}"
+            if zone_key not in zones_data:
+                zones_data[zone_key] = []
+            zones_data[zone_key].append(scan)
         
         # Create Excel workbook
         wb = Workbook()
-        ws = wb.active
-        ws.title = "Inventory Scan Report"
         
-        # Define headers in exact order
+        # Remove default sheet
+        if wb.active:
+            wb.remove(wb.active)
+        
+        current_time = datetime.now()
+        current_date = current_time.strftime('%Y-%m-%d')
+        
+        # Define column headers
         headers = [
-            "Item Number", "Barcode", "Description", "Department", "Section", "Family",
-            "Supplier Code", "Supplier Name", "Qty Scanned in SA", "Qty Scanned in WH",
-            "Total Inventory Scan", "System Stock", "Variance in Qty", "Variance in Value"
+            "Item Number", "Barcode", "Description", "Supplier Code", "Supplier Name",
+            "Qty Scanned in SA", "Qty Scanned in WH", "Total Inventory Scan",
+            "System Stock", "Variance in Qty", "Variance in Value"
         ]
         
-        # Add headers with formatting
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num)
-            cell.value = header
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-        
-        # Add data rows
-        total_sa = total_wh = total_inventory = total_variance_value = 0.0
-        
-        for row_num, scan in enumerate(aggregated_scans, 2):
-            total_inventory_scan = scan["qty_scanned_sa"] + scan["qty_scanned_wh"]
-            variance_qty = total_inventory_scan - scan["system_stock"]
-            variance_value = variance_qty * scan["unit_cost"]
+        # Create worksheet for each zone
+        for zone_key, zone_scans in zones_data.items():
+            ws = wb.create_sheet(title=zone_key)
             
-            # Accumulate totals
-            total_sa += scan["qty_scanned_sa"]
-            total_wh += scan["qty_scanned_wh"]
-            total_inventory += total_inventory_scan
-            total_variance_value += variance_value
+            # Zone header section
+            ws.cell(row=1, column=1).value = f"Zone Number: {zone_key}"
+            ws.cell(row=1, column=1).font = Font(bold=True, size=14)
             
-            row_data = [
-                scan["item_number"], scan["_id"], scan["description"], scan["department"],
-                scan["section"], scan["family"], scan["supplier_code"], scan["supplier_name"],
-                scan["qty_scanned_sa"], scan["qty_scanned_wh"], total_inventory_scan,
-                scan["system_stock"], variance_qty, variance_value
-            ]
+            ws.cell(row=2, column=1).value = f"Total SKUs Scanned: {len(zone_scans)}"
+            ws.cell(row=2, column=1).font = Font(bold=True, size=12)
             
-            for col_num, value in enumerate(row_data, 1):
-                cell = ws.cell(row=row_num, column=col_num)
-                cell.value = value
+            ws.cell(row=3, column=1).value = f"Generated On: {current_date}"
+            ws.cell(row=3, column=1).font = Font(size=10, italic=True)
+            
+            # Blank line before table
+            table_start_row = 5
+            
+            # Add headers with formatting
+            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
+            
+            for col_num, header in enumerate(headers, 1):
+                cell = ws.cell(row=table_start_row, column=col_num)
+                cell.value = header
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.fill = header_fill
+                cell.border = border
+            
+            # Freeze header row
+            ws.freeze_panes = f"A{table_start_row + 1}"
+            
+            # Add data rows
+            zone_total_sa = zone_total_wh = zone_total_inventory = zone_total_variance = 0.0
+            
+            for row_num, scan in enumerate(zone_scans, table_start_row + 1):
+                total_inventory_scan = scan["qty_scanned_sa"] + scan["qty_scanned_wh"]
+                variance_qty = total_inventory_scan - scan["system_stock"]
+                variance_value = variance_qty * scan["unit_cost"]
                 
-                # Right-align numeric columns (9-14)
-                if col_num >= 9:
+                # Accumulate zone totals
+                zone_total_sa += scan["qty_scanned_sa"]
+                zone_total_wh += scan["qty_scanned_wh"] 
+                zone_total_inventory += total_inventory_scan
+                zone_total_variance += variance_value
+                
+                row_data = [
+                    scan["item_number"], scan["_id"]["barcode"], scan["description"],
+                    scan["supplier_code"], scan["supplier_name"], scan["qty_scanned_sa"],
+                    scan["qty_scanned_wh"], total_inventory_scan, scan["system_stock"],
+                    variance_qty, variance_value
+                ]
+                
+                for col_num, value in enumerate(row_data, 1):
+                    cell = ws.cell(row=row_num, column=col_num)
+                    cell.value = value
+                    cell.border = border
+                    
+                    # Right-align numeric columns (6-11)
+                    if col_num >= 6:
+                        cell.alignment = Alignment(horizontal='right')
+                    
+                    # Alternate row background
+                    if row_num % 2 == 0:
+                        cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+            
+            # Add totals row
+            totals_row = table_start_row + len(zone_scans) + 1
+            
+            # Totals label
+            totals_cell = ws.cell(row=totals_row, column=5)
+            totals_cell.value = "TOTALS:"
+            totals_cell.font = Font(bold=True)
+            totals_cell.alignment = Alignment(horizontal='right')
+            totals_cell.border = border
+            totals_cell.fill = PatternFill(start_color="D9E2F3", end_color="D9E2F3", fill_type="solid")
+            
+            # Zone totals
+            totals_data = [zone_total_sa, zone_total_wh, zone_total_inventory, "", "", zone_total_variance]
+            for i, total_value in enumerate(totals_data, 6):
+                if total_value != "":
+                    cell = ws.cell(row=totals_row, column=i)
+                    cell.value = total_value
+                    cell.font = Font(bold=True)
                     cell.alignment = Alignment(horizontal='right')
-        
-        # Add total row
-        total_row = len(aggregated_scans) + 2
-        ws.cell(row=total_row, column=8).value = "TOTALS:"
-        ws.cell(row=total_row, column=8).font = Font(bold=True)
-        ws.cell(row=total_row, column=9).value = total_sa
-        ws.cell(row=total_row, column=9).font = Font(bold=True)
-        ws.cell(row=total_row, column=10).value = total_wh
-        ws.cell(row=total_row, column=10).font = Font(bold=True)
-        ws.cell(row=total_row, column=11).value = total_inventory
-        ws.cell(row=total_row, column=11).font = Font(bold=True)
-        ws.cell(row=total_row, column=14).value = total_variance_value
-        ws.cell(row=total_row, column=14).font = Font(bold=True)
-        
-        # Auto-adjust column widths
-        for column in ws.columns:
-            max_length = 0
-            column_letter = get_column_letter(column[0].column)
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
+                    cell.border = border
+                    cell.fill = PatternFill(start_color="D9E2F3", end_color="D9E2F3", fill_type="solid")
+            
+            # Auto-adjust column widths
+            for column in ws.columns:
+                max_length = 0
+                column_letter = get_column_letter(column[0].column)
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length + 3, 25)
+                ws.column_dimensions[column_letter].width = adjusted_width
         
         # Generate file
-        current_time = datetime.now()
         filename = f"Inventory_Scan_Report_{current_time.strftime('%Y%m%d')}_{current_time.strftime('%H%M')}.xlsx"
         
         buffer = io.BytesIO()
