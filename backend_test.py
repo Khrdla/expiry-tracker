@@ -231,8 +231,8 @@ class InventoryScanningPDFTester:
                 self.test_results.append("❌ Company branding missing")
                 return False
             
-            # Check for zone number in header
-            if f"Zone Number: {expected_zone}" in page_text:
+            # Check for zone number in header (account for whitespace)
+            if f"Zone Number: {expected_zone}" in page_text or f" Zone Number: {expected_zone}" in page_text:
                 self.test_results.append(f"✅ Zone number header found: {expected_zone}")
             else:
                 self.test_results.append(f"❌ Zone number header missing for {expected_zone}")
