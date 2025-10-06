@@ -32,7 +32,22 @@ const InventoryScanning = () => {
 
   useEffect(() => {
     loadInventoryScans();
+    // Auto-focus zone number on initial load
+    if (!zoneSet && zoneNumberRef.current) {
+      zoneNumberRef.current.focus();
+    }
   }, []);
+
+  // Update current zone scan count when scans change
+  useEffect(() => {
+    if (zoneSet && zoneData.zone_number) {
+      const currentZoneCount = scans.filter(scan => 
+        scan.zone_type === zoneData.zone_type && 
+        scan.zone_number === parseInt(zoneData.zone_number)
+      ).length;
+      setCurrentZoneScans(currentZoneCount);
+    }
+  }, [scans, zoneData, zoneSet]);
 
   const loadInventoryScans = async () => {
     try {
