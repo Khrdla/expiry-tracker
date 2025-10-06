@@ -566,7 +566,8 @@ class InventoryScanningPDFTester:
                     self.test_results.append("❌ Could not retrieve scans for verification")
                     return False
                     
-                scans_data = await response.json()
+                response_data = await response.json()
+                scans_data = response_data.get("scans", [])
                 self.test_results.append(f"✅ Retrieved {len(scans_data)} scan records")
                 
                 # Group by zone for verification
