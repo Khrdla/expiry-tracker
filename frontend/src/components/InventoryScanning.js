@@ -86,13 +86,21 @@ const InventoryScanning = () => {
       
       if (response.ok) {
         const result = await response.json();
-        setSuccess(`Successfully added ${result.quantity_added} units of ${result.item_description}`);
+        setSuccess(`✅ Added ${result.quantity_added} units of ${result.item_description}`);
+        
+        // Reset form for next scan, keeping zone info
         setFormData({
           zone_type: formData.zone_type,
           zone_number: formData.zone_number,
           barcode: '',
           quantity_scanned: ''
         });
+        
+        // Auto-focus on barcode field for next scan
+        setTimeout(() => {
+          document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
+        }, 500);
+        
         loadInventoryScans();
       } else {
         const errorData = await response.json();
