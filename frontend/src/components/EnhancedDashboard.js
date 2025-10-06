@@ -60,6 +60,16 @@ const EnhancedDashboard = () => {
     errorCount: 0
   });
 
+  // Currency conversion state
+  const [currencySettings, setCurrencySettings] = useState({
+    display_currency: 'USD',
+    yer_exchange_rate: 1610.0,
+    sar_exchange_rate: 3.75,
+    last_updated: null,
+    can_edit: false
+  });
+  const [currencyLoading, setCurrencyLoading] = useState(false);
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   // Enhanced logging system
