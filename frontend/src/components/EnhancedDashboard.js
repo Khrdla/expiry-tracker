@@ -906,7 +906,7 @@ const EnhancedDashboard = () => {
                         {safeNumber(supplier?.total_items, 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {supplier?.total_stock_value || 'N/A'}
+                        {supplier?.total_stock_value ? formatCurrency(supplier.total_stock_value) : 'N/A'}
                       </td>
                     </tr>
                   ))}
