@@ -316,8 +316,8 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl border-r border-gray-200 transform transition-transform duration-300 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 ${sidebarOpen ? 'w-64' : 'w-16 lg:w-64'}`}>
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      } w-64 lg:${sidebarOpen ? 'w-64' : 'w-16'}`}>
         
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
