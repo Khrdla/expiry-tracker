@@ -600,7 +600,16 @@ const InventoryScanning = () => {
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Upload size={20} />
-            Export Inventory Report
+            Export Excel Report
+          </button>
+          
+          <button
+            onClick={handlePdfExport}
+            disabled={loading || scans.length === 0}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <FileText size={20} />
+            Export PDF Report
           </button>
           
           <button
