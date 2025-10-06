@@ -5905,8 +5905,8 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
                     cell.value = value
                     cell.border = border
                     
-                    # Right-align numeric columns (6-11)
-                    if col_num >= 6:
+                    # Right-align numeric columns (6, 8-13)
+                    if col_num == 6 or col_num >= 8:
                         cell.alignment = Alignment(horizontal='right')
                     
                     # Alternate row background
