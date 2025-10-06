@@ -4565,10 +4565,14 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
             
             # Get PDF content as bytes (binary data, no encoding)
             pdf_content = pdf.output(dest='S')
-            if isinstance(pdf_content, str):
-                pdf_content = pdf_content.encode('latin1')
-            elif not isinstance(pdf_content, bytes):
-                pdf_content = bytes(pdf_content)
+            # CRITICAL FIX: Do not encode binary PDF data - this was causing corruption
+            if not isinstance(pdf_content, bytes):
+                # FPDF2 should return bytes directly, but handle edge cases
+                if isinstance(pdf_content, str):
+                    # This should not happen with modern FPDF2, but handle gracefully
+                    pdf_content = pdf_content.encode('utf-8')
+                else:
+                    pdf_content = bytes(pdf_content)
             
             print(f"✅ FPDF2 generated PDF size: {len(pdf_content)} bytes")
             
