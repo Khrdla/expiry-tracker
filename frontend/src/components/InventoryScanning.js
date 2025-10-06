@@ -314,175 +314,187 @@ const InventoryScanning = () => {
           </div>
         )}
 
-        {/* Inventory Scanning Form */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-6">Add Inventory Scan</h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Zone Setup Section */}
+        {!zoneSet && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-blue-900">📍 Set Up Scanning Zone</h2>
+            <p className="text-blue-700 mb-6">Choose your zone to begin continuous scanning. Zone will remain active until you change it.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {/* Zone Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Zone Type <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-blue-900 mb-2">Zone Type</label>
                 <select
-                  value={formData.zone_type}
-                  onChange={(e) => setFormData({...formData, zone_type: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  value={zoneData.zone_type}
+                  onChange={(e) => setZoneData({...zoneData, zone_type: e.target.value})}
+                  className="w-full px-4 py-3 text-lg border border-blue-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="SA">SA (Selling Area)</option>
-                  <option value="WH">WH (Warehouse)</option>
+                  <option value="SA">🏪 SA (Selling Area)</option>
+                  <option value="WH">📦 WH (Warehouse)</option>
                 </select>
               </div>
 
               {/* Zone Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Zone Number <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-blue-900 mb-2">Zone Number</label>
                 <input
+                  ref={zoneNumberRef}
                   type="number"
-                  placeholder="Enter Zone Number"
-                  value={formData.zone_number}
-                  onChange={(e) => setFormData({...formData, zone_number: e.target.value})}
+                  placeholder="e.g., 01, 02, 03..."
+                  value={zoneData.zone_number}
+                  onChange={(e) => setZoneData({...zoneData, zone_number: e.target.value})}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      // Move to barcode field
-                      document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
+                      handleZoneNumberSet();
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  className="w-full px-4 py-3 text-lg border border-blue-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
-                {/* Mobile Next Button */}
-                <div className="mt-2 sm:hidden">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
-                    }}
-                    disabled={!formData.zone_number}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    Next → Barcode
-                  </button>
+              </div>
+            </div>
+
+            <button
+              onClick={handleZoneNumberSet}
+              disabled={!zoneData.zone_number}
+              className="w-full px-6 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              <Scan size={20} />
+              Start Scanning Zone {zoneData.zone_type}{zoneData.zone_number ? zoneData.zone_number.padStart(2, '0') : ''}
+            </button>
+          </div>
+        )}
+
+        {/* Continuous Scanning Section */}
+        {zoneSet && (
+          <div className={`bg-white rounded-lg shadow-lg mb-8 transition-all duration-200 ${scanFlash ? 'bg-green-100 shadow-green-200' : ''}`}>
+            {/* Zone Header with Live Counter */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-semibold">🎯 Zone: {zoneData.zone_type}{zoneData.zone_number.padStart(2, '0')}</h2>
+                  <p className="text-blue-100">Continuous Scanning Active</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold">{currentZoneScans}</div>
+                  <div className="text-sm text-blue-100">SKUs Scanned</div>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  setZoneSet(false);
+                  setScanData({barcode: '', quantity_scanned: ''});
+                }}
+                className="mt-2 px-3 py-1 bg-blue-500 hover:bg-blue-400 text-white text-sm rounded"
+              >
+                📝 Change Zone
+              </button>
+            </div>
 
-              {/* Barcode Scanner */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Barcode <span className="text-red-500">*</span>
+            {/* Scanning Form */}
+            <div className="p-6">
+              {/* Barcode Input */}
+              <div className="mb-6">
+                <label className="block text-lg font-medium text-gray-700 mb-3">
+                  📷 Scan Barcode
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <input
-                    ref={(el) => {
-                      if (el) {
-                        // Auto-open camera on focus
-                        el.addEventListener('focus', () => {
-                          if (!formData.barcode) {
-                            setShowScanner(true);
-                          }
-                        });
-                      }
-                    }}
+                    ref={barcodeRef}
                     type="text"
-                    placeholder="Tap to scan or enter barcode"
-                    value={formData.barcode}
-                    onChange={(e) => setFormData({...formData, barcode: e.target.value})}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        // Move to quantity field
-                        document.querySelector('input[placeholder="Enter quantity"]')?.focus();
+                    placeholder="Tap to activate camera scanner"
+                    value={scanData.barcode}
+                    onChange={(e) => setScanData({...scanData, barcode: e.target.value})}
+                    onFocus={() => {
+                      if (!scanData.barcode && !showScanner) {
+                        setShowScanner(true);
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    required
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && scanData.barcode) {
+                        e.preventDefault();
+                        if (quantityRef.current) {
+                          quantityRef.current.focus();
+                        }
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowScanner(true)}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                   >
-                    <Camera size={16} />
-                    Scan
+                    <Camera size={20} />
+                    <span className="hidden sm:inline">Scan</span>
                   </button>
                 </div>
-                {/* Mobile Enter/Next Button */}
-                <div className="mt-2 sm:hidden">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (formData.barcode) {
-                        document.querySelector('input[placeholder="Enter quantity"]')?.focus();
-                      } else {
-                        setShowScanner(true);
-                      }
-                    }}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center justify-center gap-2"
-                  >
-                    {formData.barcode ? 'Next → Quantity' : '📷 Open Camera'}
-                  </button>
-                </div>
+
+                {/* Mobile Camera Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="mt-3 w-full sm:hidden px-6 py-4 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 flex items-center justify-center gap-3"
+                >
+                  📷 Activate Camera Scanner
+                </button>
               </div>
 
-              {/* Quantity Scanned */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity Scanned <span className="text-red-500">*</span>
+              {/* Quantity Input */}
+              <div className="mb-6">
+                <label className="block text-lg font-medium text-gray-700 mb-3">
+                  📊 Quantity Scanned
                 </label>
                 <input
+                  ref={quantityRef}
                   type="number"
                   step="0.01"
                   placeholder="Enter quantity"
-                  value={formData.quantity_scanned}
-                  onChange={(e) => setFormData({...formData, quantity_scanned: e.target.value})}
+                  value={scanData.quantity_scanned}
+                  onChange={(e) => setScanData({...scanData, quantity_scanned: e.target.value})}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && scanData.quantity_scanned) {
                       e.preventDefault();
-                      // Submit the form if all fields are filled
-                      if (formData.zone_number && formData.barcode && formData.quantity_scanned) {
-                        handleSubmit(e);
-                      }
+                      handleQuantitySubmit();
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                  disabled={!scanData.barcode}
                 />
-                {/* Mobile Submit Button */}
-                <div className="mt-2 sm:hidden">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      if (formData.zone_number && formData.barcode && formData.quantity_scanned) {
-                        handleSubmit(e);
-                      }
-                    }}
-                    disabled={!formData.zone_number || !formData.barcode || !formData.quantity_scanned || loading}
-                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
-                  >
-                    {loading ? 'Adding...' : '✓ Add to Inventory'}
-                  </button>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleQuantitySubmit}
+                  disabled={loading || !scanData.barcode || !scanData.quantity_scanned}
+                  className="mt-3 w-full px-6 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={20} />
+                      ✓ Add & Continue Scanning
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Quick Instructions */}
+              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                <div className="font-medium mb-2">📋 Scanning Workflow:</div>
+                <div className="space-y-1">
+                  <div>1. Tap barcode field → camera opens automatically</div>
+                  <div>2. Scan barcode → beep + flash → auto-advance to quantity</div>
+                  <div>3. Enter quantity → press Enter or tap "Add & Continue"</div>
+                  <div>4. Form resets → ready for next scan in same zone</div>
                 </div>
               </div>
             </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                <Package size={16} />
-                {loading ? 'Adding...' : 'Add to Inventory Log'}
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+        )}
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
