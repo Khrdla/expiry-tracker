@@ -833,7 +833,7 @@ const EnhancedDashboard = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${safeName(name)}: ${safeNumber(value, 0)}`}
+                    label={({ name, value }) => `${safeName(name)}: ${formatCurrency(safeNumber(value, 0))}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="stock_value"
