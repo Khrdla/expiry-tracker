@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Test USD conversion functionality in return forms
+Dynamic Currency Conversion Dashboard Enhancement Testing
+Testing comprehensive currency system implementation with admin-only currency management
 """
 
 import requests
 import json
+import os
 import time
 from datetime import datetime
 
@@ -13,41 +15,57 @@ BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-def test_currency_conversion():
-    session = requests.Session()
+# Test data from review request
+DEFAULT_DISPLAY_CURRENCY = "USD"
+DEFAULT_YER_EXCHANGE_RATE = 1610.0
+DEFAULT_SAR_EXCHANGE_RATE = 3.75
+TEST_CURRENCIES = ["USD", "SAR", "YER"]
+
+class CurrencyConversionTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.token = None
+        self.test_results = []
+        self.original_settings = None
+        
+    def log_result(self, test_name, success, details="", response_time=0):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "response_time": f"{response_time:.0f}ms",
+            "timestamp": datetime.now().strftime("%H:%M:%S")
+        }
+        self.test_results.append(result)
+        print(f"{status} {test_name} ({response_time:.0f}ms)")
+        if details:
+            print(f"    Details: {details}")
     
-    # Authenticate
-    response = session.post(f"{BACKEND_URL}/auth/login", 
-        json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
-    
-    if response.status_code != 200:
-        print("❌ Authentication failed")
-        return
-    
-    token = response.json().get("access_token")
-    session.headers.update({"Authorization": f"Bearer {token}"})
-    print("✅ Authentication successful")
-    
-    # Test currency rates API
-    rates_response = session.get(f"{BACKEND_URL}/currency/rates")
-    print(f"📊 Currency Rates API Status: {rates_response.status_code}")
-    
-    if rates_response.status_code == 200:
-        rates_data = rates_response.json()
-        print(f"   Base Currency: {rates_data.get('base_currency')}")
-        print(f"   Exchange Rates: {rates_data.get('exchange_rates')}")
-        print(f"   Last Updated: {rates_data.get('last_updated')}")
-    
-    # Create return forms with different currencies
-    test_currencies = [
-        {"currency": "YER", "price": 1000.0, "product": "Test Product YER"},
-        {"currency": "SAR", "price": 50.0, "product": "Test Product SAR"},
-        {"currency": "EUR", "price": 10.0, "product": "Test Product EUR"}
-    ]
-    
-    created_forms = []
-    
-    for curr_data in test_currencies:
+    def authenticate_admin(self):
+        """Authenticate with admin credentials"""
+        try:
+            start_time = time.time()
+            response = self.session.post(f"{BACKEND_URL}/auth/login", 
+                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.token = data.get("access_token")
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                self.log_result("Admin Authentication", True, 
+                    f"Admin user {ADMIN_USERNAME} authenticated successfully", response_time)
+                return True
+            else:
+                self.log_result("Admin Authentication", False, 
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
+                return False
+        except Exception as e:
+            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
+            return False
         form_data = {
             "reference_number": f"RTN-{curr_data['currency']}-{int(time.time())}",
             "product_code": f"TEST-{curr_data['currency']}",
