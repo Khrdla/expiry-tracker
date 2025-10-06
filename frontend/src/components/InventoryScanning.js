@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Package, Upload, Trash2, AlertTriangle, CheckCircle, X, Scan, Volume2 } from 'lucide-react';
+import { Camera, Package, Upload, Trash2, AlertTriangle, CheckCircle, X, Scan, Volume2, FileText } from 'lucide-react';
 import SimpleMobileBarcodeScanner from './SimpleMobileBarcodeScanner';
 
 const InventoryScanning = () => {
