@@ -491,7 +491,7 @@ const InventoryScanning = () => {
                   ) : (
                     <>
                       <CheckCircle size={20} />
-                      ✓ Add & Continue Scanning
+                      ✓ Add → 📷 Auto Scan Next
                     </>
                   )}
                 </button>
