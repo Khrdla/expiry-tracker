@@ -273,17 +273,17 @@ class InventoryScanningPDFTester:
                 return False
             
             # Check for zone title
-            if f"Zone {expected_zone} - Inventory Details" in page_text:
-                self.test_results.append(f"✅ Zone title found: Zone {expected_zone} - Inventory Details")
+            if f"Zone {actual_zone} - Inventory Details" in page_text:
+                self.test_results.append(f"✅ Zone title found: Zone {actual_zone} - Inventory Details")
             else:
-                self.test_results.append(f"❌ Zone title missing for {expected_zone}")
+                self.test_results.append(f"❌ Zone title missing for {actual_zone}")
                 return False
             
             # Check for zone summary
-            if f"Zone {expected_zone} Summary:" in page_text:
-                self.test_results.append(f"✅ Zone summary found for {expected_zone}")
+            if f"Zone {actual_zone} Summary:" in page_text:
+                self.test_results.append(f"✅ Zone summary found for {actual_zone}")
             else:
-                self.test_results.append(f"❌ Zone summary missing for {expected_zone}")
+                self.test_results.append(f"❌ Zone summary missing for {actual_zone}")
                 return False
             
             # Check for logo placeholder (🏢 emoji or similar)
