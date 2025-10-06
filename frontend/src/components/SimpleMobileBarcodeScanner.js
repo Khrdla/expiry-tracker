@@ -355,10 +355,24 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
               </div>
 
               {/* Instructions */}
-              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-blue-700 text-sm">
-                  💡 <strong>Tip:</strong> You can also use your device's camera app to scan the barcode, then copy and paste the number here.
-                </p>
+              <div className="mt-4 space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-blue-700 text-sm">
+                    💡 <strong>Alternative Methods:</strong><br/>
+                    • Use your phone's camera app → scan barcode → copy number<br/>
+                    • Use Google Lens or similar barcode scanner apps<br/>
+                    • Type the numbers directly from the barcode label
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-gray-600 text-sm">
+                    📊 <strong>Common Formats:</strong><br/>
+                    • EAN13: 13 digits (e.g., 1234567890123)<br/>
+                    • CODE128: Variable length with letters/numbers<br/>
+                    • UPC: 12 digits (e.g., 123456789012)
+                  </p>
+                </div>
               </div>
             </div>
           )}
