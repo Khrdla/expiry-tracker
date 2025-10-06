@@ -358,7 +358,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
                     }`}
                   >
                     <item.icon size={20} className={isActive ? 'text-green-600' : item.color} />
-                    <span className={`font-medium ${sidebarOpen || 'lg:block'} ${!sidebarOpen && 'hidden'}`}>
+                    <span className={`font-medium ${sidebarOpen ? 'block' : 'hidden lg:block'}`}>
                       {item.label}
                     </span>
                   </button>
