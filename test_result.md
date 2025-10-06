@@ -1393,8 +1393,9 @@ mobile_app_comprehensive_fixes:
 
 test_plan:
   current_focus:
-    - "NEW Inventory Scanning System backend functionality"
-  stuck_tasks: []
+    - "Enhanced Mobile Inventory Scanning Workflow - NAVIGATION FIX REQUIRED"
+  stuck_tasks:
+    - "Enhanced Mobile Inventory Scanning Workflow"
   test_all: false
   test_priority: "high_first"
   frontend_testing_completed: true
