@@ -4511,7 +4511,7 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
             
             # Currency totals
             pdf.set_font('Arial', 'B', 12)
-            pdf.cell(0, 8, 'Waste Value Summary:', 0, 1)
+            pdf.cell(0, 8, sanitize_text('Waste Value Summary:'), 0, 1)
             pdf.set_font('Arial', '', 10)
             
             # Get exchange rates safely
