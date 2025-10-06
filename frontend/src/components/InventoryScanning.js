@@ -8,15 +8,26 @@ const InventoryScanning = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [scanFlash, setScanFlash] = useState(false);
+  const [currentZoneScans, setCurrentZoneScans] = useState(0);
+  const [zoneSet, setZoneSet] = useState(false);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Form state - focus on continuous scanning
+  const [zoneData, setZoneData] = useState({
     zone_type: 'SA',
-    zone_number: '',
+    zone_number: ''
+  });
+  
+  const [scanData, setScanData] = useState({
     barcode: '',
     quantity_scanned: ''
   });
 
+  // Refs for field focus management
+  const barcodeRef = useRef(null);
+  const quantityRef = useRef(null);
+  const zoneNumberRef = useRef(null);
+  
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
