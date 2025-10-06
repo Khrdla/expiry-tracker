@@ -8,11 +8,16 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
   const [manualInput, setManualInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
   const [cameraError, setCameraError] = useState(false);
+  const [scanSuccess, setScanSuccess] = useState(false);
+  const [lastScanTime, setLastScanTime] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const [scanStatus, setScanStatus] = useState('');
   
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
-  const scanIntervalRef = useRef(null);
+  const codeReaderRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
     if (!showManualInput) {
