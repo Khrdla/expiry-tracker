@@ -151,13 +151,47 @@ const EnhancedVisualCharts = () => {
     'expired': '#DC2626'
   };
 
-  const formatCurrency = (value, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value || 0);
+  // Currency conversion functions
+  const convertCurrency = (usdValue, targetCurrency = null) => {
+    const currency = targetCurrency || currencySettings.display_currency;
+    const value = parseFloat(usdValue) || 0;
+    
+    switch (currency) {
+      case 'SAR':
+        return value * currencySettings.sar_exchange_rate;
+      case 'YER':
+        return value * currencySettings.yer_exchange_rate;
+      case 'USD':
+      default:
+        return value;
+    }
+  };
+
+  const formatCurrency = (value, currency = null) => {
+    const targetCurrency = currency || currencySettings.display_currency;
+    const convertedValue = convertCurrency(value, targetCurrency);
+    
+    switch (targetCurrency) {
+      case 'USD':
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedValue);
+      case 'SAR':
+        return `SAR ${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedValue)}`;
+      case 'YER':
+        return `YER ${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(convertedValue)}`;
+      default:
+        return `$${convertedValue.toFixed(2)}`;
+    }
   };
 
   const formatNumber = (value) => {
