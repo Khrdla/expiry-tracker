@@ -271,6 +271,19 @@ const InventoryScanning = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
+                {/* Mobile Next Button */}
+                <div className="mt-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
+                    }}
+                    disabled={!formData.zone_number}
+                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    Next → Barcode
+                  </button>
+                </div>
               </div>
 
               {/* Barcode Scanner */}
