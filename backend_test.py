@@ -653,8 +653,8 @@ class InventoryScanningPDFTester:
             return False
             
     async def run_comprehensive_test(self):
-        """Run comprehensive test of Enhanced Inventory Scanning Excel Export"""
-        print("🚀 STARTING ENHANCED INVENTORY SCANNING EXCEL EXPORT TESTING")
+        """Run comprehensive test of Inventory Scanning PDF Export"""
+        print("🚀 STARTING INVENTORY SCANNING PDF EXPORT TESTING")
         print("=" * 80)
         
         try:
@@ -663,28 +663,37 @@ class InventoryScanningPDFTester:
             # Step 1: Authentication
             if not await self.authenticate():
                 return False
-                
-            # Step 2: Clear existing data
-            if not await self.clear_existing_scans():
+            
+            # Step 2: Test admin access control
+            if not await self.test_admin_access_control():
                 return False
                 
-            # Step 3: Setup multi-zone test data
+            # Step 3: Test error handling with no data
+            if not await self.test_error_handling_no_data():
+                return False
+                
+            # Step 4: Setup multi-zone test data
             if not await self.setup_multi_zone_data():
                 return False
                 
-            # Step 4: Export and analyze Excel structure
-            if not await self.export_and_analyze_excel():
+            # Step 5: Test PDF export endpoint and get PDF content
+            pdf_success, pdf_content = await self.test_pdf_export_endpoint()
+            if not pdf_success:
                 return False
                 
-            # Step 5: Verify data integrity
+            # Step 6: Analyze PDF structure and content
+            if not await self.analyze_pdf_structure(pdf_content):
+                return False
+                
+            # Step 7: Verify data integrity
             if not await self.verify_data_integrity():
                 return False
                 
-            # Step 6: Test same item in different zones
-            if not await self.test_same_item_different_zones():
+            # Step 8: Test same item in different zones (PDF verification)
+            if not await self.test_same_item_different_zones_pdf(pdf_content):
                 return False
                 
-            self.test_results.append("\n🎉 ALL TESTS COMPLETED SUCCESSFULLY!")
+            self.test_results.append("\n🎉 ALL PDF EXPORT TESTS COMPLETED SUCCESSFULLY!")
             return True
             
         except Exception as e:
