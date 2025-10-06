@@ -21,10 +21,10 @@ const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
 
   useEffect(() => {
     if (!showManualInput) {
-      startCamera();
+      initializeScanner();
     }
     return () => {
-      stopCamera();
+      cleanup();
     };
   }, [showManualInput]);
 
