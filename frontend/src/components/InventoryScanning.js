@@ -166,12 +166,10 @@ const InventoryScanning = () => {
           quantity_scanned: ''
         });
         
-        // Auto-focus barcode field for continuous scanning
+        // Automatically open camera scanner for next scan (continuous workflow)
         setTimeout(() => {
-          if (barcodeRef.current) {
-            barcodeRef.current.focus();
-          }
-        }, 200);
+          setShowScanner(true);
+        }, 300);
         
         loadInventoryScans();
       } else {
