@@ -127,11 +127,9 @@ const InventoryScanning = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.zone_number || !formData.barcode || !formData.quantity_scanned) {
-      setError('Please fill in all required fields');
+  const handleQuantitySubmit = async () => {
+    if (!zoneData.zone_number || !scanData.barcode || !scanData.quantity_scanned) {
+      setError('Please complete barcode and quantity');
       return;
     }
 
@@ -140,10 +138,10 @@ const InventoryScanning = () => {
       const token = localStorage.getItem('token');
       
       const scanRequest = {
-        zone_type: formData.zone_type,
-        zone_number: parseInt(formData.zone_number),
-        barcode: formData.barcode,
-        quantity_scanned: parseFloat(formData.quantity_scanned)
+        zone_type: zoneData.zone_type,
+        zone_number: parseInt(zoneData.zone_number),
+        barcode: scanData.barcode,
+        quantity_scanned: parseFloat(scanData.quantity_scanned)
       };
 
       const response = await fetch(`${BACKEND_URL}/api/inventory-scans`, {
@@ -157,20 +155,23 @@ const InventoryScanning = () => {
       
       if (response.ok) {
         const result = await response.json();
-        setSuccess(`✅ Added ${result.quantity_added} units of ${result.item_description}`);
         
-        // Reset form for next scan, keeping zone info
-        setFormData({
-          zone_type: formData.zone_type,
-          zone_number: formData.zone_number,
+        // Show brief success message
+        setSuccess(`✅ ${result.item_description} - ${result.quantity_added} units`);
+        setTimeout(() => setSuccess(''), 2000);
+        
+        // Reset scan data for next item (keep zone data)
+        setScanData({
           barcode: '',
           quantity_scanned: ''
         });
         
-        // Auto-focus on barcode field for next scan
+        // Auto-focus barcode field for continuous scanning
         setTimeout(() => {
-          document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
-        }, 500);
+          if (barcodeRef.current) {
+            barcodeRef.current.focus();
+          }
+        }, 200);
         
         loadInventoryScans();
       } else {
