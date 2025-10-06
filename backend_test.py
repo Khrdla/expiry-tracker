@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
 """
-Enhanced Supplier Return Form System Testing
-Testing comprehensive return form functionality with supervisor dropdown, dual currency, and PDF exports
+Enhanced Inventory Scanning Excel Export Testing
+Testing multi-zone Excel export with separate worksheets per zone
 """
 
-import requests
+import asyncio
+import aiohttp
 import json
 import os
-import time
 from datetime import datetime
+import openpyxl
+from io import BytesIO
 
 # Configuration
 BACKEND_URL = "https://inventory-master-78.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-# Test data from review request
-TEST_SUPERVISORS = ["Mahmoud Badr", "Abdelhamed Mostafa"]
-SECTION_MANAGER = "Imad Qejji"
-TEST_CURRENCIES = ["YER", "SAR", "EUR"]
-TEST_BARCODE = "3222471081716"  # Apple Juice Box 1L
-
-class EnhancedReturnFormTester:
+class InventoryScanningTester:
     def __init__(self):
         self.session = requests.Session()
         self.token = None
