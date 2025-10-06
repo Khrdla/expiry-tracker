@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Package, Upload, Trash2, AlertTriangle, CheckCircle, X, Scan, Volume2 } from 'lucide-react';
-import BarcodeScanner from './BarcodeScanner';
+import SimpleMobileBarcodeScanner from './SimpleMobileBarcodeScanner';
 
 const InventoryScanning = () => {
   const [loading, setLoading] = useState(false);
