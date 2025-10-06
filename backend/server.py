@@ -4461,6 +4461,20 @@ async def generate_waste_report_excel(report_data: dict, period: str):
 async def generate_waste_report_pdf(report_data: dict, period: str):
     """Generate PDF using fpdf2 library for maximum compatibility"""
     try:
+        # Text sanitization function to prevent Unicode issues
+        def sanitize_text(text):
+            """Fix Unicode characters that can cause PDF corruption"""
+            if not text:
+                return ""
+            text = str(text)
+            # Replace problematic Unicode characters
+            text = text.replace('–', '-').replace('—', '-')  # Em/en-dash to regular dash
+            text = text.replace(''', "'").replace(''', "'")  # Curly quotes to straight
+            text = text.replace('"', '"').replace('"', '"')  # Curly quotes to straight
+            # Remove any other non-ASCII characters that could cause issues
+            text = ''.join(char if ord(char) < 128 else '?' for char in text)
+            return text
+        
         # Try using fpdf2 for better compatibility
         try:
             from fpdf import FPDF
