@@ -187,6 +187,110 @@ class InventoryScanningPDFTester:
             self.test_results.append(f"❌ PDF Export error: {str(e)}")
             return False, None
             
+    async def analyze_pdf_structure(self, pdf_content):
+        """Analyze the PDF file structure for zone-based pages and content"""
+        try:
+            self.test_results.append("\n🔍 ANALYZING PDF STRUCTURE:")
+            
+            # Load PDF file
+            pdf_reader = PyPDF2.PdfReader(BytesIO(pdf_content))
+            num_pages = len(pdf_reader.pages)
+            
+            # Expected zones based on our test data
+            expected_zones = ["SA01", "SA02", "WH01", "WH02"]
+            self.test_results.append(f"✅ PDF has {num_pages} pages (expected: {len(expected_zones)} zones)")
+            
+            if num_pages != len(expected_zones):
+                self.test_results.append(f"❌ Page count mismatch: expected {len(expected_zones)}, got {num_pages}")
+                return False
+            
+            # Analyze each page
+            pages_analysis_success = True
+            for page_num in range(num_pages):
+                if not await self.analyze_pdf_page(pdf_reader.pages[page_num], page_num + 1, expected_zones[page_num]):
+                    pages_analysis_success = False
+            
+            return pages_analysis_success
+            
+        except Exception as e:
+            self.test_results.append(f"❌ PDF analysis error: {str(e)}")
+            return False
+    
+    async def analyze_pdf_page(self, page, page_num, expected_zone):
+        """Analyze individual PDF page structure and content"""
+        try:
+            self.test_results.append(f"\n📋 ANALYZING PAGE {page_num} (Expected Zone: {expected_zone}):")
+            
+            # Extract text from page
+            page_text = page.extract_text()
+            
+            # Check for Geant Hypermarket branding
+            if "Geant Hypermarket" in page_text:
+                self.test_results.append("✅ Company branding (Geant Hypermarket) found")
+            else:
+                self.test_results.append("❌ Company branding missing")
+                return False
+            
+            # Check for zone number in header
+            if f"Zone Number: {expected_zone}" in page_text:
+                self.test_results.append(f"✅ Zone number header found: {expected_zone}")
+            else:
+                self.test_results.append(f"❌ Zone number header missing for {expected_zone}")
+                return False
+            
+            # Check for total SKUs scanned header
+            if "Total SKUs Scanned:" in page_text:
+                self.test_results.append("✅ Total SKUs scanned header found")
+            else:
+                self.test_results.append("❌ Total SKUs scanned header missing")
+                return False
+            
+            # Check for generation date header
+            if "Generated:" in page_text:
+                self.test_results.append("✅ Generation date header found")
+            else:
+                self.test_results.append("❌ Generation date header missing")
+                return False
+            
+            # Check for table headers
+            required_headers = ["Item Number", "Barcode", "Description", "Quantity Scanned"]
+            headers_found = 0
+            for header in required_headers:
+                if header in page_text:
+                    headers_found += 1
+            
+            if headers_found == len(required_headers):
+                self.test_results.append("✅ All required table headers found")
+            else:
+                self.test_results.append(f"❌ Missing table headers: {headers_found}/{len(required_headers)} found")
+                return False
+            
+            # Check for zone title
+            if f"Zone {expected_zone} - Inventory Details" in page_text:
+                self.test_results.append(f"✅ Zone title found: Zone {expected_zone} - Inventory Details")
+            else:
+                self.test_results.append(f"❌ Zone title missing for {expected_zone}")
+                return False
+            
+            # Check for zone summary
+            if f"Zone {expected_zone} Summary:" in page_text:
+                self.test_results.append(f"✅ Zone summary found for {expected_zone}")
+            else:
+                self.test_results.append(f"❌ Zone summary missing for {expected_zone}")
+                return False
+            
+            # Check for logo placeholder (🏢 emoji or similar)
+            if "🏢" in page_text or "logo" in page_text.lower():
+                self.test_results.append("✅ Logo placeholder found")
+            else:
+                self.test_results.append("⚠️ Logo placeholder not detected (may be image)")
+            
+            return True
+            
+        except Exception as e:
+            self.test_results.append(f"❌ Page analysis error for page {page_num}: {str(e)}")
+            return False
+
     async def analyze_excel_structure(self, excel_content):
         """Analyze the Excel file structure for multiple worksheets"""
         try:
