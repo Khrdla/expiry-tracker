@@ -66,38 +66,48 @@ class CurrencyConversionTester:
         except Exception as e:
             self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
             return False
-        form_data = {
-            "reference_number": f"RTN-{curr_data['currency']}-{int(time.time())}",
-            "product_code": f"TEST-{curr_data['currency']}",
-            "product_name": curr_data['product'],
-            "quantity": 5,
-            "purchase_price": curr_data['price'],
-            "purchase_currency": curr_data['currency'],
-            "supplier": "Test Supplier",
-            "reason_for_return": f"Test {curr_data['currency']} conversion",
-            "selected_supervisor": "Mahmoud Badr",
-            "prepared_by_supervisor": "Mahmoud Badr",
-            "section_manager_name": "Imad Qejji",
-            "supervisor_approved": True,
-            "supervisor_signature": "test_signature",
-            "supervisor_timestamp": datetime.now().isoformat(),
-            "section_manager_approved": True,
-            "section_manager_signature": "test_signature",
-            "section_manager_timestamp": datetime.now().isoformat()
-        }
-        
-        response = session.post(f"{BACKEND_URL}/return-forms", json=form_data)
-        
-        if response.status_code == 200:
-            form_id = response.json().get("id")
-            created_forms.append({"id": form_id, "currency": curr_data['currency'], "price": curr_data['price']})
-            print(f"✅ Created {curr_data['currency']} form: {form_id}")
-        else:
-            print(f"❌ Failed to create {curr_data['currency']} form: {response.status_code}")
     
-    # Test PDF exports to check for USD conversion
-    for form in created_forms:
-        print(f"\n📄 Testing PDF export for {form['currency']} form...")
+    def test_get_currency_settings_default(self):
+        """Test GET /api/dashboard/currency-settings returns default settings for new users"""
+        try:
+            start_time = time.time()
+            response = self.session.get(f"{BACKEND_URL}/dashboard/currency-settings")
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.original_settings = data  # Store for cleanup
+                
+                # Verify default values
+                expected_fields = ["display_currency", "yer_exchange_rate", "sar_exchange_rate", "last_updated", "can_edit"]
+                missing_fields = [field for field in expected_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_result("GET Currency Settings - Structure", False,
+                        f"Missing fields: {missing_fields}", response_time)
+                    return False
+                
+                # Verify default values
+                display_currency_ok = data.get("display_currency") == DEFAULT_DISPLAY_CURRENCY
+                yer_rate_ok = data.get("yer_exchange_rate") == DEFAULT_YER_EXCHANGE_RATE
+                sar_rate_ok = data.get("sar_exchange_rate") == DEFAULT_SAR_EXCHANGE_RATE
+                can_edit_ok = data.get("can_edit") == True  # Admin should be able to edit
+                
+                all_defaults_ok = display_currency_ok and yer_rate_ok and sar_rate_ok and can_edit_ok
+                
+                self.log_result("GET Currency Settings - Default Values", all_defaults_ok,
+                    f"Currency: {data.get('display_currency')} (expected: {DEFAULT_DISPLAY_CURRENCY}), "
+                    f"YER rate: {data.get('yer_exchange_rate')} (expected: {DEFAULT_YER_EXCHANGE_RATE}), "
+                    f"SAR rate: {data.get('sar_exchange_rate')} (expected: {DEFAULT_SAR_EXCHANGE_RATE}), "
+                    f"Can edit: {data.get('can_edit')} (expected: True)", response_time)
+                return all_defaults_ok
+            else:
+                self.log_result("GET Currency Settings", False,
+                    f"Status: {response.status_code}, Response: {response.text}", response_time)
+                return False
+        except Exception as e:
+            self.log_result("GET Currency Settings", False, f"Exception: {str(e)}")
+            return False
         
         # Test individual PDF export (this one works)
         pdf_response = session.get(f"{BACKEND_URL}/export/return-form/{form['id']}/pdf")
