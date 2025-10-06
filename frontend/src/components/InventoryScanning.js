@@ -261,6 +261,13 @@ const InventoryScanning = () => {
                   placeholder="Enter Zone Number"
                   value={formData.zone_number}
                   onChange={(e) => setFormData({...formData, zone_number: e.target.value})}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      // Move to barcode field
+                      document.querySelector('input[placeholder="Tap to scan or enter barcode"]')?.focus();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
