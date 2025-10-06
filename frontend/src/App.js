@@ -370,7 +370,7 @@ const Navigation = ({ user, onLogout, sidebarOpen, setSidebarOpen, notifications
 
         {/* User Info and Logout */}
         <div className="border-t border-gray-200 p-4">
-          <div className={`flex items-center space-x-3 mb-4 ${sidebarOpen || 'lg:flex'} ${!sidebarOpen && 'hidden lg:flex'}`}>
+          <div className={`flex items-center space-x-3 mb-4 ${sidebarOpen ? 'flex' : 'hidden lg:flex'}`}>
             <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
               <span className="text-sm font-semibold text-gray-700">
                 {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'}
