@@ -5535,6 +5535,100 @@ async def get_current_exchange_rates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get exchange rates: {str(e)}")
 
+@api_router.get("/dashboard/currency-settings")
+async def get_dashboard_currency_settings(current_user: User = Depends(get_current_user)):
+    """Get dashboard currency display settings"""
+    try:
+        # Get dashboard currency settings
+        settings = await db.dashboard_currency_settings.find_one(
+            {"user_id": current_user.id if current_user.role in [UserRole.ADMIN, UserRole.MANAGER] else "default"}
+        )
+        
+        if not settings:
+            # Create default dashboard currency settings
+            default_settings = {
+                "id": str(uuid.uuid4()),
+                "user_id": current_user.id if current_user.role in [UserRole.ADMIN, UserRole.MANAGER] else "default",
+                "display_currency": "USD",
+                "yer_exchange_rate": 1610.0,  # 1 USD = 1610 YER
+                "sar_exchange_rate": 3.75,    # 1 USD = 3.75 SAR (fixed)
+                "last_updated": datetime.now(),
+                "updated_by": current_user.username,
+                "created_at": datetime.now()
+            }
+            
+            await db.dashboard_currency_settings.insert_one(default_settings)
+            settings = default_settings
+        
+        # Remove MongoDB ObjectId for JSON serialization
+        if "_id" in settings:
+            del settings["_id"]
+        
+        return {
+            "display_currency": settings.get("display_currency", "USD"),
+            "yer_exchange_rate": settings.get("yer_exchange_rate", 1610.0),
+            "sar_exchange_rate": settings.get("sar_exchange_rate", 3.75),
+            "last_updated": settings.get("last_updated", datetime.now()).isoformat() if isinstance(settings.get("last_updated"), datetime) else settings.get("last_updated"),
+            "can_edit": current_user.role in [UserRole.ADMIN, UserRole.MANAGER]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get dashboard currency settings: {str(e)}")
+
+@api_router.put("/dashboard/currency-settings")
+async def update_dashboard_currency_settings(
+    settings_update: Dict[str, Any],
+    current_user: User = Depends(get_admin_user)
+):
+    """Update dashboard currency display settings (Admin only)"""
+    try:
+        # Only admins can update dashboard currency settings
+        display_currency = settings_update.get("display_currency", "USD")
+        yer_exchange_rate = float(settings_update.get("yer_exchange_rate", 1610.0))
+        
+        # Validate display currency
+        if display_currency not in ["USD", "SAR", "YER"]:
+            raise HTTPException(status_code=400, detail="Display currency must be USD, SAR, or YER")
+        
+        # Validate YER exchange rate
+        if yer_exchange_rate <= 0:
+            raise HTTPException(status_code=400, detail="YER exchange rate must be positive")
+        
+        # Update settings
+        new_settings = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user.id,
+            "display_currency": display_currency,
+            "yer_exchange_rate": yer_exchange_rate,
+            "sar_exchange_rate": 3.75,  # Fixed SAR rate
+            "last_updated": datetime.now(),
+            "updated_by": current_user.username,
+            "created_at": datetime.now()
+        }
+        
+        # Deactivate previous settings
+        await db.dashboard_currency_settings.update_many(
+            {"user_id": current_user.id},
+            {"$set": {"is_active": False}}
+        )
+        
+        # Insert new settings
+        await db.dashboard_currency_settings.insert_one(new_settings)
+        
+        logger.info(f"Dashboard currency settings updated by {current_user.username}: {display_currency}, YER rate: {yer_exchange_rate}")
+        
+        return {
+            "success": True,
+            "message": "Dashboard currency settings updated successfully",
+            "display_currency": display_currency,
+            "yer_exchange_rate": yer_exchange_rate,
+            "sar_exchange_rate": 3.75,
+            "last_updated": new_settings["last_updated"].isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update dashboard currency settings: {str(e)}")
+
 @api_router.post("/currency/rates/quick-update")
 async def quick_update_rate(
     rate_update: Dict[str, Any],
