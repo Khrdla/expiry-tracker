@@ -5539,9 +5539,10 @@ async def get_current_exchange_rates():
 async def get_dashboard_currency_settings(current_user: User = Depends(get_current_user)):
     """Get dashboard currency display settings"""
     try:
-        # Get dashboard currency settings
+        # Get dashboard currency settings (latest record)
         settings = await db.dashboard_currency_settings.find_one(
-            {"user_id": current_user.id if current_user.role in [UserRole.ADMIN, UserRole.MANAGER] else "default"}
+            {"user_id": current_user.id if current_user.role in [UserRole.ADMIN, UserRole.MANAGER] else "default"},
+            sort=[("created_at", -1)]
         )
         
         if not settings:
