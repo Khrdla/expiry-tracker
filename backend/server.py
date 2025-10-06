@@ -4605,38 +4605,38 @@ async def generate_waste_report_pdf(report_data: dict, period: str):
             c = canvas.Canvas(buffer, pagesize=letter)
             width, height = letter
             
-            # Simple text-only PDF
+            # Simple text-only PDF with text sanitization
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(72, height - 100, "GEANT HYPERMARKET")
+            c.drawString(72, height - 100, sanitize_text("GEANT HYPERMARKET"))
             
             c.setFont("Helvetica-Bold", 14)  
-            c.drawString(72, height - 130, f"WASTE REPORT - {period.upper()}")
+            c.drawString(72, height - 130, sanitize_text(f"WASTE REPORT - {period.upper()}"))
             
             c.setFont("Helvetica", 12)
             y = height - 170
             
             current_time = datetime.now().strftime('%d/%m/%Y - %H:%M')
-            c.drawString(72, y, f"Generated: {current_time}")
+            c.drawString(72, y, sanitize_text(f"Generated: {current_time}"))
             y -= 20
-            c.drawString(72, y, f"Report Period: {period.title()}")
+            c.drawString(72, y, sanitize_text(f"Report Period: {period.title()}"))
             y -= 20
             
             # Add currency data
             currency_totals = report_data.get('currency_totals', {})
             if currency_totals:
                 y -= 20
-                c.drawString(72, y, "Currency Totals:")
+                c.drawString(72, y, sanitize_text("Currency Totals:"))
                 y -= 15
                 
                 for currency, amount in currency_totals.items():
                     if amount and float(amount) > 0:
-                        c.drawString(90, y, f"{currency}: {float(amount):,.2f} {currency}")
+                        c.drawString(90, y, sanitize_text(f"{currency}: {float(amount):,.2f} {currency}"))
                         y -= 15
             
             y -= 20
-            c.drawString(72, y, f"Total Entries: {report_data.get('total_entries', 0)}")
+            c.drawString(72, y, sanitize_text(f"Total Entries: {report_data.get('total_entries', 0)}"))
             y -= 15
-            c.drawString(72, y, f"Total Quantity: {report_data.get('total_quantity_wasted', 0)}")
+            c.drawString(72, y, sanitize_text(f"Total Quantity: {report_data.get('total_quantity_wasted', 0)}"))
             
             c.save()
             buffer.seek(0)
