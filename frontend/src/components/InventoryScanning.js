@@ -156,9 +156,9 @@ const InventoryScanning = () => {
       if (response.ok) {
         const result = await response.json();
         
-        // Show brief success message
-        setSuccess(`✅ ${result.item_description} - ${result.quantity_added} units`);
-        setTimeout(() => setSuccess(''), 2000);
+        // Show brief success message with next action indicator
+        setSuccess(`✅ ${result.item_description} - ${result.quantity_added} units | 📷 Opening camera...`);
+        setTimeout(() => setSuccess(''), 3000);
         
         // Reset scan data for next item (keep zone data)
         setScanData({
