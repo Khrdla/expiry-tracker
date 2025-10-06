@@ -18,7 +18,7 @@ BACKEND_URL = "https://geant-scanner.preview.emergentagent.com/api"
 ADMIN_USERNAME = "imadqejji"
 ADMIN_PASSWORD = "066380531I"
 
-class InventoryScanningTester:
+class InventoryScanningPDFTester:
     def __init__(self):
         self.session = None
         self.auth_token = None
