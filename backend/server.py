@@ -5833,11 +5833,11 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
         current_time = datetime.now()
         current_date = current_time.strftime('%Y-%m-%d')
         
-        # Define column headers
+        # Define column headers with Purchase Price and Currency columns
         headers = [
             "Item Number", "Barcode", "Description", "Supplier Code", "Supplier Name",
-            "Qty Scanned in SA", "Qty Scanned in WH", "Total Inventory Scan",
-            "System Stock", "Variance in Qty", "Variance in Value"
+            "Purchase Price", "Purchase Currency", "Qty Scanned in SA", "Qty Scanned in WH", 
+            "Total Inventory Scan", "System Stock", "Variance in Qty", "Variance in Value", "Variance Currency"
         ]
         
         # Create worksheet for each zone
