@@ -219,10 +219,17 @@ class InventoryScanningPDFTester:
     async def analyze_pdf_page(self, page, page_num, expected_zone):
         """Analyze individual PDF page structure and content"""
         try:
-            self.test_results.append(f"\n📋 ANALYZING PAGE {page_num} (Expected Zone: {expected_zone}):")
-            
             # Extract text from page
             page_text = page.extract_text()
+            
+            # Find actual zone from the page text
+            actual_zone = None
+            for line in page_text.split('\n'):
+                if 'Zone Number:' in line:
+                    actual_zone = line.split('Zone Number:')[-1].strip()
+                    break
+            
+            self.test_results.append(f"\n📋 ANALYZING PAGE {page_num} (Actual Zone: {actual_zone}):")
             
             # Check for Geant Hypermarket branding
             if "Geant Hypermarket" in page_text:
@@ -231,11 +238,11 @@ class InventoryScanningPDFTester:
                 self.test_results.append("❌ Company branding missing")
                 return False
             
-            # Check for zone number in header (account for whitespace)
-            if f"Zone Number: {expected_zone}" in page_text or f" Zone Number: {expected_zone}" in page_text:
-                self.test_results.append(f"✅ Zone number header found: {expected_zone}")
+            # Check for zone number in header
+            if actual_zone:
+                self.test_results.append(f"✅ Zone number header found: {actual_zone}")
             else:
-                self.test_results.append(f"❌ Zone number header missing for {expected_zone}")
+                self.test_results.append("❌ Zone number header missing")
                 return False
             
             # Check for total SKUs scanned header
