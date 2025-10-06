@@ -48,6 +48,39 @@ class CurrencyRateUpdate(BaseModel):
     rate: float
     updated_by: str
 
+class ZoneType(str, Enum):
+    SA = "SA"  # Selling Area
+    WH = "WH"  # Warehouse
+
+class InventoryScan(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    zone_type: ZoneType
+    zone_number: int
+    barcode: str
+    item_number: str
+    description: str
+    department: str
+    section: str
+    family: str
+    supplier_code: str
+    supplier_name: str
+    system_stock: float
+    unit_cost: float
+    qty_scanned_sa: float = 0.0
+    qty_scanned_wh: float = 0.0
+    total_inventory_scan: float = Field(default=0.0)
+    variance_qty: float = Field(default=0.0)
+    variance_value: float = Field(default=0.0)
+    date_scanned: datetime = Field(default_factory=datetime.now)
+    scanned_by: str  # User ID who performed the scan
+    created_at: datetime = Field(default_factory=datetime.now)
+
+class InventoryScanRequest(BaseModel):
+    zone_type: ZoneType
+    zone_number: int
+    barcode: str
+    quantity_scanned: float
+
 class ProductStatus(str, Enum):
     IN_STOCK = "in_stock"
     LOW_STOCK = "low_stock"
