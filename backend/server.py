@@ -5881,7 +5881,11 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
             for row_num, scan in enumerate(zone_scans, table_start_row + 1):
                 total_inventory_scan = scan["qty_scanned_sa"] + scan["qty_scanned_wh"]
                 variance_qty = total_inventory_scan - scan["system_stock"]
-                variance_value = variance_qty * scan["unit_cost"]
+                
+                # Calculate variance value in purchase currency (not USD converted)
+                purchase_price = scan["unit_cost"]  # This is the original purchase price
+                purchase_currency = scan.get("purchase_currency", "YER")  # Get original currency
+                variance_value = variance_qty * purchase_price  # Keep in original currency
                 
                 # Accumulate zone totals
                 zone_total_sa += scan["qty_scanned_sa"]
@@ -5891,9 +5895,9 @@ async def export_inventory_scans(current_user: User = Depends(get_admin_user)):
                 
                 row_data = [
                     scan["item_number"], scan["_id"]["barcode"], scan["description"],
-                    scan["supplier_code"], scan["supplier_name"], scan["qty_scanned_sa"],
-                    scan["qty_scanned_wh"], total_inventory_scan, scan["system_stock"],
-                    variance_qty, variance_value
+                    scan["supplier_code"], scan["supplier_name"], purchase_price, purchase_currency,
+                    scan["qty_scanned_sa"], scan["qty_scanned_wh"], total_inventory_scan, 
+                    scan["system_stock"], variance_qty, variance_value, purchase_currency
                 ]
                 
                 for col_num, value in enumerate(row_data, 1):
