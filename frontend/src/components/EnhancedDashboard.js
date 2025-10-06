@@ -31,9 +31,9 @@ import EnhancedVisualCharts from './EnhancedVisualCharts';
  * - Enhanced error boundaries and logging
  * - Stable state management
  */
-const EnhancedDashboard = () => {
+const EnhancedDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(propUser || null);
   const [kpis, setKpis] = useState({});
   const [chartData, setChartData] = useState([]);
   const [error, setError] = useState('');
