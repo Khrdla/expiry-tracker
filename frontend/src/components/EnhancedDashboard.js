@@ -89,7 +89,13 @@ const EnhancedDashboard = () => {
     loadUserData();
     loadDashboardData();
     loadFilterOptions();
+    loadCurrencySettings();
   }, [selectedDepartment, selectedSection, selectedSupplier]);
+
+  // Load currency settings from localStorage and backend
+  useEffect(() => {
+    loadCurrencySettings();
+  }, []);
 
   // Enhanced user data loading with error handling
   const loadUserData = async () => {
