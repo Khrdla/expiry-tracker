@@ -701,7 +701,7 @@ class InventoryScanningPDFTester:
         print(f"📈 FINAL SCORE: {successes} ✅ | {failures} ❌ | {warnings} ⚠️")
         
         if failures == 0:
-            print("🎉 ENHANCED INVENTORY SCANNING EXCEL EXPORT: FULLY FUNCTIONAL!")
+            print("🎉 INVENTORY SCANNING PDF EXPORT: FULLY FUNCTIONAL!")
         else:
             print("🚨 ISSUES DETECTED - NEEDS ATTENTION")
         
@@ -709,7 +709,7 @@ class InventoryScanningPDFTester:
 
 async def main():
     """Main test execution"""
-    tester = InventoryScanningTester()
+    tester = InventoryScanningPDFTester()
     success = await tester.run_comprehensive_test()
     tester.print_results()
     return success
