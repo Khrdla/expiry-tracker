@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, X, AlertTriangle, Type, CheckCircle } from 'lucide-react';
+import { Camera, X, AlertTriangle, Type, CheckCircle, RefreshCw, Volume2 } from 'lucide-react';
+import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
 
 const SimpleMobileBarcodeScanner = ({ onScan, onClose }) => {
   const [isScanning, setIsScanning] = useState(false);
