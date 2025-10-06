@@ -355,6 +355,150 @@ const EnhancedDashboard = () => {
     return value || 'Unknown';
   };
 
+  // Currency conversion functions
+  const loadCurrencySettings = async () => {
+    try {
+      setCurrencyLoading(true);
+      
+      // Try to load from localStorage first
+      const savedSettings = localStorage.getItem('dashboardCurrencySettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setCurrencySettings(prev => ({...prev, ...parsed}));
+      }
+      
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/currency-settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newSettings = {
+          display_currency: data.display_currency,
+          yer_exchange_rate: data.yer_exchange_rate,
+          sar_exchange_rate: data.sar_exchange_rate,
+          last_updated: data.last_updated,
+          can_edit: data.can_edit
+        };
+        
+        setCurrencySettings(newSettings);
+        localStorage.setItem('dashboardCurrencySettings', JSON.stringify(newSettings));
+      }
+    } catch (error) {
+      console.error('Failed to load currency settings:', error);
+    } finally {
+      setCurrencyLoading(false);
+    }
+  };
+
+  const updateCurrencySettings = async (newSettings) => {
+    if (!currencySettings.can_edit) {
+      alert('Only admin users can modify currency settings');
+      return;
+    }
+
+    try {
+      setCurrencyLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/currency-settings`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newSettings)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const updatedSettings = {
+          display_currency: data.display_currency,
+          yer_exchange_rate: data.yer_exchange_rate,
+          sar_exchange_rate: data.sar_exchange_rate,
+          last_updated: data.last_updated,
+          can_edit: currencySettings.can_edit
+        };
+        
+        setCurrencySettings(updatedSettings);
+        localStorage.setItem('dashboardCurrencySettings', JSON.stringify(updatedSettings));
+        
+        // Refresh dashboard data to apply new currency conversion
+        loadDashboardData();
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to update currency settings: ${errorData.detail || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Failed to update currency settings:', error);
+      alert('Failed to update currency settings');
+    } finally {
+      setCurrencyLoading(false);
+    }
+  };
+
+  const convertCurrency = (usdValue, targetCurrency = null) => {
+    const currency = targetCurrency || currencySettings.display_currency;
+    const value = parseFloat(usdValue) || 0;
+    
+    switch (currency) {
+      case 'SAR':
+        return value * currencySettings.sar_exchange_rate;
+      case 'YER':
+        return value * currencySettings.yer_exchange_rate;
+      case 'USD':
+      default:
+        return value;
+    }
+  };
+
+  const formatCurrency = (value, currency = null) => {
+    const targetCurrency = currency || currencySettings.display_currency;
+    const convertedValue = convertCurrency(value, targetCurrency);
+    
+    switch (targetCurrency) {
+      case 'USD':
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedValue);
+      case 'SAR':
+        return `SAR ${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedValue)}`;
+      case 'YER':
+        return `YER ${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(convertedValue)}`;
+      default:
+        return `$${convertedValue.toFixed(2)}`;
+    }
+  };
+
+  const handleCurrencyChange = (newCurrency) => {
+    updateCurrencySettings({
+      display_currency: newCurrency,
+      yer_exchange_rate: currencySettings.yer_exchange_rate
+    });
+  };
+
+  const handleExchangeRateChange = (newRate) => {
+    const rate = parseFloat(newRate);
+    if (rate > 0) {
+      updateCurrencySettings({
+        display_currency: currencySettings.display_currency,
+        yer_exchange_rate: rate
+      });
+    }
+  };
+
   const processFilterArray = (array, prefix) => {
     if (!Array.isArray(array)) return [];
     
