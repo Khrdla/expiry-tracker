@@ -842,7 +842,7 @@ const EnhancedDashboard = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [value.toLocaleString(), 'Stock Value']} />
+                  <Tooltip formatter={(value) => [formatCurrency(value), 'Stock Value']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
