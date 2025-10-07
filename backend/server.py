@@ -6016,19 +6016,34 @@ async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user
             scan["total_qty_scanned"] = total_qty
             zones_data[zone_key].append(scan)
         
-        # Create PDF
+        # Create PDF with Geant Yemen theme specifications
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+        # Page setup: Top/Bottom 1.5cm (42.52pt), Left/Right 2cm (56.69pt)
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=A4, 
+            rightMargin=56.69, 
+            leftMargin=56.69, 
+            topMargin=42.52, 
+            bottomMargin=42.52
+        )
+        
+        # Geant Yemen Theme Colors
+        GEANT_PRIMARY_GREEN = colors.HexColor('#009639')
+        GEANT_ACCENT_RED = colors.HexColor('#E41E26')
+        GEANT_HIGHLIGHT_YELLOW = colors.HexColor('#F9A825')
+        GEANT_LIGHT_YELLOW = colors.HexColor('#FFF9E6')  # Light yellow tint for alternate rows
         
         # Get styles
         styles = getSampleStyleSheet()
         
-        # Create custom styles
+        # Create custom styles with Geant Yemen theme
         title_style = ParagraphStyle(
-            'CustomTitle',
+            'GeantTitle',
             parent=styles['Heading1'],
-            fontSize=18,
-            textColor=colors.HexColor('#2563eb'),
+            fontSize=14,
+            fontName='Helvetica-Bold',
+            textColor=GEANT_PRIMARY_GREEN,
             alignment=TA_CENTER,
             spaceAfter=20
         )
@@ -6036,7 +6051,8 @@ async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user
         header_style = ParagraphStyle(
             'HeaderStyle',
             parent=styles['Normal'],
-            fontSize=12,
+            fontSize=10,
+            fontName='Helvetica',
             textColor=colors.HexColor('#374151'),
             alignment=TA_RIGHT,
             spaceAfter=15
@@ -6045,10 +6061,31 @@ async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user
         zone_title_style = ParagraphStyle(
             'ZoneTitle',
             parent=styles['Heading2'],
-            fontSize=16,
-            textColor=colors.HexColor('#1f2937'),
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            textColor=GEANT_ACCENT_RED,
             alignment=TA_LEFT,
-            spaceAfter=15
+            spaceAfter=10
+        )
+        
+        summary_style = ParagraphStyle(
+            'SummaryStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            fontName='Helvetica-Bold',
+            textColor=GEANT_PRIMARY_GREEN,
+            alignment=TA_LEFT,
+            spaceAfter=10
+        )
+        
+        footer_style = ParagraphStyle(
+            'FooterStyle',
+            parent=styles['Normal'],
+            fontSize=9,
+            fontName='Helvetica',
+            textColor=colors.HexColor('#666666'),
+            alignment=TA_CENTER,
+            spaceBefore=20
         )
         
         # Story to hold PDF content
