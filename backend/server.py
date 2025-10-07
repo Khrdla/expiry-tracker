@@ -6101,34 +6101,32 @@ async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user
             if zone_idx > 0:
                 story.append(PageBreak())
             
-            # Company logo and header section
-            header_data = [
-                [
-                    Paragraph("Geant Hypermarket<br/>Inventory Scanning Report", title_style),
-                    "🏢"  # Simple logo placeholder - you can replace with actual logo
-                ]
-            ]
-            
-            header_table = Table(header_data, colWidths=[4.5*inch, 1*inch])
-            header_table.setStyle(TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-                ('FONTSIZE', (1, 0), (1, 0), 36),
-            ]))
-            story.append(header_table)
-            story.append(Spacer(1, 20))
+            # Page title: "Geant Hypermarket – Inventory Scanning Report" 
+            # Bold, centered, in Primary Green
+            page_title = Paragraph("Geant Hypermarket – Inventory Scanning Report", title_style)
+            story.append(page_title)
+            story.append(Spacer(1, 15))
             
             # Zone information header (top-right style)
             zone_info_text = f"Zone Number: {zone_key}<br/>Total SKUs Scanned: {len(zone_scans)}<br/>Generated: {current_date}"
             zone_info = Paragraph(zone_info_text, header_style)
             story.append(zone_info)
-            story.append(Spacer(1, 15))
-            
-            # Zone title
-            zone_title = Paragraph(f"Zone {zone_key} - Inventory Details", zone_title_style)
-            story.append(zone_title)
             story.append(Spacer(1, 10))
+            
+            # Zone title with divider line
+            # Bold, Accent Red, with a thin green divider line below
+            zone_title = Paragraph(f"Zone {zone_key} – Inventory Details", zone_title_style)
+            story.append(zone_title)
+            
+            # Add thin green divider line below section title
+            divider_table = Table([['']], colWidths=[6.5*inch])
+            divider_table.setStyle(TableStyle([
+                ('LINEBELOW', (0, 0), (-1, -1), 1, GEANT_PRIMARY_GREEN),
+                ('TOPPADDING', (0, 0), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ]))
+            story.append(divider_table)
+            story.append(Spacer(1, 8))
             
             # Create table data
             table_data = [
