@@ -6146,27 +6146,38 @@ async def export_inventory_scans_pdf(current_user: User = Depends(get_admin_user
                 ]
                 table_data.append(row)
             
-            # Create the table
+            # Create the table with auto-fit content and proper padding
             data_table = Table(table_data, colWidths=[1.3*inch, 1.5*inch, 2.7*inch, 1*inch])
             
-            # Style the table
+            # Style the table with Geant Yemen theme
             table_style = TableStyle([
-                # Header row styling
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563eb')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),  # Right-align quantity column
+                # Table Header Row: Background Primary Green, text white, bold and centered
+                ('BACKGROUND', (0, 0), (-1, 0), GEANT_PRIMARY_GREEN),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # Header centered
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
                 
-                # Data rows styling
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                # Data rows styling with alternating light yellow background
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                
+                # Text alignment: Text fields left-aligned, numeric fields right-aligned
+                ('ALIGN', (0, 1), (2, -1), 'LEFT'),    # Item Number, Barcode, Description left-aligned
+                ('ALIGN', (3, 1), (3, -1), 'RIGHT'),   # Quantity Scanned right-aligned
+                
+                # Borders: thin gray grid lines between all cells
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                
+                # Alternate table rows: Light yellow tint background for better readability
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, GEANT_LIGHT_YELLOW]),
             ])
             
             data_table.setStyle(table_style)
